@@ -10,9 +10,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -24,7 +25,7 @@ type Service struct {
 	collections collectionimpl.Reader
 	catalogs    catalogimpl.Reader
 	clock       clockutil.Clock
-	policy      protection.RootPolicy
+	policy      root.RootPolicy
 }
 
 func NewService(
@@ -32,7 +33,7 @@ func NewService(
 	collections collectionimpl.Reader,
 	catalogs catalogimpl.Reader,
 	timeClock clockutil.Clock,
-	policy protection.RootPolicy,
+	policy root.RootPolicy,
 ) (*Service, error) {
 	if repository == nil ||
 		collections == nil ||
@@ -96,7 +97,7 @@ func (s *Service) Adopt(
 	ctx context.Context,
 	request artifact.AdoptRequest,
 ) (artifact.Artifact, error) {
-	if err := protection.RequireMutableRoot(
+	if err := rootimpl.RequireMutableRoot(
 		ctx,
 		s.policy,
 		request.Collection.RootID,
@@ -207,7 +208,7 @@ func (s *Service) Pin(
 	ctx context.Context,
 	request artifact.PinRequest,
 ) (artifact.Artifact, error) {
-	if err := protection.RequireMutableRoot(
+	if err := rootimpl.RequireMutableRoot(
 		ctx,
 		s.policy,
 		request.Collection.RootID,
@@ -339,7 +340,7 @@ func (s *Service) SetEnabled(
 	expectedRevision uint64,
 	enabled bool,
 ) (artifact.Artifact, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return artifact.Artifact{}, err
 	}
 	current, err := s.repository.Get(ctx, ref)
@@ -374,7 +375,7 @@ func (s *Service) SetName(
 	expectedRevision uint64,
 	name string,
 ) (artifact.Artifact, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return artifact.Artifact{}, err
 	}
 	if err := basespec.ValidateRequiredText(
@@ -416,7 +417,7 @@ func (s *Service) UpdateData(
 	expectedRevision uint64,
 	data json.RawMessage,
 ) (artifact.Artifact, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return artifact.Artifact{}, err
 	}
 	canonical, err := canonicalArtifactData(data)
@@ -455,7 +456,7 @@ func (s *Service) Unadopt(
 	expectedRevision uint64,
 	suppress bool,
 ) error {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return err
 	}
 	current, err := s.repository.Get(ctx, ref)
@@ -506,7 +507,7 @@ func (s *Service) Suppress(
 	ctx context.Context,
 	request artifact.SuppressRequest,
 ) (artifact.Suppression, error) {
-	if err := protection.RequireMutableRoot(
+	if err := rootimpl.RequireMutableRoot(
 		ctx,
 		s.policy,
 		request.Collection.RootID,
@@ -564,7 +565,7 @@ func (s *Service) Unsuppress(
 	binding artifact.SourceBinding,
 	expectedRevision uint64,
 ) error {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return err
 	}
 	if err := ref.Validate(); err != nil {
@@ -601,7 +602,7 @@ func (s *Service) Purge(
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
 ) error {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return err
 	}
 	if err := ref.Validate(); err != nil {
@@ -626,7 +627,7 @@ func (s *Service) PurgeAndSuppress(
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
 ) error {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return err
 	}
 	if err := ref.Validate(); err != nil {

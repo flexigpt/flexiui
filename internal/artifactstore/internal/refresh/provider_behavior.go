@@ -17,7 +17,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/discovery"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
@@ -56,7 +56,7 @@ func (s *Service) RefreshCollection(
 	if err := ref.Validate(); err != nil {
 		return refresh.RefreshCollectionResult{}, err
 	}
-	if err := protection.RequireMutableRoot(
+	if err := rootimpl.RequireMutableRoot(
 		ctx,
 		s.policy,
 		ref.RootID,

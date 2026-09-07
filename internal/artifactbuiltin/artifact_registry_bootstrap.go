@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 )
 
@@ -200,7 +199,7 @@ func (r *BootstrapRegistry) Ensure(ctx context.Context) error {
 		return entries[left].name < entries[right].name
 	})
 
-	ctx = protection.WithPrivilegedInstaller(ctx)
+	ctx = basespec.WithPrivilegedInstaller(ctx)
 	prepared := make([]preparedHydration, 0, len(entries))
 
 	for _, entry := range entries {

@@ -10,14 +10,15 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/discovery"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/providerregistry"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 )
@@ -34,7 +35,7 @@ type Service struct {
 	documents   providerapi.ExpectedCanonicalizer
 	artifactIDs artifactid.Provider
 	clock       clockutil.Clock
-	policy      protection.RootPolicy
+	policy      root.RootPolicy
 }
 
 func NewService(
@@ -49,7 +50,7 @@ func NewService(
 	documents providerapi.ExpectedCanonicalizer,
 	artifactIDs artifactid.Provider,
 	timeClock clockutil.Clock,
-	policy protection.RootPolicy,
+	policy root.RootPolicy,
 ) (*Service, error) {
 	if collections == nil ||
 		catalogs == nil ||
@@ -92,7 +93,7 @@ func (s *Service) refresh(
 	plan discovery.Plan,
 	policy artifactimpl.Policy,
 ) (refresh.RefreshCollectionResult, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
 		return refresh.RefreshCollectionResult{}, err
 	}
 	if ctx == nil {

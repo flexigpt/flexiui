@@ -8,7 +8,6 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -55,7 +54,7 @@ func (i *Installer) DesiredHydration(
 	if err := ctx.Err(); err != nil {
 		return topology.Hydration{}, err
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return topology.Hydration{}, err
 	}
 
@@ -79,7 +78,7 @@ func (i *Installer) EnsureHydration(
 	ctx context.Context,
 	current bool,
 ) error {
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return err
 	}
 	if current {
@@ -103,7 +102,7 @@ func (i *Installer) FinalizeHydration(
 	if i == nil {
 		return basespec.ErrClosed
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return err
 	}
 	return i.ensureBuiltInCatalogsCurrent(ctx)

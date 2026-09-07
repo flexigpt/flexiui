@@ -6,7 +6,6 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 )
 
@@ -20,7 +19,7 @@ func (c *Components) EnsureProtectedTopology(
 	if c == nil || c.Roots == nil || c.Sources == nil {
 		return topology.Installed{}, basespec.ErrClosed
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return topology.Installed{}, err
 	}
 	if err := declaration.Validate(); err != nil {

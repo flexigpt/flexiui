@@ -8,20 +8,19 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 )
 
 type Service struct {
 	repository Repository
 	clock      clockutil.Clock
-	policy     protection.RootPolicy
+	policy     root.RootPolicy
 }
 
 func NewService(
 	repository Repository,
 	timeClock clockutil.Clock,
-	policy protection.RootPolicy,
+	policy root.RootPolicy,
 ) (*Service, error) {
 	if repository == nil || timeClock == nil {
 		return nil, fmt.Errorf(
@@ -40,7 +39,7 @@ func (s *Service) Create(
 	ctx context.Context,
 	draft artifactConsumerAPIroot.RootDraft,
 ) (root.Root, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, draft.ID); err != nil {
+	if err := RequireMutableRoot(ctx, s.policy, draft.ID); err != nil {
 		return root.Root{}, err
 	}
 	return s.create(ctx, draft)
@@ -62,7 +61,7 @@ func (s *Service) EnsureSystem(
 			draft.ID,
 		)
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return root.Root{}, err
 	}
 	return s.create(ctx, draft)
@@ -87,7 +86,7 @@ func (s *Service) Update(
 	id basespec.RootID,
 	update artifactConsumerAPIroot.RootUpdate,
 ) (root.Root, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, id); err != nil {
+	if err := RequireMutableRoot(ctx, s.policy, id); err != nil {
 		return root.Root{}, err
 	}
 	if update.ExpectedRevision == 0 {
@@ -134,7 +133,7 @@ func (s *Service) Retire(
 	if err := basespec.ValidateRootID(id); err != nil {
 		return root.Root{}, err
 	}
-	if err := protection.RequireRootDeletion(ctx, s.policy, id); err != nil {
+	if err := requireRootDeletion(ctx, s.policy, id); err != nil {
 		return root.Root{}, err
 	}
 	if expectedRevision == 0 {
@@ -176,7 +175,7 @@ func (s *Service) Purge(
 	if err := basespec.ValidateRootID(id); err != nil {
 		return err
 	}
-	if err := protection.RequireRootDeletion(ctx, s.policy, id); err != nil {
+	if err := requireRootDeletion(ctx, s.policy, id); err != nil {
 		return err
 	}
 	if expectedRevision == 0 {
@@ -230,4 +229,42 @@ func (s *Service) create(
 		)
 	}
 	return existing, nil
+}
+
+// requireRootDeletion permits normal mutable-root checks and additionally
+// rejects retirement or purge of a retained application Root. Retention is
+// not bypassed by installer context because it is an application data-retention
+// policy rather than protected-topology installation access.
+func requireRootDeletion(
+	ctx context.Context,
+	policy root.RootPolicy,
+	rootID basespec.RootID,
+) error {
+	if deletionPolicy, supported := policy.(root.RootDeletionPolicy); supported &&
+		deletionPolicy.IsRootDeletionProtected(rootID) {
+		return fmt.Errorf(
+			"%w: root %q is retained and cannot be retired or purged",
+			basespec.ErrProtected,
+			rootID,
+		)
+	}
+	return RequireMutableRoot(ctx, policy, rootID)
+}
+
+func RequireMutableRoot(
+	ctx context.Context,
+	policy root.RootPolicy,
+	rootID basespec.RootID,
+) error {
+	if policy == nil || !policy.IsProtectedRoot(rootID) {
+		return nil
+	}
+	if basespec.IsPrivilegedInstaller(ctx) {
+		return nil
+	}
+	return fmt.Errorf(
+		"%w: root %q may only be mutated by a trusted protected-topology installer",
+		basespec.ErrProtected,
+		rootID,
+	)
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
@@ -17,7 +17,7 @@ func Open(
 	ctx context.Context,
 	config OpenConfig,
 ) (*API, error) {
-	rootPolicy, err := protection.NewSetRootPolicy(
+	rootPolicy, err := rootimpl.NewSetRootPolicy(
 		append([]basespec.RootID(nil), config.ProtectedRoots...),
 		append([]basespec.RootID(nil), config.RetainedRoots...),
 	)

@@ -20,7 +20,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -304,7 +303,7 @@ func (a *API) EnsureBuiltInBundleCurrent(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) error {
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return err
 	}
 	bundle, err := a.GetBundle(ctx, ref)
@@ -685,7 +684,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 	ctx context.Context,
 	request BuiltInBundleTopology,
 ) (Bundle, error) {
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return Bundle{}, err
 	}
 	bundle, err := a.createBundle(ctx, CreateBundleRequest{

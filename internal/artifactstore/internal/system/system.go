@@ -9,6 +9,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
@@ -23,7 +24,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source/fsdir"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source/managed"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/sqlite"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 )
@@ -38,7 +38,7 @@ type Config struct {
 	// It is Store composition input and never reaches a provider or consumer.
 	ArtifactIDProvider        artifactid.Provider
 	Clock                     clockutil.Clock
-	RootMutationPolicy        protection.RootPolicy
+	RootMutationPolicy        root.RootPolicy
 	FilesystemTraversalPolicy *fsdir.TraversalPolicy
 }
 
@@ -62,7 +62,7 @@ type Components struct {
 
 	metadata           *sqlite.Store
 	managedSources     *sourceimpl.Registry
-	rootMutationPolicy protection.RootPolicy
+	rootMutationPolicy root.RootPolicy
 }
 
 func Open(
@@ -365,7 +365,7 @@ func Open(
 	return components, nil
 }
 
-func (c *Components) RootMutationPolicy() protection.RootPolicy {
+func (c *Components) RootMutationPolicy() root.RootPolicy {
 	if c == nil {
 		return nil
 	}
@@ -475,7 +475,7 @@ func (c *Components) publishProtectedManagedPackage(
 			rootID,
 		)
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	return c.publishManagedPackage(
@@ -526,7 +526,7 @@ func (c *Components) removeProtectedManagedPackage(
 			rootID,
 		)
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	return c.removeManagedPackage(
@@ -558,7 +558,7 @@ func (c *Components) publishManagedPackage(
 			rootID,
 		)
 	}
-	if err := protection.RequireMutableRoot(ctx, c.rootMutationPolicy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, c.rootMutationPolicy, rootID); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	normalizedPublication, err := source.NormalizeManagedPackagePublication(
@@ -643,7 +643,7 @@ func (c *Components) removeManagedPackage(
 			rootID,
 		)
 	}
-	if err := protection.RequireMutableRoot(ctx, c.rootMutationPolicy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, c.rootMutationPolicy, rootID); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	if err := address.Validate(); err != nil {

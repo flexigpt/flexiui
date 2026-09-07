@@ -10,7 +10,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -36,7 +35,7 @@ func (a *API) EnsureBuiltIn(
 	if a == nil {
 		return Bundle{}, basespec.ErrClosed
 	}
-	if err := protection.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
 		return Bundle{}, err
 	}
 	if err := basespec.ValidateRootID(request.RootID); err != nil {

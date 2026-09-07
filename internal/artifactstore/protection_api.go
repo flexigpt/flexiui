@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 )
 
 func (a *API) IsProtectedRoot(rootID basespec.RootID) bool {
@@ -18,5 +17,5 @@ func (a *API) RequirePrivilegedInstaller(ctx context.Context) error {
 	if err := a.check(ctx); err != nil {
 		return err
 	}
-	return protection.RequirePrivilegedInstaller(ctx)
+	return basespec.RequirePrivilegedInstaller(ctx)
 }

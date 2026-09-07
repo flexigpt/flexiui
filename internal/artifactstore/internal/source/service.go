@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -26,7 +26,7 @@ type Service struct {
 	registry   *Registry
 	roots      rootReader
 	clock      clockutil.Clock
-	policy     protection.RootPolicy
+	policy     root.RootPolicy
 }
 
 func NewService(
@@ -34,7 +34,7 @@ func NewService(
 	registry *Registry,
 	roots rootReader,
 	timeClock clockutil.Clock,
-	policy protection.RootPolicy,
+	policy root.RootPolicy,
 ) (*Service, error) {
 	if repository == nil || registry == nil || roots == nil || timeClock == nil {
 		return nil, fmt.Errorf(
@@ -87,7 +87,7 @@ func (s *Service) CreateWithStatus(
 	if err != nil {
 		return source.Summary{}, false, err
 	}
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, false, err
 	}
 	if err := basespec.ValidateSourceID(draft.ID); err != nil {
@@ -282,7 +282,7 @@ func (s *Service) Update(
 	id basespec.SourceID,
 	update source.Update,
 ) (source.Summary, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateRootID(rootID); err != nil {
@@ -369,7 +369,7 @@ func (s *Service) Retire(
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateRootID(rootID); err != nil {
@@ -431,7 +431,7 @@ func (s *Service) Discard(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRootID(rootID); err != nil {
@@ -479,7 +479,7 @@ func (s *Service) Purge(
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return err
 	}
 	if expectedRevision == 0 {
@@ -506,7 +506,7 @@ func (s *Service) MarkContentChanged(
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
-	if err := protection.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
+	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, err
 	}
 	if ctx == nil {

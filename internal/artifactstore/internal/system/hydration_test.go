@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -21,7 +21,7 @@ func TestPrepareTopologyHydrationsAllowsFreshProtectedRoot(
 	sourceID := basespec.SourceID(
 		"0192c4c0-0001-7000-8000-000000000001",
 	)
-	policy, err := protection.NewSetRootPolicy(
+	policy, err := rootimpl.NewSetRootPolicy(
 		[]basespec.RootID{rootID},
 		nil,
 	)
@@ -51,7 +51,7 @@ func TestPrepareTopologyHydrationsAllowsFreshProtectedRoot(
 		SourceID:      sourceID,
 		Fingerprint:   cryptoutil.DigestBytes([]byte("fresh-install")),
 	}
-	ctx := protection.WithPrivilegedInstaller(t.Context())
+	ctx := basespec.WithPrivilegedInstaller(t.Context())
 
 	current, err := components.PrepareTopologyHydrations(
 		ctx,

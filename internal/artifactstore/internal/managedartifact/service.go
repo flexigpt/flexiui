@@ -7,10 +7,11 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
+	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -90,7 +91,7 @@ type Dependencies struct {
 	Artifacts   ArtifactCommands
 	Collections CollectionReader
 	Refresh     CollectionRunner
-	Policy      protection.RootPolicy
+	Policy      root.RootPolicy
 
 	GetSourceState          GetSourceStateFunc
 	PublishPackage          PublishPackageFunc
@@ -561,9 +562,9 @@ func (s *Service) requireMutable(
 				basespec.ErrProtected,
 			)
 		}
-		return protection.RequirePrivilegedInstaller(ctx)
+		return basespec.RequirePrivilegedInstaller(ctx)
 	}
-	return protection.RequireMutableRoot(ctx, s.dependencies.Policy, rootID)
+	return rootimpl.RequireMutableRoot(ctx, s.dependencies.Policy, rootID)
 }
 
 func (s *Service) requireCollectionSource(
