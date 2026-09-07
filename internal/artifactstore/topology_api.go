@@ -6,11 +6,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/topology"
 )
 
-var (
-	_ topology.Ensurer              = (*API)(nil)
-	_ topology.HydrationCoordinator = (*API)(nil)
-)
-
 func (a *API) EnsureProtectedTopology(
 	ctx context.Context,
 	declaration topology.Declaration,

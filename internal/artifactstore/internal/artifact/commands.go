@@ -35,7 +35,7 @@ func (u SourceStateUpdate) Validate() error {
 	if err := basespec.ValidateCollectionID(u.CollectionID); err != nil {
 		return err
 	}
-	if err := artifact.ValidateSourceState(u.State, u.ResolvedDefinition); err != nil {
+	if err := u.State.Validate(u.ResolvedDefinition); err != nil {
 		return err
 	}
 	if err := providerapi.ValidateDiagnostics(u.Diagnostics); err != nil {

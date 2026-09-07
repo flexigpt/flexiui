@@ -4,9 +4,25 @@ import (
 	"encoding/json"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
+
+// OpenConfig contains the application-composition inputs required to open one
+// Artifact Store.
+//
+// Store implementation dependencies, source snapshots, source adapters,
+// metadata repositories, SQLite handles, clocks, and automatic Artifact ID
+// providers remain private to Artifact Store.
+type OpenConfig struct {
+	BaseDirectory string
+
+	ArtifactProviders []providerapi.Provider
+
+	ProtectedRoots []basespec.RootID
+	RetainedRoots  []basespec.RootID
+}
 
 type CreateArtifactRootRequest struct {
 	Body *root.RootDraft

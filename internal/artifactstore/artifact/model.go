@@ -54,6 +54,44 @@ const (
 	StateIncompatible State = "incompatible"
 )
 
+func (s State) Validate(
+	resolvedDefinition *cryptoutil.Digest,
+) error {
+	if resolvedDefinition != nil {
+		if err := cryptoutil.ValidateDigest(*resolvedDefinition); err != nil {
+			return err
+		}
+	}
+
+	switch s {
+	case StateAvailable, StateIncompatible:
+		if resolvedDefinition == nil {
+			return fmt.Errorf(
+				"%w: artifact state %q requires a resolved definition",
+				basespec.ErrInvalid,
+				s,
+			)
+		}
+
+	case StateMissing, StateInvalid:
+		if resolvedDefinition != nil {
+			return fmt.Errorf(
+				"%w: artifact state %q cannot retain a resolved definition",
+				basespec.ErrInvalid,
+				s,
+			)
+		}
+
+	default:
+		return fmt.Errorf(
+			"%w: invalid artifact state %q",
+			basespec.ErrInvalid,
+			s,
+		)
+	}
+	return nil
+}
+
 type AdoptionMode string
 
 const (
@@ -180,7 +218,7 @@ func (a Artifact) Validate() error {
 			a.Adoption,
 		)
 	}
-	if err := ValidateSourceState(a.State, a.ResolvedDefinition); err != nil {
+	if err := a.State.Validate(a.ResolvedDefinition); err != nil {
 		return err
 	}
 	if _, err := jsonutil.CanonicalizeObject(
@@ -276,43 +314,4 @@ func (b SourceBinding) Validate() error {
 		return err
 	}
 	return basespec.ValidateArtifactKind(b.ExpectedKind)
-}
-
-func ValidateSourceState(
-	state State,
-	resolvedDefinition *cryptoutil.Digest,
-) error {
-	if resolvedDefinition != nil {
-		if err := cryptoutil.ValidateDigest(*resolvedDefinition); err != nil {
-			return err
-		}
-	}
-
-	switch state {
-	case StateAvailable, StateIncompatible:
-		if resolvedDefinition == nil {
-			return fmt.Errorf(
-				"%w: artifact state %q requires a resolved definition",
-				basespec.ErrInvalid,
-				state,
-			)
-		}
-
-	case StateMissing, StateInvalid:
-		if resolvedDefinition != nil {
-			return fmt.Errorf(
-				"%w: artifact state %q cannot retain a resolved definition",
-				basespec.ErrInvalid,
-				state,
-			)
-		}
-
-	default:
-		return fmt.Errorf(
-			"%w: invalid artifact state %q",
-			basespec.ErrInvalid,
-			state,
-		)
-	}
-	return nil
 }
