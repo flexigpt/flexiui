@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
@@ -37,7 +38,7 @@ func NewService(
 
 func (s *Service) Create(
 	ctx context.Context,
-	draft root.RootDraft,
+	draft artifactConsumerAPIroot.RootDraft,
 ) (root.Root, error) {
 	if err := protection.RequireMutableRoot(ctx, s.policy, draft.ID); err != nil {
 		return root.Root{}, err
@@ -49,7 +50,7 @@ func (s *Service) Create(
 // installer. Artifact Store does not assign any feature meaning to the Root.
 func (s *Service) EnsureSystem(
 	ctx context.Context,
-	draft root.RootDraft,
+	draft artifactConsumerAPIroot.RootDraft,
 ) (root.Root, error) {
 	if err := basespec.ValidateRootID(draft.ID); err != nil {
 		return root.Root{}, err
@@ -84,7 +85,7 @@ func (s *Service) List(ctx context.Context) ([]root.Root, error) {
 func (s *Service) Update(
 	ctx context.Context,
 	id basespec.RootID,
-	update root.RootUpdate,
+	update artifactConsumerAPIroot.RootUpdate,
 ) (root.Root, error) {
 	if err := protection.RequireMutableRoot(ctx, s.policy, id); err != nil {
 		return root.Root{}, err
@@ -189,7 +190,7 @@ func (s *Service) Purge(
 
 func (s *Service) create(
 	ctx context.Context,
-	draft root.RootDraft,
+	draft artifactConsumerAPIroot.RootDraft,
 ) (root.Root, error) {
 	if err := basespec.ValidateRootID(draft.ID); err != nil {
 		return root.Root{}, err

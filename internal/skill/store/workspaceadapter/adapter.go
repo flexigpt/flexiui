@@ -13,7 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
-	artifactConsumerAPIResource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
+	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -260,7 +260,7 @@ func (f *Adapter) loadLocal(
 		resolved, err := f.resources.ResolveArtifact(
 			ctx,
 			item.Artifact.Ref(),
-			artifactConsumerAPIResource.ResolveOptions{},
+			artifactConsumerAPIresource.ResolveOptions{},
 		)
 		if err != nil {
 			output.Diagnostics = providerapi.AppendDiagnostics(

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
@@ -25,7 +26,7 @@ type OpenConfig struct {
 }
 
 type CreateArtifactRootRequest struct {
-	Body *root.RootDraft
+	Body *artifactConsumerAPIroot.RootDraft
 }
 
 type CreateArtifactRootResponse struct {
@@ -52,7 +53,7 @@ type ListArtifactRootsResponse struct {
 
 type UpdateArtifactRootRequest struct {
 	RootID basespec.RootID `path:"rootID" required:"true"`
-	Body   *root.RootUpdate
+	Body   *artifactConsumerAPIroot.RootUpdate
 }
 
 type UpdateArtifactRootResponse struct {

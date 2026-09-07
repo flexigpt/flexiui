@@ -14,7 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 
-	artifactConsumerAPIResource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
+	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 )
 
@@ -199,7 +199,7 @@ func (a *API) resolvedSkillFromSnapshot(
 	resolved, err := a.dependencies.Store.ResolveArtifact(
 		ctx,
 		record.Ref(),
-		artifactConsumerAPIResource.ResolveOptions{},
+		artifactConsumerAPIresource.ResolveOptions{},
 	)
 	if err != nil {
 		return ResolvedSkill{}, err

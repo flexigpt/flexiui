@@ -441,8 +441,8 @@ linters:
           alias: sourceimpl
         - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi
           alias: artifactConsumerAPI
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource
-          alias: artifactConsumerAPIResource
+        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/(\w+)
+          alias: artifactConsumerAPI${1}
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/consts
           alias: ${1}Consts
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/spec

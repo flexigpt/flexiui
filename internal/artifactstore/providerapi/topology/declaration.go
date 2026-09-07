@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
@@ -15,8 +16,8 @@ import (
 // not describe package bytes, collection kinds, artifact kinds, feature roles,
 // or any built-in product semantics.
 type Declaration struct {
-	Root    root.RootDraft `json:"root"`
-	Sources []source.Draft `json:"sources"`
+	Root    artifactConsumerAPIroot.RootDraft `json:"root"`
+	Sources []source.Draft                    `json:"sources"`
 }
 
 // Installed is the verified local protected topology created from a

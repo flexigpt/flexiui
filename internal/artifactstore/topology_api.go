@@ -3,7 +3,7 @@ package artifactstore
 import (
 	"context"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 )
 
 func (a *API) EnsureProtectedTopology(

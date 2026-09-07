@@ -6,7 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
