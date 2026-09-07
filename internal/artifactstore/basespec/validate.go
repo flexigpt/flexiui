@@ -98,14 +98,6 @@ func ValidateLabels(
 	return nil
 }
 
-func ValidateSourceGeneration(value string) error {
-	return ValidateRequiredText(
-		"source generation",
-		value,
-		MaxSourceGenerationBytes,
-	)
-}
-
 func ValidateIdentifier(label, value string, maximum int) error {
 	if value == "" ||
 		len(value) > maximum ||
@@ -191,4 +183,12 @@ func ValidateRequiredText(label, value string, maximum int) error {
 		}
 	}
 	return nil
+}
+
+func ValidateSourceGeneration(value string) error {
+	return ValidateRequiredText(
+		"source generation",
+		value,
+		MaxSourceGenerationBytes,
+	)
 }
