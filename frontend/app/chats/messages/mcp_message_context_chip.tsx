@@ -1,6 +1,6 @@
 import { FiChevronRight, FiServer } from 'react-icons/fi';
 
-import { Menu, MenuButton, useMenuStore } from '@ariakit/react';
+import { Menu, MenuButton, useMenuStore, useStoreState } from '@ariakit/react';
 
 import type { MCPConversationContext } from '@/spec/mcp_artifact';
 
@@ -9,6 +9,7 @@ import { toolExposureLabel } from '@/chats/messages/mcp_message_context_utils';
 export function MCPMessageContextChip({ context }: { context?: MCPConversationContext }) {
 	const count = context?.servers?.length ?? 0;
 	const menu = useMenuStore({ placement: 'bottom-start', focusLoop: true });
+	const open = useStoreState(menu, 'open');
 
 	if (!context || count === 0) {
 		return null;
@@ -36,31 +37,35 @@ export function MCPMessageContextChip({ context }: { context?: MCPConversationCo
 				<FiChevronRight size={14} />
 			</MenuButton>
 
-			<Menu
-				store={menu}
-				gutter={8}
-				overflowPadding={8}
-				portal
-				className="rounded-box bg-base-100 text-base-content border-base-300 z-50 max-h-72 max-w-lg min-w-72 overflow-y-auto border p-2 shadow-xl focus-visible:outline-none"
-				autoFocusOnShow
-			>
-				<div className="text-base-content/70 mb-2 text-xs font-semibold">MCP context</div>
+			{open ? (
+				<Menu
+					store={menu}
+					gutter={8}
+					overflowPadding={8}
+					portal
+					className="rounded-box bg-base-100 text-base-content border-base-300 z-50 max-h-72 max-w-lg min-w-72 overflow-y-auto border p-2 shadow-xl focus-visible:outline-none"
+					autoFocusOnShow
+				>
+					<div className="text-base-content/70 mb-2 text-xs font-semibold">MCP context</div>
 
-				{context.servers.map(server => (
-					<div key={server.server} className="bg-base-200 mb-1 rounded-xl px-2 py-1">
-						<div className="font-mono text-xs break-all">{server.server}</div>
-						<div className="mt-1 flex flex-wrap gap-1">
-							<span className="badge badge-ghost badge-xs">{toolExposureLabel(server)}</span>
-							{server.includeServerInstructions ? (
-								<span className="badge badge-ghost badge-xs">instructions</span>
-							) : null}
+					{context.servers.map(server => (
+						<div key={server.server} className="bg-base-200 mb-1 rounded-xl px-2 py-1">
+							<div className="font-mono text-xs break-all">{server.server}</div>
+							<div className="mt-1 flex flex-wrap gap-1">
+								<span className="badge badge-ghost badge-xs">{toolExposureLabel(server)}</span>
+								{server.includeServerInstructions ? (
+									<span className="badge badge-ghost badge-xs">instructions</span>
+								) : null}
+							</div>
 						</div>
-					</div>
-				))}
+					))}
 
-				{resourceCount > 0 ? <div className="text-base-content/70 mt-2 text-xs">Resources: {resourceCount}</div> : null}
-				{promptCount > 0 ? <div className="text-base-content/70 text-xs">Prompts: {promptCount}</div> : null}
-			</Menu>
+					{resourceCount > 0 ? (
+						<div className="text-base-content/70 mt-2 text-xs">Resources: {resourceCount}</div>
+					) : null}
+					{promptCount > 0 ? <div className="text-base-content/70 text-xs">Prompts: {promptCount}</div> : null}
+				</Menu>
+			) : null}
 		</div>
 	);
 }

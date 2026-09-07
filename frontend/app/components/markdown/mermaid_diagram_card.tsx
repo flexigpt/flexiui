@@ -1,14 +1,12 @@
 import type { CSSProperties } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FiMoon, FiSun } from 'react-icons/fi';
 
 import type { MermaidConfig } from 'mermaid';
 
-import { Base64EncodeUTF8 } from '@/lib/encode_decode';
 import { getUUIDv7 } from '@/lib/uuid_utils';
 
-import { useDebounce } from '@/hooks/use_debounce';
 import { renderMermaidQueued, useIsDarkMermaid } from '@/hooks/use_mermaid';
 
 import { DownloadButton } from '@/components/download_button';
@@ -37,7 +35,7 @@ type MermaidRenderState =
 	| {
 			key: string;
 			status: 'rendered';
-			svgMarkup: string;
+			imageSrc: string;
 	  }
 	| {
 			key: string;
@@ -47,27 +45,23 @@ type MermaidRenderState =
 
 interface CachedMermaidRender {
 	key: string;
-	renderId: string;
-	svgMarkup: string;
+	imageSrc: string;
+	estimatedBytes: number;
 }
 
-type ZoomState =
-	| {
-			isOpen: false;
-			svgNode: null;
-	  }
-	| {
-			isOpen: true;
-			svgNode: SVGSVGElement;
-	  };
-
 const MERMAID_ERROR_MESSAGE = 'Failed to render diagram. Please check the syntax.';
+const MERMAID_CACHE_MAX_ENTRIES = 32;
+const MERMAID_CACHE_MAX_ESTIMATED_BYTES = 32 * 1024 * 1024;
+const MERMAID_PNG_MAX_DIMENSION = 8192;
+const MERMAID_PNG_MAX_PIXELS = 16_000_000;
 
 // Successful Mermaid renders survive component unmounts. This is important
 // for virtualized or rebuilt markdown trees where scrolling can remount the
 // same diagram.
 const renderedMermaidCache = new Map<string, CachedMermaidRender>();
 const pendingMermaidRenders = new Map<string, Promise<CachedMermaidRender>>();
+const activeMermaidRenderKeys = new Map<string, number>();
+let renderedMermaidCacheEstimatedBytes = 0;
 
 const appendInlineStyles = (element: Element, styles: Record<string, string>) => {
 	const existingStyle = element.getAttribute('style')?.trim();
@@ -99,10 +93,10 @@ const prepareMermaidSvgMarkup = (svgMarkup: string): string => {
 		appendInlineStyles(svg, {
 			display: 'block',
 			margin: 'auto',
-			width: 'auto',
-			height: 'auto',
-			'max-width': '80%',
-			'max-height': '60vh',
+			width: '100%',
+			height: '100%',
+			'max-width': 'none',
+			'max-height': 'none',
 			'background-color': 'transparent',
 		});
 
@@ -117,26 +111,75 @@ const prepareMermaidSvgMarkup = (svgMarkup: string): string => {
 	}
 };
 
+function deleteCachedMermaidRender(key: string): void {
+	const cached = renderedMermaidCache.get(key);
+	if (!cached) {
+		return;
+	}
+
+	renderedMermaidCache.delete(key);
+	renderedMermaidCacheEstimatedBytes = Math.max(0, renderedMermaidCacheEstimatedBytes - cached.estimatedBytes);
+	URL.revokeObjectURL(cached.imageSrc);
+}
+
+function pruneRenderedMermaidCache(): void {
+	if (
+		renderedMermaidCache.size <= MERMAID_CACHE_MAX_ENTRIES &&
+		renderedMermaidCacheEstimatedBytes <= MERMAID_CACHE_MAX_ESTIMATED_BYTES
+	) {
+		return;
+	}
+
+	for (const key of renderedMermaidCache.keys()) {
+		if (
+			renderedMermaidCache.size <= MERMAID_CACHE_MAX_ENTRIES &&
+			renderedMermaidCacheEstimatedBytes <= MERMAID_CACHE_MAX_ESTIMATED_BYTES
+		) {
+			break;
+		}
+
+		if ((activeMermaidRenderKeys.get(key) ?? 0) > 0) {
+			continue;
+		}
+
+		deleteCachedMermaidRender(key);
+	}
+}
+
+function storeCachedMermaidRender(rendered: CachedMermaidRender): void {
+	if (renderedMermaidCache.has(rendered.key)) {
+		deleteCachedMermaidRender(rendered.key);
+	}
+
+	renderedMermaidCache.set(rendered.key, rendered);
+	renderedMermaidCacheEstimatedBytes += rendered.estimatedBytes;
+	pruneRenderedMermaidCache();
+}
+
+function retainMermaidRenderKey(key: string): () => void {
+	activeMermaidRenderKeys.set(key, (activeMermaidRenderKeys.get(key) ?? 0) + 1);
+
+	return () => {
+		const nextCount = (activeMermaidRenderKeys.get(key) ?? 1) - 1;
+		if (nextCount > 0) {
+			activeMermaidRenderKeys.set(key, nextCount);
+		} else {
+			activeMermaidRenderKeys.delete(key);
+		}
+
+		pruneRenderedMermaidCache();
+	};
+}
+
 function getCachedMermaidRender(key: string): CachedMermaidRender | null {
 	return renderedMermaidCache.get(key) ?? null;
 }
 
-function createMermaidRenderState(
-	cached: CachedMermaidRender,
-	instanceRenderId: string
-): Extract<MermaidRenderState, { status: 'rendered' }> {
-	// Mermaid incorporates the supplied render ID into the SVG root ID,
-	// marker IDs, CSS selectors, and URL references. Give each mounted copy
-	// its own ID so identical diagrams can safely coexist in the document.
-	const svgMarkup =
-		cached.renderId === instanceRenderId
-			? cached.svgMarkup
-			: cached.svgMarkup.replaceAll(cached.renderId, instanceRenderId);
-
+function createMermaidRenderState(cached: CachedMermaidRender): Extract<MermaidRenderState, { status: 'rendered' }> {
 	return {
 		key: cached.key,
 		status: 'rendered',
-		svgMarkup,
+		imageSrc: cached.imageSrc,
 	};
 }
 
@@ -153,13 +196,15 @@ function renderMermaidCached(key: string, code: string, config: MermaidConfig): 
 
 	const renderId = `mermaid-cache-${getUUIDv7()}`;
 	const next = renderMermaidQueued(renderId, code, config).then(renderResult => {
+		const preparedSvgMarkup = prepareMermaidSvgMarkup(renderResult.svg);
+		const imageSrc = URL.createObjectURL(new Blob([preparedSvgMarkup], { type: 'image/svg+xml;charset=utf-8' }));
 		const rendered: CachedMermaidRender = {
 			key,
-			renderId,
-			svgMarkup: prepareMermaidSvgMarkup(renderResult.svg),
+			imageSrc,
+			estimatedBytes: (key.length + preparedSvgMarkup.length) * 2,
 		};
 
-		renderedMermaidCache.set(key, rendered);
+		storeCachedMermaidRender(rendered);
 		return rendered;
 	});
 
@@ -190,16 +235,14 @@ export function MermaidDiagram({
 	const isDark = useIsDarkMermaid();
 
 	const wrapperRef = useRef<HTMLDivElement | null>(null);
-	const inlineDiagramRef = useRef<HTMLDivElement | null>(null);
 
-	const [zoomState, setZoomState] = useState<ZoomState>({ isOpen: false, svgNode: null });
+	const [isZoomOpen, setIsZoomOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<'auto' | 'light' | 'dark'>(defaultThemeMode);
 
-	const [instanceRenderId] = useState(() => `mermaid-${getUUIDv7()}`);
 	const latestToken = useRef(0);
 
-	// Prevent rendering while code is still settling after streaming/markdown rebuild.
-	const stableCode = useDebounce(code, 150);
+	// CodeBlock mounts Mermaid only after streaming has completed.
+	const stableCode = code;
 
 	const effectiveMermaidTheme = useMemo<'dark' | 'default'>(() => {
 		if (themeMode === 'auto') {
@@ -211,6 +254,10 @@ export function MermaidDiagram({
 	const renderKey = useMemo(() => `${effectiveMermaidTheme}\u0000${stableCode}`, [effectiveMermaidTheme, stableCode]);
 
 	const [renderState, setRenderState] = useState<MermaidRenderState | null>(null);
+
+	useEffect(() => {
+		return retainMermaidRenderKey(renderKey);
+	}, [renderKey]);
 
 	// Per-diagram surface override: only when user explicitly selects light/dark.
 	// In auto mode, it stays consistent with the app’s DaisyUI theme.
@@ -245,8 +292,8 @@ export function MermaidDiagram({
 
 	const cachedRender = getCachedMermaidRender(renderKey);
 	const cachedRenderState = useMemo(
-		() => (cachedRender ? createMermaidRenderState(cachedRender, instanceRenderId) : null),
-		[cachedRender, instanceRenderId]
+		() => (cachedRender ? createMermaidRenderState(cachedRender) : null),
+		[cachedRender]
 	);
 
 	useEffect(() => {
@@ -270,7 +317,7 @@ export function MermaidDiagram({
 					return;
 				}
 
-				setRenderState(createMermaidRenderState(cr, instanceRenderId));
+				setRenderState(createMermaidRenderState(cr));
 
 				onRenderStatusChange?.('rendered');
 			})
@@ -292,41 +339,11 @@ export function MermaidDiagram({
 		return () => {
 			isCancelled = true;
 		};
-	}, [instanceRenderId, mermaidConfig, onRenderStatusChange, renderKey, stableCode]);
+	}, [mermaidConfig, onRenderStatusChange, renderKey, stableCode]);
 
 	const currentRenderState = cachedRenderState ?? (renderState?.key === renderKey ? renderState : null);
-	const svgMarkup = currentRenderState?.status === 'rendered' ? currentRenderState.svgMarkup : null;
+	const imageSrc = currentRenderState?.status === 'rendered' ? currentRenderState.imageSrc : null;
 	const hasRenderError = currentRenderState?.status === 'error';
-
-	const attachInlineDiagram = useCallback(
-		(element: HTMLDivElement | null) => {
-			inlineDiagramRef.current = element;
-
-			if (!element) {
-				return;
-			}
-
-			element.replaceChildren();
-
-			if (!svgMarkup) {
-				return;
-			}
-
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
-			if (doc.querySelector('parsererror')) {
-				return;
-			}
-
-			const svg = doc.querySelector('svg');
-			if (!svg) {
-				return;
-			}
-
-			element.append(document.importNode(svg, true));
-		},
-		[svgMarkup]
-	);
 
 	const getDiagramBackgroundColor = (): string => {
 		const el = wrapperRef.current;
@@ -345,28 +362,30 @@ export function MermaidDiagram({
 	};
 
 	const fetchDiagramAsBlob = async (): Promise<Blob> => {
-		if (!inlineDiagramRef.current) {
-			throw new Error('Container not found');
+		if (!imageSrc) {
+			throw new Error('Mermaid image is not ready');
 		}
-
-		const svg = inlineDiagramRef.current.querySelector('svg');
-		if (!svg) {
-			throw new Error('SVG element not found in container');
-		}
-
-		const svgData = new XMLSerializer().serializeToString(svg);
-		const svgBase64 = Base64EncodeUTF8(svgData);
-		const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
 
 		return new Promise<Blob>((resolve, reject) => {
 			const img = new window.Image();
-			img.crossOrigin = 'anonymous';
 
 			img.onload = () => {
-				const scaleFactor = 2;
+				const width = img.naturalWidth || img.width;
+				const height = img.naturalHeight || img.height;
+				if (width <= 0 || height <= 0) {
+					reject(new Error('Mermaid image has invalid dimensions'));
+					return;
+				}
+
+				const scaleFactor = Math.min(
+					2,
+					MERMAID_PNG_MAX_DIMENSION / width,
+					MERMAID_PNG_MAX_DIMENSION / height,
+					Math.sqrt(MERMAID_PNG_MAX_PIXELS / (width * height))
+				);
 				const canvas = document.createElement('canvas');
-				canvas.width = img.width * scaleFactor;
-				canvas.height = img.height * scaleFactor;
+				canvas.width = Math.max(1, Math.round(width * scaleFactor));
+				canvas.height = Math.max(1, Math.round(height * scaleFactor));
 
 				const ctx = canvas.getContext('2d');
 				if (!ctx) {
@@ -376,8 +395,8 @@ export function MermaidDiagram({
 
 				ctx.scale(scaleFactor, scaleFactor);
 				ctx.fillStyle = getDiagramBackgroundColor();
-				ctx.fillRect(0, 0, img.width, img.height);
-				ctx.drawImage(img, 0, 0);
+				ctx.fillRect(0, 0, width, height);
+				ctx.drawImage(img, 0, 0, width, height);
 
 				canvas.toBlob(
 					blob => {
@@ -397,36 +416,38 @@ export function MermaidDiagram({
 				reject(err);
 			};
 
-			img.src = dataUrl;
+			img.src = imageSrc;
 		});
 	};
 
 	const handleOpenZoom = () => {
-		const svg = inlineDiagramRef.current?.querySelector('svg');
-		if (!svg) {
+		if (!imageSrc) {
 			return;
 		}
 
-		setZoomState({
-			isOpen: true,
-			svgNode: svg.cloneNode(true) as SVGSVGElement,
-		});
+		setIsZoomOpen(true);
 	};
 
 	const handleCloseZoom = () => {
-		setZoomState({
-			isOpen: false,
-			svgNode: null,
-		});
+		setIsZoomOpen(false);
 	};
 
-	if (!stableCode.trim() || hasRenderError || !svgMarkup) {
+	if (!stableCode.trim() || hasRenderError) {
 		return null;
 	}
 
 	return (
 		<>
-			<div ref={wrapperRef} className="app-bg-mermaid my-4 overflow-hidden rounded-lg" style={surfaceStyle}>
+			<div
+				ref={wrapperRef}
+				className="app-bg-mermaid my-4 overflow-hidden rounded-lg"
+				style={{
+					...surfaceStyle,
+					contain: 'layout paint style',
+					contentVisibility: 'auto',
+					containIntrinsicSize: 'auto 18rem',
+				}}
+			>
 				<div className="app-bg-code-header flex items-center justify-between px-4">
 					<span className="app-text-code">Mermaid Diagram</span>
 
@@ -477,42 +498,51 @@ export function MermaidDiagram({
 							</div>
 						)}
 
-						<DownloadButton
-							valueFetcher={fetchDiagramAsBlob}
-							size={16}
-							fileprefix="diagram"
-							isBinary={true}
-							language="mermaid"
-							className="btn btn-sm app-text-code flex items-center border-none bg-transparent shadow-none hover:opacity-60"
-						/>
+						{imageSrc ? (
+							<DownloadButton
+								valueFetcher={fetchDiagramAsBlob}
+								size={16}
+								fileprefix="diagram"
+								isBinary={true}
+								language="mermaid"
+								className="btn btn-sm app-text-code flex items-center border-none bg-transparent shadow-none hover:opacity-60"
+							/>
+						) : null}
 					</div>
 				</div>
 
-				{/* A native button would wrap Mermaid SVG links, so retain a keyboard-operable composite trigger. */}
-				<button
-					className="flex min-h-65 w-full cursor-zoom-in items-center justify-center overflow-auto p-1 text-center"
-					type="button"
-					tabIndex={0}
-					aria-label="Enlarge Mermaid diagram"
-					onClick={handleOpenZoom}
-					onKeyDown={event => {
-						if (event.key !== 'Enter' && event.key !== ' ') {
-							return;
-						}
-						event.preventDefault();
-						handleOpenZoom();
-					}}
-				>
-					<div ref={attachInlineDiagram} className="max-h-[60vh] w-full overflow-auto" />
-				</button>
+				{imageSrc ? (
+					<button
+						className="flex min-h-65 w-full cursor-zoom-in items-center justify-center overflow-hidden p-1 text-center"
+						type="button"
+						aria-label="Enlarge Mermaid diagram"
+						onClick={handleOpenZoom}
+					>
+						<img
+							src={imageSrc}
+							alt=""
+							aria-hidden="true"
+							loading="lazy"
+							decoding="async"
+							draggable={false}
+							className="pointer-events-none block size-auto max-h-[60vh] max-w-[80%] object-contain"
+						/>
+					</button>
+				) : (
+					<div className="text-base-content/60 flex min-h-65 items-center justify-center text-sm" aria-busy="true">
+						Rendering diagram
+					</div>
+				)}
 			</div>
 
-			<MermaidZoomModal
-				isOpen={zoomState.isOpen}
-				onClose={handleCloseZoom}
-				svgNode={zoomState.svgNode}
-				surfaceStyle={surfaceStyle}
-			/>
+			{imageSrc ? (
+				<MermaidZoomModal
+					isOpen={isZoomOpen}
+					onClose={handleCloseZoom}
+					imageSrc={imageSrc}
+					surfaceStyle={surfaceStyle}
+				/>
+			) : null}
 		</>
 	);
 }

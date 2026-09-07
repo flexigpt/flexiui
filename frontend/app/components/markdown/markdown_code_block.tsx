@@ -24,7 +24,7 @@ interface CodeProps {
 
 interface MermaidResultState {
 	key: string;
-	status: Extract<MermaidRenderStatus, 'rendered' | 'error'>;
+	status: Extract<MermaidRenderStatus, 'error'>;
 	message?: string;
 }
 
@@ -99,13 +99,7 @@ export function CodeBlock({
 	const currentMermaidResult = isMermaid && mermaidResult?.key === codeBlockKey ? mermaidResult : null;
 
 	const mermaidRenderStatus: MermaidRenderStatus =
-		!isMermaid || isBusy || !value.trim()
-			? 'idle'
-			: currentMermaidResult?.status === 'error'
-				? 'error'
-				: currentMermaidResult?.status === 'rendered'
-					? 'rendered'
-					: 'rendering';
+		!isMermaid || isBusy || !value.trim() ? 'idle' : currentMermaidResult?.status === 'error' ? 'error' : 'rendering';
 
 	const mermaidRenderError = currentMermaidResult?.status === 'error' ? currentMermaidResult.message : null;
 	const hasMermaidSyntaxError = isMermaid && mermaidRenderStatus === 'error';
@@ -156,13 +150,17 @@ export function CodeBlock({
 
 	const handleMermaidRenderStatusChange = useCallback(
 		(status: MermaidRenderStatus, message?: string) => {
-			if (status === 'rendered' || status === 'error') {
-				setMermaidResult({
-					key: codeBlockKey,
-					status,
-					message,
-				});
+			// A successful render does not change CodeBlock presentation.
+			// Avoid rebuilding this subtree merely to store "rendered".
+			if (status !== 'error') {
+				return;
 			}
+
+			setMermaidResult({
+				key: codeBlockKey,
+				status,
+				message,
+			});
 		},
 		[codeBlockKey]
 	);

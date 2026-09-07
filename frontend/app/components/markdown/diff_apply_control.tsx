@@ -37,7 +37,6 @@ import {
 	getErrorMessage,
 	haveSharedPathIdentity,
 	isTerminalUnifiedDiffStatus,
-	looksLikeUnifiedDiff,
 	parseUnifiedDiffForUI,
 	prepareUnifiedDiffTextForApply,
 	summaryLabel,
@@ -425,7 +424,7 @@ function hydrateApplyOutputWithRequestTargets(
 
 		if (directMatch) {
 			usedTargetIndexes.add(directMatch.index);
-		} else if (canUsePositionFallback && requestTargets[index] && !usedTargetIndexes.has(index)) {
+		} else if (canUsePositionFallback && normalizedRequestTargets[index] && !usedTargetIndexes.has(index)) {
 			target = normalizedRequestTargets[index];
 			usedTargetIndexes.add(index);
 		} else if (outputFiles.length === 1 && normalizedRequestTargets.length === 1) {
@@ -711,7 +710,6 @@ export function DiffApplyControl({
 	candidatePaths,
 	workspaceRoots,
 }: DiffApplyControlProps) {
-	const isDiffLike = useMemo(() => looksLikeUnifiedDiff(diffText, language), [diffText, language]);
 	const fallbackParsed = useMemo(() => parseUnifiedDiffForUI(diffText, language), [diffText, language]);
 	const suppliedCandidatePaths = useMemo(() => absolutePathStrings(candidatePaths ?? []), [candidatePaths]);
 	const suppliedWorkspaceRoots = useMemo(() => absolutePathStrings(workspaceRoots ?? []), [workspaceRoots]);
@@ -743,10 +741,6 @@ export function DiffApplyControl({
 			return value;
 		});
 	}, []);
-
-	useEffect(() => {
-		stateRef.current = state;
-	}, [state]);
 
 	useEffect(() => {
 		return () => {
@@ -1084,36 +1078,58 @@ export function DiffApplyControl({
 		}
 	};
 
-	if (!isDiffLike || isBusy) {
+	const title = useMemo(() => buildTitle(state, fallbackParsed), [fallbackParsed, state]);
+	const headerAnalysis = useMemo(() => {
+		const statusCounts = buildFileStatusCounts(state.output, fallbackParsed);
+		const patchDiagnostics = uniqueDiagnostics([
+			...(fallbackParsed.diagnostics ?? []),
+			...collectPatchLevelDiagnostics(state.output),
+		]);
+		const patchDiagnosticCounts = getDiagnosticSeverityCounts(patchDiagnostics);
+		const headerStatusSummary = getHeaderStatusSummary(statusCounts, state.output, fallbackParsed);
+		const blockedCount = Math.max(0, statusCounts.blocked - statusCounts.needsInfo);
+
+		// Target-path inference is expensive and is not needed before a dry-run
+		// output can identify applicable files.
+		const editableTargetsForHeader = state.output
+			? buildEditableTargetsFromOutput(state.output, fallbackParsed, normalizedCandidatePaths, normalizedWorkspaceRoots)
+			: [];
+		const applicableTargets = getApplicableTargetsForOutput(editableTargetsForHeader, state.output);
+		const applicableTargetsHaveMissingPaths =
+			applicableTargets.length > 0 &&
+			editableTargetsToFileTargets(applicableTargets).length !== applicableTargets.length;
+
+		return {
+			statusCounts,
+			patchDiagnostics,
+			patchDiagnosticCounts,
+			headerStatusSummary,
+			blockedCount,
+			applicableTargets,
+			applicableTargetsHaveMissingPaths,
+		};
+	}, [fallbackParsed, normalizedCandidatePaths, normalizedWorkspaceRoots, state.output]);
+
+	if (!fallbackParsed.isDiffLike || isBusy) {
 		return null;
 	}
 
-	const title = buildTitle(state, fallbackParsed);
 	const buttonTitle = getButtonTitle(state.status);
 	const label = getButtonLabel(state.status);
 	const icon = getButtonIcon(state.status);
 	const isRequestBusy = state.status === 'checking' || state.status === 'applying';
 	const hasDryRunResult = !!state.output;
 
-	const statusCounts = buildFileStatusCounts(state.output, fallbackParsed);
-	const patchDiagnostics = uniqueDiagnostics([
-		...(fallbackParsed.diagnostics ?? []),
-		...collectPatchLevelDiagnostics(state.output),
-	]);
-	const patchDiagnosticCounts = getDiagnosticSeverityCounts(patchDiagnostics);
-	const headerStatusSummary = getHeaderStatusSummary(statusCounts, state.output, fallbackParsed);
+	const {
+		statusCounts,
+		patchDiagnostics,
+		patchDiagnosticCounts,
+		headerStatusSummary,
+		blockedCount,
+		applicableTargets,
+		applicableTargetsHaveMissingPaths,
+	} = headerAnalysis;
 	const detailTitle = uniqueStrings([headerStatusSummary, title, formatDiagnosticsTitle(patchDiagnostics)]).join('\n');
-	const blockedCount = Math.max(0, statusCounts.blocked - statusCounts.needsInfo);
-
-	const editableTargetsForHeader = buildEditableTargetsFromOutput(
-		state.output,
-		fallbackParsed,
-		normalizedCandidatePaths,
-		normalizedWorkspaceRoots
-	);
-	const applicableTargets = getApplicableTargetsForOutput(editableTargetsForHeader, state.output);
-	const applicableTargetsHaveMissingPaths =
-		applicableTargets.length > 0 && editableTargetsToFileTargets(applicableTargets).length !== applicableTargets.length;
 	const canHeaderApply = applicableTargets.length > 0 && !isRequestBusy && !applicableTargetsHaveMissingPaths;
 
 	const handleHeaderApply = () => {

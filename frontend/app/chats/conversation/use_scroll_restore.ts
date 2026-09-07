@@ -18,20 +18,6 @@ function shouldElementAutoFollow(el: HTMLElement): boolean {
 	return getDistanceFromBottom(el) <= SCROLL_AUTO_FOLLOW_THRESHOLD;
 }
 
-function isScrollFooterNear(scroller: HTMLElement, footer: HTMLElement | null): boolean {
-	if (!footer) {
-		return shouldElementAutoFollow(scroller);
-	}
-
-	const scrollerRect = scroller.getBoundingClientRect();
-	const footerRect = footer.getBoundingClientRect();
-
-	return (
-		footerRect.top <= scrollerRect.bottom + SCROLL_AUTO_FOLLOW_THRESHOLD &&
-		footerRect.bottom >= scrollerRect.top - SCROLL_AUTO_FOLLOW_THRESHOLD
-	);
-}
-
 function isElementAtTop(el: HTMLElement): boolean {
 	return el.scrollTop <= SCROLL_AT_TOP_THRESHOLD;
 }
@@ -228,7 +214,7 @@ export function useScrollRestore({
 
 	const updateAutoFollowFromPosition = useCallback(
 		(el: HTMLElement, tabId: string) => {
-			setAutoFollowForTab(tabId, isScrollFooterNear(el, scrollFooterRef.current));
+			setAutoFollowForTab(tabId, shouldElementAutoFollow(el));
 		},
 		[setAutoFollowForTab]
 	);
@@ -303,7 +289,7 @@ export function useScrollRestore({
 
 	const scheduleMessageJumpStateUpdate = useCallback(() => {
 		if (messageJumpTimerRef.current !== null) {
-			window.clearTimeout(messageJumpTimerRef.current);
+			return;
 		}
 
 		messageJumpTimerRef.current = window.setTimeout(() => {

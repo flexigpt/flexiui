@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useState, useSyncExternalStore } from 'react';
+import { memo, useMemo, useSyncExternalStore } from 'react';
 
 import { EnhancedMarkdown } from '@/components/markdown/markdown_enhanced';
 
@@ -74,23 +74,25 @@ interface StreamingMarkdownSegment {
 	text: string;
 }
 
-interface StreamingMarkdownState {
-	committedLength: number;
-	generation: number;
+const STREAMING_MARKDOWN_SEGMENT_TARGET_LENGTH = 4096;
+
+function splitStreamingMarkdown(text: string): {
 	segments: StreamingMarkdownSegment[];
-}
-
-const MAX_STREAMING_MARKDOWN_SEGMENTS = 96;
-const STREAMING_MARKDOWN_COMPACT_SEGMENT_COUNT = 24;
-
-function findSafeStreamingMarkdownCutoff(text: string): number {
+	tail: string;
+	tailKey: string;
+} {
+	const segments: StreamingMarkdownSegment[] = [];
 	let openFence: string | undefined;
-	let cutoff = 0;
+	let segmentStart = 0;
 	let offset = 0;
+	const lines = text.split('\n');
 
-	for (const line of text.split('\n')) {
-		const nextOffset = offset + line.length + 1;
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const hasTrailingNewline = index < lines.length - 1;
+		const nextOffset = offset + line.length + (hasTrailingNewline ? 1 : 0);
 		const fenceMatch = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+		let isSafeBoundary = false;
 
 		if (fenceMatch?.[1]) {
 			const marker = fenceMatch[1];
@@ -98,85 +100,27 @@ function findSafeStreamingMarkdownCutoff(text: string): number {
 				openFence = marker;
 			} else if (marker.startsWith(openFence)) {
 				openFence = undefined;
-				cutoff = nextOffset;
+				isSafeBoundary = true;
 			}
 		} else if (!openFence && line.trim().length === 0) {
-			cutoff = nextOffset;
+			isSafeBoundary = true;
+		}
+
+		if (isSafeBoundary && nextOffset - segmentStart >= STREAMING_MARKDOWN_SEGMENT_TARGET_LENGTH) {
+			segments.push({
+				key: `${segmentStart}:${nextOffset}`,
+				text: text.slice(segmentStart, nextOffset),
+			});
+			segmentStart = nextOffset;
 		}
 
 		offset = nextOffset;
 	}
 
-	return Math.min(cutoff, text.length);
-}
-
-function appendStreamingMarkdownSegment(
-	segments: StreamingMarkdownSegment[],
-	text: string,
-	generation: number,
-	offset: number
-): StreamingMarkdownSegment[] {
-	const next = [...segments, { key: `${generation}:${offset}`, text }];
-
-	// Never mutate the latest committed segment. EnhancedMarkdown is memoized,
-	// so immutable segments avoid reparsing old content for every new chunk.
-	if (next.length <= MAX_STREAMING_MARKDOWN_SEGMENTS) {
-		return next;
-	}
-
-	const compacted = next.slice(0, STREAMING_MARKDOWN_COMPACT_SEGMENT_COUNT);
-	return [
-		{
-			key: `${generation}:compact:${offset}`,
-			text: compacted.map(segment => segment.text).join(''),
-		},
-		...next.slice(STREAMING_MARKDOWN_COMPACT_SEGMENT_COUNT),
-	];
-}
-
-function useStreamingMarkdownSegments(text: string) {
-	const [state, setState] = useState<StreamingMarkdownState>({
-		committedLength: 0,
-		generation: 0,
-		segments: [],
-	});
-
-	useLayoutEffect(() => {
-		// oxlint-disable-next-line react/set-state-in-effect
-		setState(previous => {
-			const reset = text.length < previous.committedLength;
-			const base: StreamingMarkdownState = reset
-				? {
-						committedLength: 0,
-						generation: previous.generation + 1,
-						segments: [],
-					}
-				: previous;
-			const pendingText = text.slice(base.committedLength);
-			const cutoff = findSafeStreamingMarkdownCutoff(pendingText);
-
-			if (cutoff === 0) {
-				return base;
-			}
-
-			const stableText = pendingText.slice(0, cutoff);
-			return {
-				committedLength: base.committedLength + stableText.length,
-				generation: base.generation,
-				segments: appendStreamingMarkdownSegment(base.segments, stableText, base.generation, base.committedLength),
-			};
-		});
-	}, [text]);
-
-	const stateMatchesText = text.length >= state.committedLength;
-	const committedLength = stateMatchesText ? state.committedLength : 0;
-	const tailGeneration = stateMatchesText ? state.generation : state.generation + 1;
-	const tailKey = `${tailGeneration}:${committedLength}`;
-
 	return {
-		segments: stateMatchesText ? state.segments : [],
-		tail: text.slice(committedLength),
-		tailKey,
+		segments,
+		tail: text.slice(segmentStart),
+		tailKey: `tail:${segmentStart}`,
 	};
 }
 
@@ -186,7 +130,7 @@ function StreamingMarkdownContent(props: {
 	diffCandidatePaths?: string[];
 	defaultCodeBlockExpanded: boolean;
 }) {
-	const { segments, tail, tailKey } = useStreamingMarkdownSegments(props.text);
+	const { segments, tail, tailKey } = useMemo(() => splitStreamingMarkdown(props.text), [props.text]);
 
 	if (props.text.length === 0) {
 		return null;

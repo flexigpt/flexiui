@@ -426,7 +426,9 @@ function buildDiffCandidatePathsByMessageID(messages: ConversationMessage[]): Ma
 		}
 
 		cumulative = next;
-		byID.set(message.id, cumulative);
+		if (textContainsDiffPayload(message.uiContent)) {
+			byID.set(message.id, cumulative);
+		}
 	}
 
 	return byID;
@@ -513,10 +515,10 @@ const ConversationMessageList = memo(function ConversationMessageList(props: {
 		paths: Map<string, string[]>;
 	} | null>(null);
 
-	const allMessagesAreRich = !deferRichWork && !isBusy && richReadyCount >= messages.length;
+	const canBuildDiffCandidatePaths = !deferRichWork && !isBusy;
 
 	useEffect(() => {
-		if (!allMessagesAreRich) {
+		if (!canBuildDiffCandidatePaths) {
 			return;
 		}
 
@@ -538,7 +540,7 @@ const ConversationMessageList = memo(function ConversationMessageList(props: {
 			cancelled = true;
 			cancelWork();
 		};
-	}, [allMessagesAreRich, messages]);
+	}, [canBuildDiffCandidatePaths, messages]);
 
 	const diffCandidatePathsByMessageID =
 		diffCandidateState?.messages === messages ? diffCandidateState.paths : EMPTY_DIFF_CANDIDATE_PATHS;

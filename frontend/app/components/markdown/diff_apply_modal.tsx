@@ -54,6 +54,8 @@ interface DisplayCandidatePathList {
 	isLimited: boolean;
 }
 
+const displayCandidatePathCache = new WeakMap<EditableUnifiedDiffTarget, DisplayCandidatePathList>();
+
 function getTargetCardClassName(visualState: TargetVisualState): string {
 	switch (visualState) {
 		default:
@@ -497,6 +499,17 @@ function buildDisplayCandidatePathsForTarget(
 	};
 }
 
+function getDisplayCandidatePathsForTarget(target: EditableUnifiedDiffTarget): DisplayCandidatePathList {
+	const cached = displayCandidatePathCache.get(target);
+	if (cached) {
+		return cached;
+	}
+
+	const next = buildDisplayCandidatePathsForTarget(target);
+	displayCandidatePathCache.set(target, next);
+	return next;
+}
+
 function isTargetProblem(target: EditableUnifiedDiffTarget, missing: boolean): boolean {
 	if (isTerminalUnifiedDiffStatus(target.status)) {
 		return false;
@@ -922,7 +935,7 @@ function DiffApplyModalContent({
 							const missing = !isAbsolutePath(target.targetPath);
 							const targetPathInput = target.targetPathInput ?? target.targetPath;
 							const inputId = `diff-apply-target-${target.fileKey ?? index}`;
-							const candidateDisplay = buildDisplayCandidatePathsForTarget(target);
+							const candidateDisplay = getDisplayCandidatePathsForTarget(target);
 							const candidates = candidateDisplay.paths;
 							const isNewFile = isNewUnifiedDiffFile(target);
 							const targetDiagnostics = uniqueDiagnostics(target.diagnostics ?? []);
