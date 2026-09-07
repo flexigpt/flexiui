@@ -20,7 +20,7 @@ type Entry struct {
 }
 
 func (e Entry) Validate() error {
-	if err := basespec.ValidateLocator(e.Locator, true); err != nil {
+	if err := e.Locator.Validate(true); err != nil {
 		return err
 	}
 	if e.Name == "" {

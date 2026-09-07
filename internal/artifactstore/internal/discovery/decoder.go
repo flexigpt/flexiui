@@ -26,7 +26,7 @@ func NewDecoderRegistry(
 			return nil, fmt.Errorf("%w: decoder is nil", basespec.ErrInvalid)
 		}
 		id := decoder.ID()
-		if err := basespec.ValidateDecoderID(id); err != nil {
+		if err := id.Validate(); err != nil {
 			return nil, err
 		}
 		if err := basespec.ValidateRequiredText(

@@ -130,7 +130,7 @@ func (d Descriptor) Validate() error {
 		}
 
 		id := decoder.ID()
-		if err := basespec.ValidateDecoderID(id); err != nil {
+		if err := id.Validate(); err != nil {
 			return fmt.Errorf(
 				"artifact provider %q decoder %d: %w",
 				d.Name,

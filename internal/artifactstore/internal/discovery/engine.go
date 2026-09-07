@@ -407,9 +407,7 @@ func (e *Engine) Discover(
 
 		emittedForLocator := make(map[catalog.OccurrenceKey]struct{}, len(decoded))
 		for _, item := range decoded {
-			if err := basespec.ValidateSubresourceLocator(
-				item.SubresourceLocator,
-			); err != nil {
+			if err := item.SubresourceLocator.Validate(); err != nil {
 				return Result{}, fmt.Errorf(
 					"%w: decoder %q emitted invalid subresource: %w",
 					basespec.ErrInvalid,

@@ -16,10 +16,10 @@ func (b SourceBinding) Validate() error {
 	if err := b.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLocator(b.Locator, true); err != nil {
+	if err := b.Locator.Validate(true); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSubresourceLocator(b.SubresourceLocator); err != nil {
+	if err := b.SubresourceLocator.Validate(); err != nil {
 		return err
 	}
 	return b.ExpectedKind.Validate()

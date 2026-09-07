@@ -126,17 +126,6 @@ func ValidateOptionalText(label, value string, maximum int) error {
 	return ValidateRequiredText(label, value, maximum)
 }
 
-func ValidateLocator(value Locator, allowRoot bool) error {
-	return validateRelativePath("locator", string(value), allowRoot)
-}
-
-func ValidateSubresourceLocator(value SubresourceLocator) error {
-	if value == "" {
-		return nil
-	}
-	return validateRelativePath("subresource locator", string(value), false)
-}
-
 // PortableLocatorIdentity returns the case-insensitive portable identity used
 // to reject package entries that would collide on case-insensitive filesystems.
 func PortableLocatorIdentity(

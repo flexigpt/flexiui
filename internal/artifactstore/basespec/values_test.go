@@ -25,8 +25,6 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 		{name: "portable trailing space", err: ValidatePortableLocator("package/name ", false)},
 		{name: "portable invalid separator", err: ValidatePortableLocator(`package\\name`, false)},
 		{name: "invalid storage key", err: StorageKey("Not portable").Validate()},
-		{name: "invalid package name", err: ValidatePackageName("name/with/slash")},
-		{name: "invalid package version", err: ValidatePackageVersion("version/with/slash")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -51,13 +49,6 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 	}
 	if err := StorageKey("personal").Validate(); err != nil {
 		t.Fatalf("Validate StorageKey(valid): %v", err)
-	}
-
-	if err := ValidatePackageName("meeting-summary"); err != nil {
-		t.Fatalf("ValidatePackageName(valid): %v", err)
-	}
-	if err := ValidatePackageVersion("v1.2.0"); err != nil {
-		t.Fatalf("ValidatePackageVersion(valid): %v", err)
 	}
 }
 

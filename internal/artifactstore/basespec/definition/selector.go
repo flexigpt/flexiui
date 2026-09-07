@@ -19,7 +19,7 @@ func (s Selector) Validate() error {
 		return fmt.Errorf("selector: %w", err)
 	}
 	if s.LogicalName != "" {
-		if err := basespec.ValidateLogicalName(s.LogicalName); err != nil {
+		if err := s.LogicalName.Validate(); err != nil {
 			return fmt.Errorf("selector: %w", err)
 		}
 	}

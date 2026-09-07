@@ -241,7 +241,7 @@ func resolveNativePath(
 	root string,
 	locator basespec.Locator,
 ) (string, error) {
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 	root = filepath.Clean(root)
@@ -282,7 +282,7 @@ func resolveWithinRoot(
 	root string,
 	locator basespec.Locator,
 ) (string, error) {
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 	root = filepath.Clean(root)

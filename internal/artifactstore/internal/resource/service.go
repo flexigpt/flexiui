@@ -219,7 +219,7 @@ func (s *Service) ResolveVerifiedLocalPath(
 	if err := resolved.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(localLocator, true); err != nil {
+	if err := localLocator.Validate(true); err != nil {
 		return "", err
 	}
 
@@ -273,7 +273,7 @@ func (s *Service) ReadCollectionEntry(
 	if err := sourceID.Validate(); err != nil {
 		return artifactConsumerAPIresource.VerifiedEntry{}, err
 	}
-	if err := basespec.ValidateLocator(locator, false); err != nil {
+	if err := locator.Validate(false); err != nil {
 		return artifactConsumerAPIresource.VerifiedEntry{}, err
 	}
 
@@ -350,7 +350,7 @@ func (s *Service) ResolveSourceLocalPath(
 	if err := sourceID.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 

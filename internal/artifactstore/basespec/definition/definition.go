@@ -47,10 +47,10 @@ func (d Definition) Validate() error {
 	); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLogicalName(d.LogicalName); err != nil {
+	if err := d.LogicalName.Validate(); err != nil {
 		return fmt.Errorf("definition: %w", err)
 	}
-	if err := basespec.ValidateLogicalVersion(d.LogicalVersion, true); err != nil {
+	if err := d.LogicalVersion.Validate(true); err != nil {
 		return fmt.Errorf("definition: %w", err)
 	}
 	if err := basespec.ValidateOptionalText(

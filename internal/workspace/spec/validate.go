@@ -11,7 +11,7 @@ func ValidateDiscoveryPreferences(
 ) error {
 	seenLocators := make(map[basespec.Locator]struct{})
 	for _, locator := range value.AdditionalLocators {
-		if err := basespec.ValidateLocator(locator, false); err != nil {
+		if err := locator.Validate(false); err != nil {
 			return err
 		}
 		if _, duplicate := seenLocators[locator]; duplicate {

@@ -134,7 +134,7 @@ func (a *Adapter) ResolveLocalPath(
 			value.Kind,
 		)
 	}
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 

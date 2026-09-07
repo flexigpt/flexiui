@@ -250,15 +250,10 @@ func (v SkillCollectionV1) ValidateEnvelope() error {
 			SkillCollectionV1SchemaVersion,
 		)
 	}
-	if err := basespec.ValidateLogicalName(
-		basespec.LogicalName(v.LogicalName),
-	); err != nil {
+	if err := basespec.LogicalName(v.LogicalName).Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLogicalVersion(
-		basespec.LogicalVersion(v.LogicalVersion),
-		true,
-	); err != nil {
+	if err := basespec.LogicalVersion(v.LogicalVersion).Validate(true); err != nil {
 		return err
 	}
 	if err := basespec.ValidateOptionalText(

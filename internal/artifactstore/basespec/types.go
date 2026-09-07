@@ -10,43 +10,46 @@ func (v StorageKey) Validate() error {
 	)
 }
 
-type (
-	DecoderID string
+type LogicalName string
 
-	LogicalName    string
-	LogicalVersion string
-
-	Locator            string
-	SubresourceLocator string
-)
-
-func ValidatePackageName(value LogicalName) error {
-	return ValidatePortableName("package name", string(value))
-}
-
-func ValidatePackageVersion(value LogicalVersion) error {
-	return ValidatePortableName("package version", string(value))
-}
-
-func ValidateLogicalName(value LogicalName) error {
+func (v LogicalName) Validate() error {
 	return ValidateRequiredText(
 		"logical name",
-		string(value),
+		string(v),
 		MaxLogicalNameBytes,
 	)
 }
 
-func ValidateLogicalVersion(value LogicalVersion, optional bool) error {
-	if value == "" && optional {
+type LogicalVersion string
+
+func (v LogicalVersion) Validate(optional bool) error {
+	if v == "" && optional {
 		return nil
 	}
 	return ValidateRequiredText(
 		"logical version",
-		string(value),
+		string(v),
 		MaxVersionBytes,
 	)
 }
 
-func ValidateDecoderID(value DecoderID) error {
-	return ValidateIdentifier("decoder ID", string(value), MaxKindBytes)
+type DecoderID string
+
+func (v DecoderID) Validate() error {
+	return ValidateIdentifier("decoder ID", string(v), MaxKindBytes)
+}
+
+type Locator string
+
+func (v Locator) Validate(allowRoot bool) error {
+	return validateRelativePath("locator", string(v), allowRoot)
+}
+
+type SubresourceLocator string
+
+func (v SubresourceLocator) Validate() error {
+	if v == "" {
+		return nil
+	}
+	return validateRelativePath("subresource locator", string(v), false)
 }

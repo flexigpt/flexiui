@@ -929,12 +929,12 @@ func resolveWorkspaceDescriptorPreferences(
 func workspaceDescriptorBaseLocator(
 	document basespec.Locator,
 ) (basespec.Locator, error) {
-	if err := basespec.ValidateLocator(document, false); err != nil {
+	if err := document.Validate(false); err != nil {
 		return "", fmt.Errorf("workspace descriptor locator: %w", err)
 	}
 
 	base := basespec.Locator(path.Dir(string(document)))
-	if err := basespec.ValidateLocator(base, true); err != nil {
+	if err := base.Validate(true); err != nil {
 		return "", fmt.Errorf("workspace descriptor base locator: %w", err)
 	}
 	return base, nil
@@ -1354,5 +1354,5 @@ func validateWorkspaceDiscoveryProfile(
 	if value.ReadmeLocator == "" {
 		return nil
 	}
-	return basespec.ValidateLocator(value.ReadmeLocator, false)
+	return value.ReadmeLocator.Validate(false)
 }

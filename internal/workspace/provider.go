@@ -217,7 +217,7 @@ func normalizeWorkspaceSkillRoots(
 
 	seen := make(map[basespec.Locator]struct{}, len(roots))
 	for _, root := range roots {
-		if err := basespec.ValidateLocator(root, true); err != nil {
+		if err := root.Validate(true); err != nil {
 			return nil, err
 		}
 		if _, duplicate := seen[root]; duplicate {

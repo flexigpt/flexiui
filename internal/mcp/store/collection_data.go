@@ -32,10 +32,10 @@ func EncodeCollectionData(
 			basespec.ErrInvalid,
 		)
 	}
-	if err := basespec.ValidateLogicalName(value.LogicalName); err != nil {
+	if err := value.LogicalName.Validate(); err != nil {
 		return nil, err
 	}
-	if err := basespec.ValidateLogicalVersion(value.LogicalVersion, true); err != nil {
+	if err := value.LogicalVersion.Validate(true); err != nil {
 		return nil, err
 	}
 	if err := validateCollectionLabels(value.Labels); err != nil {

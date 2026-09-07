@@ -148,7 +148,7 @@ func decodeConfig(raw json.RawMessage) (Config, error) {
 	if config.Root == "" {
 		config.Root = "."
 	}
-	if err := basespec.ValidateLocator(config.Root, true); err != nil {
+	if err := config.Root.Validate(true); err != nil {
 		return Config{}, err
 	}
 	return config, nil

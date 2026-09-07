@@ -74,10 +74,10 @@ func (a ManagedPackageAddress) Validate() error {
 	if err := a.Kind.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidatePackageName(a.Name); err != nil {
+	if err := basespec.ValidatePortableName("package name", string(a.Name)); err != nil {
 		return err
 	}
-	return basespec.ValidatePackageVersion(a.Version)
+	return basespec.ValidatePortableName("package version", string(a.Version))
 }
 
 // Directory returns the source-relative directory used by MapStore and normal

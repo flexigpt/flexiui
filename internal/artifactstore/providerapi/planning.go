@@ -35,7 +35,7 @@ func (r PlanningDocumentRequest) Validate() error {
 	if err := r.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLocator(r.Locator, false); err != nil {
+	if err := r.Locator.Validate(false); err != nil {
 		return err
 	}
 	return r.ExpectedSchema.Validate()

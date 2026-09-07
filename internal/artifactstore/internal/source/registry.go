@@ -116,7 +116,7 @@ func (r *Registry) ResolveLocalPath(
 	if err := value.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 	adapter, exists := r.adapter(value.Kind)

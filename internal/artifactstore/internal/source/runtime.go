@@ -199,7 +199,7 @@ func ReadVerifiedSnapshotEntry(
 	if err := value.Validate(); err != nil {
 		return nil, "", err
 	}
-	if err := basespec.ValidateLocator(locator, false); err != nil {
+	if err := locator.Validate(false); err != nil {
 		return nil, "", err
 	}
 	if err := basespec.ValidateSourceGeneration(expectedGeneration); err != nil {
@@ -273,7 +273,7 @@ func VerifySnapshotContentDigest(
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLocator(locator, false); err != nil {
+	if err := locator.Validate(false); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceGeneration(expectedGeneration); err != nil {
@@ -408,7 +408,7 @@ func (r *runtime) ResolveLocalPath(
 	if err := value.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 	if r.localPaths == nil ||

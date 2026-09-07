@@ -153,7 +153,7 @@ func (s *snapshot) ensureOpen(ctx context.Context) error {
 }
 
 func fsName(locator basespec.Locator) (string, error) {
-	if err := basespec.ValidateLocator(locator, true); err != nil {
+	if err := locator.Validate(true); err != nil {
 		return "", err
 	}
 	if locator == "." {

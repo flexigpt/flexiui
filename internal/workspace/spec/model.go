@@ -196,7 +196,7 @@ func (s ArtifactSupport) Validate() error {
 	if err := s.SchemaID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateDecoderID(s.DecoderID); err != nil {
+	if err := s.DecoderID.Validate(); err != nil {
 		return err
 	}
 	if s.Validator == nil {

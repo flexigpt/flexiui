@@ -395,7 +395,7 @@ func registrationMap(
 		if err := value.ArtifactID.Validate(); err != nil {
 			return nil, err
 		}
-		if err := basespec.ValidateSubresourceLocator(value.Subresource); err != nil {
+		if err := value.Subresource.Validate(); err != nil {
 			return nil, err
 		}
 		if previous, duplicate := artifactIDs[value.ArtifactID]; duplicate {

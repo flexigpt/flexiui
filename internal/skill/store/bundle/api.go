@@ -1295,7 +1295,7 @@ func (a *API) createManagedSkill(
 	if err := request.ArtifactID.Validate(); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
-	if err := basespec.ValidateLogicalName(basespec.LogicalName(request.SkillName)); err != nil {
+	if err := basespec.LogicalName(request.SkillName).Validate(); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
 

@@ -73,7 +73,7 @@ func (d Diagnostic) Validate() error {
 		return nil
 	}
 	if d.Location.Locator != "" {
-		if err := basespec.ValidateLocator(d.Location.Locator, true); err != nil {
+		if err := d.Location.Locator.Validate(true); err != nil {
 			return fmt.Errorf("diagnostic location: %w", err)
 		}
 	}
@@ -84,7 +84,7 @@ func (d Diagnostic) Validate() error {
 				basespec.ErrInvalid,
 			)
 		}
-		if err := basespec.ValidateSubresourceLocator(d.Location.SubresourceLocator); err != nil {
+		if err := d.Location.SubresourceLocator.Validate(); err != nil {
 			return fmt.Errorf("diagnostic subresource location: %w", err)
 		}
 	}

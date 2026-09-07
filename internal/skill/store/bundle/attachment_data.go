@@ -115,7 +115,7 @@ func (d AttachmentData) SourceExpectedContentDigests() (
 		locator := basespec.Locator(
 			path.Join(string(d.DiscoveryRoot), string(member)),
 		)
-		if err := basespec.ValidateLocator(locator, false); err != nil {
+		if err := locator.Validate(false); err != nil {
 			return nil, err
 		}
 		output[locator] = digest
@@ -137,7 +137,7 @@ func (d AttachmentData) Validate() error {
 			d.SchemaVersion,
 		)
 	}
-	if err := basespec.ValidateLocator(d.DiscoveryRoot, true); err != nil {
+	if err := d.DiscoveryRoot.Validate(true); err != nil {
 		return err
 	}
 	if len(d.ExpectedMemberDigests) > basespec.MaxDiscoveryCandidates {

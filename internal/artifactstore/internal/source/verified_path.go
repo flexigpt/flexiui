@@ -139,10 +139,10 @@ func ResolveVerifiedLocalPath(
 	if err := value.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(verifiedLocator, false); err != nil {
+	if err := verifiedLocator.Validate(false); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateLocator(localLocator, true); err != nil {
+	if err := localLocator.Validate(true); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateSourceGeneration(expectedGeneration); err != nil {

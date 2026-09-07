@@ -70,11 +70,11 @@ func (o Occurrence) Validate() error {
 		}
 	}
 	if o.LogicalName != "" {
-		if err := basespec.ValidateLogicalName(o.LogicalName); err != nil {
+		if err := o.LogicalName.Validate(); err != nil {
 			return err
 		}
 	}
-	if err := basespec.ValidateLogicalVersion(o.LogicalVersion, true); err != nil {
+	if err := o.LogicalVersion.Validate(true); err != nil {
 		return err
 	}
 	if o.DefinitionDigest != nil {
@@ -88,7 +88,7 @@ func (o Occurrence) Validate() error {
 		}
 	}
 	if o.DecoderID != "" {
-		if err := basespec.ValidateDecoderID(o.DecoderID); err != nil {
+		if err := o.DecoderID.Validate(); err != nil {
 			return err
 		}
 	}
@@ -117,10 +117,10 @@ func (o Occurrence) Validate() error {
 		if err := o.Kind.Validate(); err != nil {
 			return err
 		}
-		if err := basespec.ValidateLogicalName(o.LogicalName); err != nil {
+		if err := o.LogicalName.Validate(); err != nil {
 			return err
 		}
-		if err := basespec.ValidateLogicalVersion(o.LogicalVersion, true); err != nil {
+		if err := o.LogicalVersion.Validate(true); err != nil {
 			return err
 		}
 		if o.DefinitionDigest == nil ||
@@ -131,7 +131,7 @@ func (o Occurrence) Validate() error {
 				basespec.ErrInvalid,
 			)
 		}
-		if err := basespec.ValidateDecoderID(o.DecoderID); err != nil {
+		if err := o.DecoderID.Validate(); err != nil {
 			return err
 		}
 
@@ -178,10 +178,10 @@ func (k OccurrenceKey) Validate() error {
 	if err := k.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateLocator(k.Locator, false); err != nil {
+	if err := k.Locator.Validate(false); err != nil {
 		return err
 	}
-	return basespec.ValidateSubresourceLocator(k.SubresourceLocator)
+	return k.SubresourceLocator.Validate()
 }
 
 func SortOccurrences(values []Occurrence) {

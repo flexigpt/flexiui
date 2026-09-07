@@ -96,7 +96,7 @@ func (r DirectoryRoot) Clone() DirectoryRoot {
 }
 
 func (r DirectoryRoot) Validate() error {
-	if err := basespec.ValidateLocator(r.Root, true); err != nil {
+	if err := r.Root.Validate(true); err != nil {
 		return err
 	}
 
@@ -230,7 +230,7 @@ func (p SourcePlan) Validate() error {
 		len(p.ExplicitLocators),
 	)
 	for _, locator := range p.ExplicitLocators {
-		if err := basespec.ValidateLocator(locator, false); err != nil {
+		if err := locator.Validate(false); err != nil {
 			return err
 		}
 		if _, duplicate := seenLocators[locator]; duplicate {
@@ -269,7 +269,7 @@ func (p SourcePlan) Validate() error {
 		)
 	}
 	for locator, digest := range p.ExpectedContentDigests {
-		if err := basespec.ValidateLocator(locator, false); err != nil {
+		if err := locator.Validate(false); err != nil {
 			return err
 		}
 		if err := cryptoutil.ValidateDigest(digest); err != nil {
@@ -293,7 +293,7 @@ func (p SourcePlan) Validate() error {
 			Locator:   hint.Locator,
 			Recursive: hint.Recursive,
 		}
-		if err := basespec.ValidateLocator(hint.Locator, true); err != nil {
+		if err := hint.Locator.Validate(true); err != nil {
 			return fmt.Errorf(
 				"provider decoder hint %d: %w",
 				index,
@@ -322,7 +322,7 @@ func (p SourcePlan) Validate() error {
 			len(hint.DecoderIDs),
 		)
 		for _, decoderID := range hint.DecoderIDs {
-			if err := basespec.ValidateDecoderID(decoderID); err != nil {
+			if err := decoderID.Validate(); err != nil {
 				return err
 			}
 			if _, duplicate := seenDecoderIDs[decoderID]; duplicate {
@@ -341,7 +341,7 @@ func (p SourcePlan) Validate() error {
 		len(p.AllowedDecoderIDs),
 	)
 	for _, decoderID := range p.AllowedDecoderIDs {
-		if err := basespec.ValidateDecoderID(decoderID); err != nil {
+		if err := decoderID.Validate(); err != nil {
 			return err
 		}
 		if _, duplicate := seenAllowed[decoderID]; duplicate {

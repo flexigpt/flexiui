@@ -101,9 +101,7 @@ func (r Registry) Validate() error {
 					err,
 				)
 			}
-			if err := basespec.ValidateSubresourceLocator(
-				value.Subresource,
-			); err != nil {
+			if err := value.Subresource.Validate(); err != nil {
 				return fmt.Errorf(
 					"bundles[%d].artifacts[%d]: %w",
 					index,
