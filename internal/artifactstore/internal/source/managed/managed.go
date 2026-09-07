@@ -589,7 +589,7 @@ func (a *Adapter) sourceRootPath(
 	if err := value.ID.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
+	if err := value.StorageKey.Validate(); err != nil {
 		return "", err
 	}
 	root, err := a.managedRootPath(value.RootStorageKey)
@@ -613,7 +613,7 @@ func (a *Adapter) sourceStagingPath(
 	if err := value.ID.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
+	if err := value.StorageKey.Validate(); err != nil {
 		return "", err
 	}
 	root, err := a.managedStagingRootPath(value.RootStorageKey)
@@ -633,7 +633,7 @@ func (a *Adapter) sourceStagingPath(
 func (a *Adapter) managedRootPath(
 	rootStorageKey basespec.StorageKey,
 ) (string, error) {
-	if err := basespec.ValidateStorageKey(rootStorageKey); err != nil {
+	if err := rootStorageKey.Validate(); err != nil {
 		return "", err
 	}
 
@@ -657,7 +657,7 @@ func (a *Adapter) managedRootPath(
 func (a *Adapter) managedStagingRootPath(
 	rootStorageKey basespec.StorageKey,
 ) (string, error) {
-	if err := basespec.ValidateStorageKey(rootStorageKey); err != nil {
+	if err := rootStorageKey.Validate(); err != nil {
 		return "", err
 	}
 

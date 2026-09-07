@@ -2,8 +2,6 @@ package source
 
 import (
 	"testing"
-
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 )
 
 func TestManagedPackageAddressUsesDirectSemanticDirectory(t *testing.T) {
@@ -47,7 +45,7 @@ func TestManagedPackageAddressUsesDirectSemanticDirectory(t *testing.T) {
 	}
 
 	if _, err := NewManagedPackageAddress(
-		basespec.PackageKind("agent.skill"),
+		PackageKind("agent.skill"),
 		"meeting-summary",
 		"",
 	); err == nil {

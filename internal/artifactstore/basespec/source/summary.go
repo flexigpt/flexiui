@@ -26,13 +26,13 @@ func (s Summary) Validate() error {
 	if err := s.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(s.RootStorageKey); err != nil {
+	if err := s.RootStorageKey.Validate(); err != nil {
 		return err
 	}
 	if err := s.ID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(s.StorageKey); err != nil {
+	if err := s.StorageKey.Validate(); err != nil {
 		return err
 	}
 

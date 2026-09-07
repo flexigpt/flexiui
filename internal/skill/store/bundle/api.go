@@ -929,7 +929,7 @@ func (a *API) createBundle(
 	}
 
 	if request.ManagedSourceID != "" {
-		if err := basespec.ValidateStorageKey(request.ManagedSourceStorageKey); err != nil {
+		if err := request.ManagedSourceStorageKey.Validate(); err != nil {
 			return Bundle{}, err
 		}
 	}

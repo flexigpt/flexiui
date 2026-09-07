@@ -39,7 +39,7 @@ func (d Declaration) Validate() error {
 	if err := d.Root.ID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(d.Root.StorageKey); err != nil {
+	if err := d.Root.StorageKey.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(
@@ -68,7 +68,7 @@ func (d Declaration) Validate() error {
 		if err := draft.ID.Validate(); err != nil {
 			return fmt.Errorf("protected Sources[%d]: %w", index, err)
 		}
-		if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
+		if err := draft.StorageKey.Validate(); err != nil {
 			return fmt.Errorf("protected Sources[%d]: %w", index, err)
 		}
 		if err := draft.Kind.Validate(); err != nil {

@@ -272,7 +272,7 @@ func (r *Registry) RemoveManagedRoot(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(rootStorageKey); err != nil {
+	if err := rootStorageKey.Validate(); err != nil {
 		return err
 	}
 

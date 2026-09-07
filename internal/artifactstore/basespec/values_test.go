@@ -24,8 +24,7 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 		{name: "portable trailing dot", err: ValidatePortableLocator("package/name.", false)},
 		{name: "portable trailing space", err: ValidatePortableLocator("package/name ", false)},
 		{name: "portable invalid separator", err: ValidatePortableLocator(`package\\name`, false)},
-		{name: "invalid storage key", err: ValidateStorageKey("Not portable")},
-		{name: "invalid package kind", err: ValidatePackageKind("Package Kind")},
+		{name: "invalid storage key", err: StorageKey("Not portable").Validate()},
 		{name: "invalid package name", err: ValidatePackageName("name/with/slash")},
 		{name: "invalid package version", err: ValidatePackageVersion("version/with/slash")},
 	}
@@ -50,12 +49,10 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 	if err := ValidatePortableLocator(".", false); !errors.Is(err, ErrInvalid) {
 		t.Fatalf("ValidatePortableLocator(file root) error=%v, want ErrInvalid", err)
 	}
-	if err := ValidateStorageKey("personal"); err != nil {
-		t.Fatalf("ValidateStorageKey(valid): %v", err)
+	if err := StorageKey("personal").Validate(); err != nil {
+		t.Fatalf("Validate StorageKey(valid): %v", err)
 	}
-	if err := ValidatePackageKind("skill.bundle"); err != nil {
-		t.Fatalf("ValidatePackageKind(valid): %v", err)
-	}
+
 	if err := ValidatePackageName("meeting-summary"); err != nil {
 		t.Fatalf("ValidatePackageName(valid): %v", err)
 	}

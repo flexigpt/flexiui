@@ -8,6 +8,12 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 )
 
+type PackageKind string
+
+func (v PackageKind) Validate() error {
+	return basespec.ValidateIdentifier("package kind", string(v), basespec.MaxKindBytes)
+}
+
 // ManagedPackageAddress is the generic semantic address of one complete
 // managed package.
 //
@@ -18,13 +24,13 @@ import (
 // Artifact families own the values of Kind, Name, Version, all primary file
 // names, and all package-relative resource conventions.
 type ManagedPackageAddress struct {
-	Kind    basespec.PackageKind    `json:"kind"`
+	Kind    PackageKind             `json:"kind"`
 	Name    basespec.LogicalName    `json:"name"`
 	Version basespec.LogicalVersion `json:"version"`
 }
 
 func NewManagedPackageAddress(
-	kind basespec.PackageKind,
+	kind PackageKind,
 	name basespec.LogicalName,
 	version basespec.LogicalVersion,
 ) (ManagedPackageAddress, error) {
@@ -58,14 +64,14 @@ func ParseManagedPackageAddressDirectory(
 	}
 
 	return NewManagedPackageAddress(
-		basespec.PackageKind(segments[0]),
+		PackageKind(segments[0]),
 		basespec.LogicalName(segments[1]),
 		basespec.LogicalVersion(segments[2]),
 	)
 }
 
 func (a ManagedPackageAddress) Validate() error {
-	if err := basespec.ValidatePackageKind(a.Kind); err != nil {
+	if err := a.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidatePackageName(a.Name); err != nil {

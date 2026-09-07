@@ -93,7 +93,7 @@ func (s *Service) CreateWithStatus(
 	if err := draft.ID.Validate(); err != nil {
 		return source.Summary{}, false, err
 	}
-	if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
+	if err := draft.StorageKey.Validate(); err != nil {
 		return source.Summary{}, false, err
 	}
 	if err := draft.Kind.Validate(); err != nil {

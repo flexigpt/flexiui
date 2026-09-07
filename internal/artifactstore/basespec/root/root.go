@@ -33,7 +33,7 @@ func (r Root) Validate() error {
 	if err := r.ID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(r.StorageKey); err != nil {
+	if err := r.StorageKey.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(

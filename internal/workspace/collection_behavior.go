@@ -667,7 +667,7 @@ func validateWorkspaceProviderSource(
 	if err := value.ID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
+	if err := value.StorageKey.Validate(); err != nil {
 		return err
 	}
 	if err := value.Kind.Validate(); err != nil {

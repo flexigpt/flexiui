@@ -64,16 +64,3 @@ var portableReservedBaseNames = map[string]struct{}{
 	"NUL":    {},
 	"PRN":    {},
 }
-
-type (
-	StorageKey  string
-	PackageKind string
-
-	DecoderID string
-
-	LogicalName    string
-	LogicalVersion string
-
-	Locator            string
-	SubresourceLocator string
-)

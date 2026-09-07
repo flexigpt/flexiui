@@ -45,9 +45,9 @@ const (
 
 	UnversionedPackageVersion basespec.LogicalVersion = "unversioned"
 
-	AgentSkillPackageKind  basespec.PackageKind = "agent.skill"
-	SkillBundlePackageKind basespec.PackageKind = "skill.bundle"
-	MCPBundlePackageKind   basespec.PackageKind = "mcp.bundle"
+	AgentSkillPackageKind  source.PackageKind = "agent.skill"
+	SkillBundlePackageKind source.PackageKind = "skill.bundle"
+	MCPBundlePackageKind   source.PackageKind = "mcp.bundle"
 
 	AgentSkillDefinitionFileName basespec.Locator = "SKILL.md"
 	SkillCollectionFileName      basespec.Locator = "collection.json"
@@ -295,7 +295,7 @@ func ValidateApplicationTopology() error {
 		if err := draft.ID.Validate(); err != nil {
 			return err
 		}
-		if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
+		if err := draft.StorageKey.Validate(); err != nil {
 			return err
 		}
 		if _, exists := seenRootIDs[draft.ID]; exists {

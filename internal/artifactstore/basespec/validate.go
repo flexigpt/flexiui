@@ -98,49 +98,6 @@ func ValidatePortableName(label, value string) error {
 	return nil
 }
 
-func ValidatePackageKind(value PackageKind) error {
-	return ValidateIdentifier("package kind", string(value), MaxKindBytes)
-}
-
-func ValidateStorageKey(value StorageKey) error {
-	return ValidateIdentifier(
-		"storage key",
-		string(value),
-		MaxStorageKeyBytes,
-	)
-}
-
-func ValidatePackageName(value LogicalName) error {
-	return ValidatePortableName("package name", string(value))
-}
-
-func ValidatePackageVersion(value LogicalVersion) error {
-	return ValidatePortableName("package version", string(value))
-}
-
-func ValidateLogicalName(value LogicalName) error {
-	return ValidateRequiredText(
-		"logical name",
-		string(value),
-		MaxLogicalNameBytes,
-	)
-}
-
-func ValidateLogicalVersion(value LogicalVersion, optional bool) error {
-	if value == "" && optional {
-		return nil
-	}
-	return ValidateRequiredText(
-		"logical version",
-		string(value),
-		MaxVersionBytes,
-	)
-}
-
-func ValidateDecoderID(value DecoderID) error {
-	return ValidateIdentifier("decoder ID", string(value), MaxKindBytes)
-}
-
 func ValidateSourceGeneration(value string) error {
 	return ValidateRequiredText(
 		"source generation",
