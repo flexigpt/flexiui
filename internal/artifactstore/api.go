@@ -3,7 +3,6 @@ package artifactstore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -24,36 +23,6 @@ type API struct {
 	closeOnce sync.Once
 	closeErr  error
 	closed    atomic.Bool
-}
-
-func newAPI(components *system.Components) (*API, error) {
-	if components == nil ||
-		components.Roots == nil ||
-		components.Sources == nil {
-		return nil, errors.New("artifact store components are required")
-	}
-
-	if components.ArtifactReader == nil ||
-		components.CollectionReader == nil ||
-		components.Refresh == nil ||
-		components.SourceRuntime == nil {
-		return nil, errors.New(
-			"artifact store resource components are required",
-		)
-	}
-	resources, err := resource.NewService(
-		components.ArtifactReader,
-		components.CollectionReader,
-		components.Refresh,
-		components.SourceRuntime,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &API{
-		components: components,
-		resources:  resources,
-	}, nil
 }
 
 func (a *API) CreateArtifactRoot(

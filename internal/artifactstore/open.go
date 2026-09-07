@@ -2,8 +2,10 @@ package artifactstore
 
 import (
 	"context"
+	"errors"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
@@ -46,4 +48,34 @@ func Open(
 		return nil, err
 	}
 	return api, nil
+}
+
+func newAPI(components *system.Components) (*API, error) {
+	if components == nil ||
+		components.Roots == nil ||
+		components.Sources == nil {
+		return nil, errors.New("artifact store components are required")
+	}
+
+	if components.ArtifactReader == nil ||
+		components.CollectionReader == nil ||
+		components.Refresh == nil ||
+		components.SourceRuntime == nil {
+		return nil, errors.New(
+			"artifact store resource components are required",
+		)
+	}
+	resources, err := resource.NewService(
+		components.ArtifactReader,
+		components.CollectionReader,
+		components.Refresh,
+		components.SourceRuntime,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &API{
+		components: components,
+		resources:  resources,
+	}, nil
 }
