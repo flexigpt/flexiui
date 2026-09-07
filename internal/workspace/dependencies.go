@@ -3,12 +3,12 @@ package workspace
 import (
 	"fmt"
 
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
 
 type Dependencies struct {
-	Store artifactAPI.ConsumerAPI
+	Store artifactConsumerAPI.ConsumerAPI
 }
 
 func (d Dependencies) Validate() error {

@@ -8,19 +8,19 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
+	artifactConsumerAPIResource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 )
 
 func (a *API) ResolveArtifact(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-	options artifactAPI.ResolveOptions,
-) (artifactAPI.ResolvedArtifact, error) {
+	options artifactConsumerAPIResource.ResolveOptions,
+) (artifactConsumerAPIResource.ResolvedArtifact, error) {
 	if err := a.check(ctx); err != nil {
-		return artifactAPI.ResolvedArtifact{}, err
+		return artifactConsumerAPIResource.ResolvedArtifact{}, err
 	}
 	if a.resources == nil {
-		return artifactAPI.ResolvedArtifact{}, basespec.ErrClosed
+		return artifactConsumerAPIResource.ResolvedArtifact{}, basespec.ErrClosed
 	}
 	value, err := a.resources.ResolveArtifact(
 		ctx,
@@ -30,14 +30,14 @@ func (a *API) ResolveArtifact(
 		},
 	)
 	if err != nil {
-		return artifactAPI.ResolvedArtifact{}, err
+		return artifactConsumerAPIResource.ResolvedArtifact{}, err
 	}
 	return resolvedArtifactForAPI(value), nil
 }
 
 func (a *API) ResolveVerifiedLocalPath(
 	ctx context.Context,
-	resolved artifactAPI.ResolvedArtifact,
+	resolved artifactConsumerAPIResource.ResolvedArtifact,
 	localLocator basespec.Locator,
 ) (string, error) {
 	if err := a.check(ctx); err != nil {
@@ -62,12 +62,12 @@ func (a *API) ReadCollectionEntry(
 	sourceID basespec.SourceID,
 	locator basespec.Locator,
 	maximumBytes int64,
-) (artifactAPI.VerifiedEntry, error) {
+) (artifactConsumerAPIResource.VerifiedEntry, error) {
 	if err := a.check(ctx); err != nil {
-		return artifactAPI.VerifiedEntry{}, err
+		return artifactConsumerAPIResource.VerifiedEntry{}, err
 	}
 	if a.resources == nil {
-		return artifactAPI.VerifiedEntry{}, basespec.ErrClosed
+		return artifactConsumerAPIResource.VerifiedEntry{}, basespec.ErrClosed
 	}
 	value, err := a.resources.ReadCollectionEntry(
 		ctx,
@@ -77,7 +77,7 @@ func (a *API) ReadCollectionEntry(
 		maximumBytes,
 	)
 	if err != nil {
-		return artifactAPI.VerifiedEntry{}, err
+		return artifactConsumerAPIResource.VerifiedEntry{}, err
 	}
 	return verifiedEntryForAPI(value), nil
 }
@@ -110,8 +110,8 @@ func (a *API) SupportsLocalPath(kind basespec.SourceKind) bool {
 
 func resolvedArtifactForAPI(
 	value resource.ResolvedArtifact,
-) artifactAPI.ResolvedArtifact {
-	return artifactAPI.ResolvedArtifact{
+) artifactConsumerAPIResource.ResolvedArtifact {
+	return artifactConsumerAPIResource.ResolvedArtifact{
 		Artifact:         value.Artifact.Clone(),
 		Collection:       value.Collection.Clone(),
 		Definition:       value.Definition.Clone(),
@@ -123,7 +123,7 @@ func resolvedArtifactForAPI(
 }
 
 func resolvedArtifactForStore(
-	value artifactAPI.ResolvedArtifact,
+	value artifactConsumerAPIResource.ResolvedArtifact,
 ) resource.ResolvedArtifact {
 	value = value.Clone()
 	return resource.ResolvedArtifact{
@@ -139,8 +139,8 @@ func resolvedArtifactForStore(
 
 func verifiedEntryForAPI(
 	value resource.VerifiedEntry,
-) artifactAPI.VerifiedEntry {
-	return artifactAPI.VerifiedEntry{
+) artifactConsumerAPIResource.VerifiedEntry {
+	return artifactConsumerAPIResource.VerifiedEntry{
 		Collection:       value.Collection,
 		SourceID:         value.SourceID,
 		CatalogRevision:  value.CatalogRevision,

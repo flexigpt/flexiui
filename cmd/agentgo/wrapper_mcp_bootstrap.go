@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	mcpAggregate "github.com/flexigpt/flexigpt-app/internal/mcp/aggregate"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
@@ -32,7 +32,7 @@ func InitMCPWrappers(
 	storeWrapper *MCPStoreWrapper,
 	runtimeWrapper *MCPRuntimeWrapper,
 	aggregateWrapper *MCPAggregateWrapper,
-	store artifactAPI.ConsumerAPI,
+	store artifactConsumerAPI.ConsumerAPI,
 	settingsStore mcpAuthKeyStore,
 ) error {
 	if storeWrapper == nil ||

@@ -7,9 +7,9 @@ import (
 	"sort"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/attachmentdata"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/collectiondata"
@@ -17,12 +17,12 @@ import (
 )
 
 type Service struct {
-	store           artifactAPI.ConsumerAPI
+	store           artifactConsumerAPI.ConsumerAPI
 	workspaceRootID basespec.RootID
 }
 
 func NewService(
-	store artifactAPI.ConsumerAPI,
+	store artifactConsumerAPI.ConsumerAPI,
 	workspaceRootID basespec.RootID,
 ) (*Service, error) {
 	if store == nil {

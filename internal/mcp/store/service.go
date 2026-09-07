@@ -10,10 +10,10 @@ import (
 	"sort"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
@@ -25,7 +25,7 @@ import (
 )
 
 type Dependencies struct {
-	Store artifactAPI.ConsumerAPI
+	Store artifactConsumerAPI.ConsumerAPI
 
 	UserRootID     basespec.RootID
 	Overlays       mcpOverlay.OverlayRepository

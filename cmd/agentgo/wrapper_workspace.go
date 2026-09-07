@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	"github.com/flexigpt/flexigpt-app/internal/workspace"
 )
@@ -15,7 +15,7 @@ type WorkspaceWrapper struct {
 
 func InitWorkspaceWrapper(
 	wrapper *WorkspaceWrapper,
-	store artifactAPI.ConsumerAPI,
+	store artifactConsumerAPI.ConsumerAPI,
 ) error {
 	if wrapper == nil {
 		return errors.New("workspace wrapper is nil")

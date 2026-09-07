@@ -9,10 +9,11 @@ import (
 	"github.com/flexigpt/agentskills-go/document"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	artifactAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/api"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	artifactConsumerAPIResource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -73,13 +74,13 @@ type SkillLoadPlan struct {
 type Adapter struct {
 	query         *artifactadapter.QueryService
 	runtimePolicy artifactadapter.SourceUsePolicy
-	resources     artifactAPI.ResourceResolver
+	resources     artifactConsumerAPI.ResourceResolver
 }
 
 func NewAdapter(
 	query *artifactadapter.QueryService,
 	runtimePolicy artifactadapter.SourceUsePolicy,
-	resources artifactAPI.ResourceResolver,
+	resources artifactConsumerAPI.ResourceResolver,
 ) (*Adapter, error) {
 	if query == nil || runtimePolicy == nil || resources == nil {
 		return nil, fmt.Errorf(
@@ -259,7 +260,7 @@ func (f *Adapter) loadLocal(
 		resolved, err := f.resources.ResolveArtifact(
 			ctx,
 			item.Artifact.Ref(),
-			artifactAPI.ResolveOptions{},
+			artifactConsumerAPIResource.ResolveOptions{},
 		)
 		if err != nil {
 			output.Diagnostics = providerapi.AppendDiagnostics(
