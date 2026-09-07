@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
@@ -134,4 +135,29 @@ func (s Snapshot) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (s Snapshot) Clone() Snapshot {
+	output := s
+	output.AttachmentRevisions = make(
+		map[basespec.SourceID]uint64,
+		len(s.AttachmentRevisions),
+	)
+	maps.Copy(output.AttachmentRevisions, s.AttachmentRevisions)
+	output.SourceRevisions = make(
+		map[basespec.SourceID]uint64,
+		len(s.SourceRevisions),
+	)
+	maps.Copy(output.SourceRevisions, s.SourceRevisions)
+	output.SourceGenerations = make(
+		map[basespec.SourceID]string,
+		len(s.SourceGenerations),
+	)
+	maps.Copy(output.SourceGenerations, s.SourceGenerations)
+	output.Diagnostics = providerapi.CloneDiagnostics(s.Diagnostics)
+	output.Occurrences = make([]Occurrence, len(s.Occurrences))
+	for index, occurrence := range s.Occurrences {
+		output.Occurrences[index] = occurrence.Clone()
+	}
+	return output
 }

@@ -115,7 +115,7 @@ func (s *Service) ResolveArtifact(
 				record.Binding.SubresourceLocator {
 			continue
 		}
-		value := catalog.CloneOccurrence(current)
+		value := current.Clone()
 		occurrence = &value
 		break
 	}
@@ -190,7 +190,7 @@ func (s *Service) ResolveArtifact(
 		Artifact:         record.Clone(),
 		Collection:       collectionValue.Clone(),
 		Definition:       definitionValue.Clone(),
-		Occurrence:       catalog.CloneOccurrence(*occurrence),
+		Occurrence:       occurrence.Clone(),
 		Source:           sourceValue.Summary(),
 		CatalogRevision:  snapshot.Revision,
 		SourceGeneration: sourceGeneration,

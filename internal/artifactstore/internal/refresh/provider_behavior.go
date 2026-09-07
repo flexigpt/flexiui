@@ -103,7 +103,7 @@ func (s *Service) CurrentCatalog(
 			ref.CollectionID,
 		)
 	}
-	return catalog.CloneSnapshot(inspection.Catalog), nil
+	return inspection.Catalog.Clone(), nil
 }
 
 // InspectCollectionCatalog reads the latest catalog and reports every Store-
@@ -156,7 +156,7 @@ func (s *Service) InspectCollectionCatalog(
 	}
 
 	return refresh.CatalogInspection{
-		Catalog:         catalog.CloneSnapshot(snapshot),
+		Catalog:         snapshot.Clone(),
 		MetadataChanged: errors.Is(catalogErr, basespec.ErrCatalogStale),
 		PlanChanged:     snapshot.PlanFingerprint != planFingerprint,
 		DecoderChanged:  snapshot.DecoderFingerprint != decoderFingerprint,

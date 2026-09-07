@@ -205,7 +205,7 @@ func (e *Engine) Discover(
 		if _, exists := occurrences[value.Key]; exists {
 			return Result{}, fmt.Errorf("%w: duplicate previous occurrence", basespec.ErrInvalid)
 		}
-		occurrences[value.Key] = catalog.CloneOccurrence(value)
+		occurrences[value.Key] = value.Clone()
 	}
 
 	result := Result{}

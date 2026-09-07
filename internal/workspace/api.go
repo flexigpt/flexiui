@@ -991,7 +991,7 @@ func (a *API) workspaceOccurrence(
 	}
 	for _, occurrence := range view.Catalog.Occurrences {
 		if occurrence.Key == key {
-			return catalog.CloneOccurrence(occurrence), nil
+			return occurrence.Clone(), nil
 		}
 	}
 

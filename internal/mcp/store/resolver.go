@@ -239,7 +239,7 @@ func currentServerOccurrence(
 			*occurrence.DefinitionDigest != *record.ResolvedDefinition {
 			break
 		}
-		return catalog.CloneOccurrence(occurrence), nil
+		return occurrence.Clone(), nil
 	}
 	return catalog.Occurrence{}, fmt.Errorf(
 		"%w: MCP Server does not match its current Catalog occurrence",

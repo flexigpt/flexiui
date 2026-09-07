@@ -133,6 +133,15 @@ func (s Summary) Validate() error {
 	return nil
 }
 
+func (s Summary) Clone() Summary {
+	output := s
+	if s.RetiredAt != nil {
+		retiredAt := *s.RetiredAt
+		output.RetiredAt = &retiredAt
+	}
+	return output
+}
+
 type Draft struct {
 	ID          basespec.SourceID   `json:"id"`
 	StorageKey  basespec.StorageKey `json:"storageKey"`

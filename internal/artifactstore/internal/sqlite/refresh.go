@@ -252,7 +252,7 @@ func (p *Publisher) Publish(
 
 	occurrences := make([]catalog.Occurrence, len(publication.Occurrences))
 	for index, occurrence := range publication.Occurrences {
-		occurrences[index] = catalog.CloneOccurrence(occurrence)
+		occurrences[index] = occurrence.Clone()
 	}
 
 	snapshot := catalog.Snapshot{
@@ -272,7 +272,7 @@ func (p *Publisher) Publish(
 	if err := snapshot.Validate(); err != nil {
 		return catalog.Snapshot{}, err
 	}
-	return catalog.CloneSnapshot(snapshot), nil
+	return snapshot.Clone(), nil
 }
 
 func requirePublishedSourceGenerationsTx(

@@ -480,7 +480,7 @@ func (q *QueryService) Catalog(
 				projectionDiagnostic(localArtifact, err),
 			)
 		}
-		occurrenceCopy := catalog.CloneOccurrence(occurrence)
+		occurrenceCopy := occurrence.Clone()
 		occurrencePointer := &occurrenceCopy
 		current := catalogCurrent &&
 			occurrencePointer.State == catalog.OccurrenceValid &&

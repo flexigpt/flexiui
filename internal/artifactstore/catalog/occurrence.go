@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
@@ -154,6 +153,18 @@ func (o Occurrence) Validate() error {
 	return nil
 }
 
+func (o Occurrence) Clone() Occurrence {
+	output := o
+	output.DefinitionDigest = cryptoutil.CloneDigest(o.DefinitionDigest)
+	output.SourceContentDigest = cryptoutil.CloneDigest(o.SourceContentDigest)
+	if o.Definition != nil {
+		value := o.Definition.Clone()
+		output.Definition = &value
+	}
+	output.Diagnostics = providerapi.CloneDiagnostics(o.Diagnostics)
+	return output
+}
+
 func (k OccurrenceKey) Validate() error {
 	if err := basespec.ValidateCollectionID(k.CollectionID); err != nil {
 		return err
@@ -165,20 +176,4 @@ func (k OccurrenceKey) Validate() error {
 		return err
 	}
 	return basespec.ValidateSubresourceLocator(k.SubresourceLocator)
-}
-
-func SortOccurrences(values []Occurrence) {
-	sort.Slice(values, func(left, right int) bool {
-		if values[left].Key.CollectionID != values[right].Key.CollectionID {
-			return values[left].Key.CollectionID < values[right].Key.CollectionID
-		}
-		if values[left].Key.SourceID != values[right].Key.SourceID {
-			return values[left].Key.SourceID < values[right].Key.SourceID
-		}
-		if values[left].Key.Locator != values[right].Key.Locator {
-			return values[left].Key.Locator < values[right].Key.Locator
-		}
-		return values[left].Key.SubresourceLocator <
-			values[right].Key.SubresourceLocator
-	})
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 
@@ -116,8 +115,8 @@ func resolvedArtifactForAPI(
 		Artifact:         value.Artifact.Clone(),
 		Collection:       value.Collection.Clone(),
 		Definition:       value.Definition.Clone(),
-		Occurrence:       catalog.CloneOccurrence(value.Occurrence),
-		Source:           artifactAPI.CloneSourceSummary(value.Source),
+		Occurrence:       value.Occurrence.Clone(),
+		Source:           value.Source.Clone(),
 		CatalogRevision:  value.CatalogRevision,
 		SourceGeneration: value.SourceGeneration,
 	}.Clone()
@@ -131,8 +130,8 @@ func resolvedArtifactForStore(
 		Artifact:         value.Artifact.Clone(),
 		Collection:       value.Collection.Clone(),
 		Definition:       value.Definition.Clone(),
-		Occurrence:       catalog.CloneOccurrence(value.Occurrence),
-		Source:           artifactAPI.CloneSourceSummary(value.Source),
+		Occurrence:       value.Occurrence.Clone(),
+		Source:           value.Source.Clone(),
 		CatalogRevision:  value.CatalogRevision,
 		SourceGeneration: value.SourceGeneration,
 	}

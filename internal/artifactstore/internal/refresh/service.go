@@ -385,7 +385,7 @@ func (s *Service) refresh(
 		Occurrences:         make([]catalog.Occurrence, len(finalOccurrences)),
 	}
 	for index, occurrence := range finalOccurrences {
-		expected.Occurrences[index] = catalog.CloneOccurrence(occurrence)
+		expected.Occurrences[index] = occurrence.Clone()
 	}
 	if err := expected.Validate(); err != nil {
 		return refresh.Result{}, fmt.Errorf(
@@ -402,7 +402,7 @@ func (s *Service) refresh(
 	}
 
 	result := refresh.Result{
-		Catalog:     catalog.CloneSnapshot(published),
+		Catalog:     published.Clone(),
 		Diagnostics: providerapi.CloneDiagnostics(allDiagnostics),
 		Candidates:  candidates,
 	}

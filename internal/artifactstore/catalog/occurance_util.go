@@ -2,10 +2,27 @@ package catalog
 
 import (
 	"maps"
+	"sort"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
+
+func SortOccurrences(values []Occurrence) {
+	sort.Slice(values, func(left, right int) bool {
+		if values[left].Key.CollectionID != values[right].Key.CollectionID {
+			return values[left].Key.CollectionID < values[right].Key.CollectionID
+		}
+		if values[left].Key.SourceID != values[right].Key.SourceID {
+			return values[left].Key.SourceID < values[right].Key.SourceID
+		}
+		if values[left].Key.Locator != values[right].Key.Locator {
+			return values[left].Key.Locator < values[right].Key.Locator
+		}
+		return values[left].Key.SubresourceLocator <
+			values[right].Key.SubresourceLocator
+	})
+}
 
 // EqualSnapshot compares the semantic contents of two catalog snapshots.
 // Occurrences are compared by occurrence key because their persisted ordering
@@ -25,11 +42,11 @@ func EqualSnapshot(left, right Snapshot) bool {
 		return false
 	}
 
-	return EqualOccurrences(left.Occurrences, right.Occurrences)
+	return equalOccurrences(left.Occurrences, right.Occurrences)
 }
 
-// EqualOccurrences compares occurrence values independently of ordering.
-func EqualOccurrences(left, right []Occurrence) bool {
+// equalOccurrences compares occurrence values independently of ordering.
+func equalOccurrences(left, right []Occurrence) bool {
 	if len(left) != len(right) {
 		return false
 	}

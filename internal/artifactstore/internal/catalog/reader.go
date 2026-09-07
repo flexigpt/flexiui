@@ -66,5 +66,5 @@ func ReadCurrent(
 			validateErr,
 		)
 	}
-	return catalog.CloneSnapshot(value), err
+	return value.Clone(), err
 }

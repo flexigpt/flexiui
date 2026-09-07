@@ -148,8 +148,8 @@ func (r ResolvedArtifact) Clone() ResolvedArtifact {
 	output.Artifact = r.Artifact.Clone()
 	output.Collection = r.Collection.Clone()
 	output.Definition = r.Definition.Clone()
-	output.Occurrence = catalog.CloneOccurrence(r.Occurrence)
-	output.Source = CloneSourceSummary(r.Source)
+	output.Occurrence = r.Occurrence.Clone()
+	output.Source = r.Source.Clone()
 	return output
 }
 
@@ -196,14 +196,5 @@ func (e VerifiedEntry) Validate() error {
 func (e VerifiedEntry) Clone() VerifiedEntry {
 	output := e
 	output.Content = append([]byte(nil), e.Content...)
-	return output
-}
-
-func CloneSourceSummary(value source.Summary) source.Summary {
-	output := value
-	if value.RetiredAt != nil {
-		retiredAt := *value.RetiredAt
-		output.RetiredAt = &retiredAt
-	}
 	return output
 }

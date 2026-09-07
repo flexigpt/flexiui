@@ -164,13 +164,13 @@ func (s *Store) getCurrentCatalog(
 		return catalog.Snapshot{}, err
 	}
 	if stale {
-		return catalog.CloneSnapshot(value), fmt.Errorf(
+		return value.Clone(), fmt.Errorf(
 			"%w: catalog for collection %q does not match current metadata",
 			basespec.ErrCatalogStale,
 			ref.CollectionID,
 		)
 	}
-	return catalog.CloneSnapshot(value), nil
+	return value.Clone(), nil
 }
 
 func scanOccurrence(row scanner) (catalog.Occurrence, error) {

@@ -323,7 +323,7 @@ func currentSkillOccurrence(
 			*occurrence.DefinitionDigest != *record.ResolvedDefinition {
 			break
 		}
-		return catalog.CloneOccurrence(occurrence), nil
+		return occurrence.Clone(), nil
 	}
 	return catalog.Occurrence{}, fmt.Errorf(
 		"%w: Skill Artifact does not match the current catalog occurrence",
