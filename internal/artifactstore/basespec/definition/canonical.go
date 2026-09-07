@@ -1,4 +1,4 @@
-package providerapi
+package definition
 
 import (
 	"encoding/json"

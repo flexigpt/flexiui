@@ -10,12 +10,12 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -186,7 +186,7 @@ func (s *Service) Adopt(
 		ResolvedDefinition: &resolved,
 		Data:               data,
 		State:              artifact.StateAvailable,
-		Diagnostics:        providerapi.CloneDiagnostics(occurrence.Diagnostics),
+		Diagnostics:        diagnostic.Clone(occurrence.Diagnostics),
 		Revision:           1,
 		CreatedAt:          now,
 		ModifiedAt:         now,
@@ -253,8 +253,8 @@ func (s *Service) Pin(
 	var (
 		resolvedDefinition *cryptoutil.Digest
 		state              = artifact.StateMissing
-		diagnostics        = []providerapi.Diagnostic{{
-			Severity: providerapi.DiagnosticInfo,
+		diagnostics        = []diagnostic.Diagnostic{{
+			Severity: diagnostic.SeverityInfo,
 			Code:     "artifact.pinned.awaiting-catalog",
 			Message:  "the pinned source binding has no current catalog observation",
 		}}
@@ -291,10 +291,10 @@ func (s *Service) Pin(
 
 	case errors.Is(snapshotErr, basespec.ErrCatalogUnavailable):
 	case errors.Is(snapshotErr, basespec.ErrCatalogStale):
-		diagnostics = providerapi.AppendDiagnostics(
+		diagnostics = diagnostic.Append(
 			diagnostics,
-			providerapi.Diagnostic{
-				Severity: providerapi.DiagnosticWarning,
+			diagnostic.Diagnostic{
+				Severity: diagnostic.SeverityWarning,
 				Code:     "artifact.pinned.catalog-stale",
 				Message:  "the pinned source binding will be reconciled after the collection catalog is refreshed",
 			},

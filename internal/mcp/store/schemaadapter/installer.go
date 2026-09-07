@@ -16,9 +16,11 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
@@ -121,7 +123,7 @@ type Installer struct {
 type preparedBundle struct {
 	registration   BundleRegistration
 	document       mcpStore.BundleDocument
-	parsed         providerapi.ParsedDocument
+	parsed         schema.ParsedDocument
 	packageAddress source.ManagedPackageAddress
 	packageFiles   []source.ManagedPackageFile
 	packageDigest  cryptoutil.Digest
@@ -150,7 +152,7 @@ func NewInstaller(
 	if err := builtInTopology.Validate(); err != nil {
 		return nil, err
 	}
-	installer := &Installer{
+	inst := &Installer{
 		bundles:         dependencies.Bundles,
 		registry:        dependencies.Registry,
 		builtInTopology: builtInTopology,
@@ -162,11 +164,11 @@ func NewInstaller(
 	// Validate every embedded document and package path before exposing the
 	// installer to bootstrap. This catches stale registry paths and filenames
 	// before protected topology mutation starts.
-	prepared, err := installer.prepareBundles(context.Background())
+	prepared, err := inst.prepareBundles(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	fingerprint, err := installer.hydrationFingerprint(prepared)
+	fingerprint, err := inst.hydrationFingerprint(prepared)
 	if err != nil {
 		return nil, err
 	}
@@ -174,10 +176,10 @@ func NewInstaller(
 	if err != nil {
 		return nil, err
 	}
-	installer.prepared = append([]preparedBundle(nil), prepared...)
-	installer.fingerprint = fingerprint
-	installer.packageScopes = scopes
-	return installer, nil
+	inst.prepared = append([]preparedBundle(nil), prepared...)
+	inst.fingerprint = fingerprint
+	inst.packageScopes = scopes
+	return inst, nil
 }
 
 func (i *Installer) DesiredHydration(
@@ -186,7 +188,7 @@ func (i *Installer) DesiredHydration(
 	if i == nil {
 		return topology.Hydration{}, basespec.ErrClosed
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return topology.Hydration{}, err
 	}
 	if err := ctx.Err(); err != nil {
@@ -218,7 +220,7 @@ func (i *Installer) EnsureHydration(
 	if i == nil {
 		return basespec.ErrClosed
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if current {
@@ -279,7 +281,7 @@ func (i *Installer) FinalizeHydration(
 	if i == nil {
 		return basespec.ErrClosed
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	return i.ensureCurrentBundles(ctx)
@@ -610,7 +612,7 @@ func (i *Installer) prepareBundles(
 func canonicalPackageFiles(
 	registered BundleRegistration,
 	address source.ManagedPackageAddress,
-	embeddedFiles []topology.PackageFile,
+	embeddedFiles []source.ManagedPackageFile,
 	canonicalDocument json.RawMessage,
 ) ([]source.ManagedPackageFile, cryptoutil.Digest, error) {
 	documentFile := basespec.Locator(

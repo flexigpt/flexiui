@@ -17,7 +17,7 @@ import (
 // application composition owner.
 func Open(
 	ctx context.Context,
-	config OpenConfig,
+	config Config,
 ) (*API, error) {
 	rootPolicy, err := rootimpl.NewSetRootPolicy(
 		append([]basespec.RootID(nil), config.ProtectedRoots...),

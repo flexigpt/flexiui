@@ -9,10 +9,11 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
 func (a *API) IsProtectedRoot(rootID basespec.RootID) bool {
@@ -26,7 +27,7 @@ func (a *API) RequirePrivilegedInstaller(ctx context.Context) error {
 	if err := a.check(ctx); err != nil {
 		return err
 	}
-	return basespec.RequirePrivilegedInstaller(ctx)
+	return installer.RequirePrivileged(ctx)
 }
 
 func (a *API) CreateCollection(
@@ -426,14 +427,14 @@ func (a *API) InspectCollectionCatalog(
 
 func (a *API) CanonicalizeExpected(
 	ctx context.Context,
-	expected providerapi.SchemaKey,
+	expected schema.Key,
 	raw []byte,
-) (providerapi.ParsedDocument, error) {
+) (schema.ParsedDocument, error) {
 	if err := a.requireStore(ctx); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	if a.components.ShareableSchemas == nil {
-		return providerapi.ParsedDocument{}, basespec.ErrClosed
+		return schema.ParsedDocument{}, basespec.ErrClosed
 	}
 	return a.components.ShareableSchemas.CanonicalizeExpected(
 		ctx,

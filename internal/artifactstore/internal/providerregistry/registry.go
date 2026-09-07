@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
@@ -36,7 +37,7 @@ func New(
 	}
 
 	seenProviderNames := make(map[string]struct{}, len(providers))
-	schemaOwners := make(map[providerapi.SchemaKey]string)
+	schemaOwners := make(map[schema.Key]string)
 	decoderOwners := make(map[basespec.DecoderID]string)
 
 	for index, provider := range providers {

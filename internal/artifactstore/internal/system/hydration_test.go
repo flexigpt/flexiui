@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -51,7 +52,7 @@ func TestPrepareTopologyHydrationsAllowsFreshProtectedRoot(
 		SourceID:      sourceID,
 		Fingerprint:   cryptoutil.DigestBytes([]byte("fresh-install")),
 	}
-	ctx := basespec.WithPrivilegedInstaller(t.Context())
+	ctx := installer.WithPrivilege(t.Context())
 
 	current, err := components.PrepareTopologyHydrations(
 		ctx,

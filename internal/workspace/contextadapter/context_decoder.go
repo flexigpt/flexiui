@@ -10,6 +10,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 
@@ -69,7 +71,7 @@ func (*ContextDecoder) Recognize(
 func (*ContextDecoder) Decode(
 	_ context.Context,
 	candidate providerapi.Candidate,
-) ([]providerapi.Decoded, []providerapi.Diagnostic) {
+) ([]providerapi.Decoded, []diagnostic.Diagnostic) {
 	if !utf8.Valid(candidate.Content) {
 		return nil, artifactadapter.WorkspaceArtifactDiagnostics(
 			candidate.Locator,
@@ -119,7 +121,7 @@ func (*ContextDecoder) Decode(
 		return nil, artifactadapter.WorkspaceArtifactErrorDiagnostics(candidate.Locator, err)
 	}
 
-	value := providerapi.Definition{
+	value := definition.Definition{
 		Kind:          artifactbuiltin.WorkspaceContextArtifactKind,
 		SchemaID:      artifactbuiltin.WorkspaceContextSchemaID,
 		SchemaVersion: artifactbuiltin.WorkspaceContextSchemaVersion,

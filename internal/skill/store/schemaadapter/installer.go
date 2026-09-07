@@ -11,8 +11,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
 )
 
@@ -155,7 +156,7 @@ func builtInPackageScopes(
 func (i *Installer) Ensure(
 	ctx context.Context,
 ) error {
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	return i.EnsureBuiltInArtifacts(ctx)
@@ -164,7 +165,7 @@ func (i *Installer) Ensure(
 func (i *Installer) EnsureBuiltInArtifacts(
 	ctx context.Context,
 ) error {
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	bundles, err := i.EnsureBuiltInBundles(ctx)
@@ -280,7 +281,7 @@ func (i *Installer) EnsureBuiltInArtifacts(
 func (i *Installer) EnsureBuiltInBundles(
 	ctx context.Context,
 ) ([]bundle.Bundle, error) {
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return nil, err
 	}
 	if err := i.rejectDynamicBuiltInBundles(ctx); err != nil {

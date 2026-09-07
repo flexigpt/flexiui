@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 )
 
 // PlanningDocumentReader is the only source-read capability available to a
@@ -26,7 +27,7 @@ type PlanningDocumentReader interface {
 type PlanningDocumentRequest struct {
 	SourceID       basespec.SourceID
 	Locator        basespec.Locator
-	ExpectedSchema SchemaKey
+	ExpectedSchema schema.Key
 }
 
 func (r PlanningDocumentRequest) Validate() error {
@@ -49,7 +50,7 @@ type PlanningDocument struct {
 	SourceID   basespec.SourceID
 	Generation string
 	Found      bool
-	Document   *ParsedDocument
+	Document   *schema.ParsedDocument
 }
 
 func (d PlanningDocument) Clone() PlanningDocument {

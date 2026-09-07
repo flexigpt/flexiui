@@ -8,6 +8,8 @@ import (
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
@@ -40,7 +42,7 @@ func (d *Decoder) Recognize(
 func (d *Decoder) Decode(
 	_ context.Context,
 	candidate providerapi.Candidate,
-) ([]providerapi.Decoded, []providerapi.Diagnostic) {
+) ([]providerapi.Decoded, []diagnostic.Diagnostic) {
 	if !candidate.RequestsDecoder(artifactbuiltin.AgentSkillDecoderID) ||
 		basespec.Locator(path.Base(string(candidate.Locator))) != artifactbuiltin.AgentSkillDefinitionFileName {
 		return nil, nil
@@ -59,7 +61,7 @@ func (d *Decoder) Decode(
 		return nil, errorDiagnostics(candidate.Locator, err)
 	}
 	for index := range warnings {
-		warnings[index].Location = &providerapi.DiagnosticLocation{
+		warnings[index].Location = &diagnostic.Location{
 			Locator: candidate.Locator,
 		}
 	}
@@ -72,7 +74,7 @@ func (d *Decoder) Decode(
 func DecodeSkillDocument(
 	content []byte,
 	expectedName string,
-) (providerapi.Definition, []providerapi.Diagnostic, error) {
+) (definition.Definition, []diagnostic.Diagnostic, error) {
 	doc, warnings, err := document.ParseSkillDocument(
 		content,
 		document.ParseSkillDocumentOptions{
@@ -80,23 +82,23 @@ func DecodeSkillDocument(
 		},
 	)
 	if err != nil {
-		return providerapi.Definition{}, nil, err
+		return definition.Definition{}, nil, err
 	}
 
 	value, err := definitionForDocument(doc)
 	if err != nil {
-		return providerapi.Definition{}, nil, err
+		return definition.Definition{}, nil, err
 	}
-	canonical, err := providerapi.Canonicalize(value)
+	canonical, err := definition.Canonicalize(value)
 	if err != nil {
-		return providerapi.Definition{}, nil, err
+		return definition.Definition{}, nil, err
 	}
 	return canonical, warningDiagnostics("", warnings), nil
 }
 
 func definitionForDocument(
 	doc document.SkillDocument,
-) (providerapi.Definition, error) {
+) (definition.Definition, error) {
 	arguments := make([]Argument, 0, len(doc.Arguments))
 	for _, argument := range doc.Arguments {
 		arguments = append(arguments, Argument{
@@ -105,7 +107,7 @@ func definitionForDocument(
 			Default:     argument.Default,
 		})
 	}
-	raw, err := providerapi.EncodeBody(Body{
+	raw, err := definition.EncodeBody(Body{
 		Name:           doc.Name,
 		DisplayName:    doc.DisplayName,
 		Description:    doc.Description,
@@ -116,9 +118,9 @@ func definitionForDocument(
 		RawFrontmatter: doc.RawFrontmatter,
 	})
 	if err != nil {
-		return providerapi.Definition{}, err
+		return definition.Definition{}, err
 	}
-	return providerapi.Definition{
+	return definition.Definition{
 		Kind:          artifactbuiltin.AgentSkillArtifactKind,
 		SchemaID:      artifactbuiltin.AgentSkillSchemaID,
 		SchemaVersion: artifactbuiltin.AgentSkillSchemaVersion,
@@ -135,12 +137,12 @@ func definitionForDocument(
 func errorDiagnostics(
 	locator basespec.Locator,
 	err error,
-) []providerapi.Diagnostic {
-	return []providerapi.Diagnostic{{
-		Severity: providerapi.DiagnosticError,
+) []diagnostic.Diagnostic {
+	return []diagnostic.Diagnostic{{
+		Severity: diagnostic.SeverityError,
 		Code:     "agent.skill.invalid",
-		Message:  providerapi.BoundedDiagnosticMessage(err.Error()),
-		Location: &providerapi.DiagnosticLocation{
+		Message:  diagnostic.BoundedMessage(err.Error()),
+		Location: &diagnostic.Location{
 			Locator: locator,
 		},
 	}}
@@ -149,21 +151,21 @@ func errorDiagnostics(
 func warningDiagnostics(
 	locator basespec.Locator,
 	warnings []string,
-) []providerapi.Diagnostic {
-	output := make([]providerapi.Diagnostic, 0, len(warnings))
+) []diagnostic.Diagnostic {
+	output := make([]diagnostic.Diagnostic, 0, len(warnings))
 	for _, warning := range warnings {
-		if len(output) == providerapi.MaxDiagnostics {
+		if len(output) == diagnostic.MaxDiagnostics {
 			break
 		}
 		warning = strings.TrimSpace(warning)
 		if warning == "" {
 			continue
 		}
-		output = append(output, providerapi.Diagnostic{
-			Severity: providerapi.DiagnosticWarning,
+		output = append(output, diagnostic.Diagnostic{
+			Severity: diagnostic.SeverityWarning,
 			Code:     "agent.skill.parse-warning",
-			Message:  providerapi.BoundedDiagnosticMessage(warning),
-			Location: &providerapi.DiagnosticLocation{
+			Message:  diagnostic.BoundedMessage(warning),
+			Location: &diagnostic.Location{
 				Locator: locator,
 			},
 		})

@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
@@ -475,7 +476,7 @@ func (c *Components) publishProtectedManagedPackage(
 			rootID,
 		)
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	return c.publishManagedPackage(
@@ -526,7 +527,7 @@ func (c *Components) removeProtectedManagedPackage(
 			rootID,
 		)
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return ManagedPackageResult{}, err
 	}
 	return c.removeManagedPackage(

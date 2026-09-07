@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 )
 
 // Provider is one Artifact Store inbound artifact-family registration.
@@ -81,7 +82,7 @@ func (d Descriptor) Validate() error {
 		seenCollectionBehaviors[kind] = struct{}{}
 	}
 
-	seenSchemas := make(map[SchemaKey]struct{}, len(d.Schemas))
+	seenSchemas := make(map[schema.Key]struct{}, len(d.Schemas))
 	for index, codec := range d.Schemas {
 		if codec == nil {
 			return fmt.Errorf(

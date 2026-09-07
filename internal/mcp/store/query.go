@@ -11,7 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpStorePolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/policy"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
@@ -41,7 +41,7 @@ type PolicyView struct {
 	Artifact         artifact.Artifact        `json:"artifact"`
 	Collection       collection.CollectionRef `json:"collection"`
 	CatalogRevision  uint64                   `json:"catalogRevision"`
-	Definition       providerapi.Definition   `json:"definition"`
+	Definition       definition.Definition    `json:"definition"`
 	Body             mcpPolicy.MCPPolicy      `json:"body"`
 	EffectiveEnabled bool                     `json:"effectiveEnabled"`
 	BuiltIn          bool                     `json:"builtIn"`
@@ -409,9 +409,9 @@ func requireCurrentPolicyOccurrence(
 func definitionForArtifact(
 	snapshot catalog.Snapshot,
 	record artifact.Artifact,
-) (providerapi.Definition, error) {
+) (definition.Definition, error) {
 	if record.ResolvedDefinition == nil {
-		return providerapi.Definition{}, fmt.Errorf(
+		return definition.Definition{}, fmt.Errorf(
 			"%w: MCP Artifact %q has no resolved definition fingerprint",
 			basespec.ErrReferenceUnresolved,
 			record.ID,
@@ -427,10 +427,10 @@ func definitionForArtifact(
 		},
 	)
 	if err != nil {
-		return providerapi.Definition{}, err
+		return definition.Definition{}, err
 	}
 	if value.Digest != *record.ResolvedDefinition {
-		return providerapi.Definition{}, fmt.Errorf(
+		return definition.Definition{}, fmt.Errorf(
 			"%w: MCP Artifact %q does not match its current catalog definition",
 			basespec.ErrCatalogStale,
 			record.ID,

@@ -48,7 +48,7 @@ func InitArtifactStoreWrapper(
 
 	api, err := artifactstore.Open(
 		context.Background(),
-		artifactstore.OpenConfig{
+		artifactstore.Config{
 			BaseDirectory: baseDirectory,
 			ArtifactProviders: []providerapi.Provider{
 				workspaceProvider,

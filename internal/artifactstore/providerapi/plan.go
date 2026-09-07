@@ -546,3 +546,17 @@ func (p Plan) Fingerprint() (cryptoutil.Digest, error) {
 	}
 	return cryptoutil.DigestBytes(canonical), nil
 }
+
+// BySource returns normalized source plans keyed by source identity.
+//
+// Validate must be called by the Store before execution. This helper exists so
+// Store internals can execute the provider-owned plan model directly without
+// maintaining an identical internal plan type.
+func (p Plan) BySource() map[basespec.SourceID]SourcePlan {
+	output := make(map[basespec.SourceID]SourcePlan, len(p.Sources))
+	for _, value := range p.Sources {
+		value = value.Normalized()
+		output[value.SourceID] = value
+	}
+	return output
+}

@@ -8,7 +8,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 )
 
 type Reader interface {
@@ -97,12 +98,12 @@ type Policy interface {
 		ctx context.Context,
 		value collection.Collection,
 		occurrence catalog.Occurrence,
-		def providerapi.Definition,
-	) (Draft, bool, []providerapi.Diagnostic, error)
+		def definition.Definition,
+	) (Draft, bool, []diagnostic.Diagnostic, error)
 }
 
 type Reconciliation struct {
 	Creates     []artifact.Artifact
 	Updates     []SourceStateUpdate
-	Diagnostics []providerapi.Diagnostic
+	Diagnostics []diagnostic.Diagnostic
 }

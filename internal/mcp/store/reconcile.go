@@ -10,10 +10,11 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
@@ -54,7 +55,7 @@ func (a *API) ReplaceDocument(
 func (a *API) replaceCanonicalDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
-	parsed providerapi.ParsedDocument,
+	parsed schema.ParsedDocument,
 	suppliedFiles []source.ManagedPackageFile,
 ) (Bundle, error) {
 	plan, err := a.prepareDocumentReplace(
@@ -276,7 +277,7 @@ func (a *API) pinRegisteredArtifact(
 	ctx context.Context,
 	bundle Bundle,
 	registration Registration,
-	expected providerapi.Definition,
+	expected definition.Definition,
 	data json.RawMessage,
 ) (artifact.Artifact, error) {
 	name := expected.DisplayName
@@ -308,7 +309,7 @@ func (a *API) updateRegisteredArtifact(
 	bundle Bundle,
 	current artifact.Artifact,
 	registration Registration,
-	expected providerapi.Definition,
+	expected definition.Definition,
 	data json.RawMessage,
 ) (artifact.Artifact, error) {
 	expectedBinding := artifact.SourceBinding{
@@ -375,7 +376,7 @@ func (a *API) updateRegisteredArtifact(
 
 func registrationMap(
 	values []Registration,
-	expected map[basespec.SubresourceLocator]providerapi.Definition,
+	expected map[basespec.SubresourceLocator]definition.Definition,
 ) (map[basespec.SubresourceLocator]Registration, error) {
 	if len(values) != len(expected) {
 		return nil, fmt.Errorf(
@@ -718,7 +719,7 @@ func (a *API) UpdateProtectedServerInstallation(
 }
 
 func serverDocumentFromDefinition(
-	value providerapi.Definition,
+	value definition.Definition,
 ) (mcpStoreServer.ServerDocument, error) {
 	body, err := mcpStoreServer.ServerBodyFromDefinition(value)
 	if err != nil {
@@ -741,18 +742,18 @@ func serverDocumentFromDefinition(
 func (a *API) currentDefinitionForArtifact(
 	ctx context.Context,
 	record artifact.Artifact,
-) (providerapi.Definition, error) {
+) (definition.Definition, error) {
 	bundle, err := a.Get(ctx, collection.CollectionRef{
 		RootID:       record.RootID,
 		CollectionID: record.CollectionID,
 	})
 	if err != nil {
-		return providerapi.Definition{}, err
+		return definition.Definition{}, err
 	}
 
 	snapshot, err := a.currentCatalog(ctx, bundle)
 	if err != nil {
-		return providerapi.Definition{}, err
+		return definition.Definition{}, err
 	}
 	return definitionForArtifact(snapshot, record)
 }

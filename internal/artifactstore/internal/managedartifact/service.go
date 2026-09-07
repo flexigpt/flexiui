@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
@@ -562,7 +563,7 @@ func (s *Service) requireMutable(
 				basespec.ErrProtected,
 			)
 		}
-		return basespec.RequirePrivilegedInstaller(ctx)
+		return installer.RequirePrivileged(ctx)
 	}
 	return rootimpl.RequireMutableRoot(ctx, s.dependencies.Policy, rootID)
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
@@ -55,14 +55,14 @@ func (d RuntimeDecision) Validate() error {
 		if err := basespec.ValidateIdentifier(
 			"runtime policy diagnostic code",
 			d.Code,
-			providerapi.MaxDiagnosticCodeBytes,
+			diagnostic.MaxDiagnosticCodeBytes,
 		); err != nil {
 			return err
 		}
 		return basespec.ValidateRequiredText(
 			"runtime policy diagnostic message",
 			d.Message,
-			providerapi.MaxDiagnosticMessageBytes,
+			diagnostic.MaxDiagnosticMessageBytes,
 		)
 
 	default:
@@ -138,16 +138,16 @@ func (*ArtifactRuntimePolicy) Decide(
 func RuntimeDecisionDiagnostic(
 	decision RuntimeDecision,
 	value artifact.Artifact,
-) providerapi.Diagnostic {
-	severity := providerapi.DiagnosticWarning
+) diagnostic.Diagnostic {
+	severity := diagnostic.SeverityWarning
 	if decision.Disposition == RuntimeUnavailable {
-		severity = providerapi.DiagnosticError
+		severity = diagnostic.SeverityError
 	}
-	return providerapi.Diagnostic{
+	return diagnostic.Diagnostic{
 		Severity: severity,
 		Code:     decision.Code,
 		Message:  decision.Message,
-		Location: &providerapi.DiagnosticLocation{
+		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,
 			SubresourceLocator: value.Binding.SubresourceLocator,
 		},

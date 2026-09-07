@@ -17,11 +17,12 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -304,7 +305,7 @@ func (a *API) EnsureBuiltInBundleCurrent(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) error {
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	bundle, err := a.GetBundle(ctx, ref)
@@ -685,7 +686,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 	ctx context.Context,
 	request BuiltInBundleTopology,
 ) (Bundle, error) {
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return Bundle{}, err
 	}
 	bundle, err := a.createBundle(ctx, CreateBundleRequest{
@@ -878,9 +879,9 @@ func (a *API) currentBundleCatalog(
 func (a *API) currentDefinitionForArtifact(
 	ctx context.Context,
 	record artifact.Artifact,
-) (providerapi.Definition, error) {
+) (definition.Definition, error) {
 	if record.ResolvedDefinition == nil {
-		return providerapi.Definition{}, fmt.Errorf(
+		return definition.Definition{}, fmt.Errorf(
 			"%w: Skill Artifact %q has no current definition",
 			basespec.ErrReferenceUnresolved,
 			record.ID,
@@ -896,7 +897,7 @@ func (a *API) currentDefinitionForArtifact(
 		},
 	)
 	if err != nil {
-		return providerapi.Definition{}, err
+		return definition.Definition{}, err
 	}
 
 	return definitionForArtifact(snapshot, record)

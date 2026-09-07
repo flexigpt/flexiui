@@ -11,7 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
@@ -24,7 +25,7 @@ type documentReplacePlan struct {
 
 	collectionData json.RawMessage
 
-	definitions   map[basespec.SubresourceLocator]providerapi.Definition
+	definitions   map[basespec.SubresourceLocator]definition.Definition
 	registrations map[basespec.SubresourceLocator]Registration
 
 	dataBySubresource   map[basespec.SubresourceLocator]json.RawMessage
@@ -38,7 +39,7 @@ type documentReplacePlan struct {
 func (a *API) prepareDocumentReplace(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
-	parsed providerapi.ParsedDocument,
+	parsed schema.ParsedDocument,
 ) (documentReplacePlan, error) {
 	if a == nil {
 		return documentReplacePlan{}, basespec.ErrClosed
@@ -213,7 +214,7 @@ func validateRequiredPolicyReferences(
 func preparedRegistrationData(
 	bundle Bundle,
 	registration Registration,
-	definitionValue providerapi.Definition,
+	definitionValue definition.Definition,
 	existing artifact.Artifact,
 ) (json.RawMessage, error) {
 	var (

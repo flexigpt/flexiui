@@ -10,6 +10,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -20,13 +21,13 @@ type registeredCodec struct {
 }
 
 type Registry struct {
-	codecs map[providerapi.SchemaKey]registeredCodec
-	keys   []providerapi.SchemaKey
+	codecs map[schema.Key]registeredCodec
+	keys   []schema.Key
 }
 
 func NewRegistry(codecs ...providerapi.SchemaCodec) (*Registry, error) {
-	values := make(map[providerapi.SchemaKey]registeredCodec, len(codecs))
-	keys := make([]providerapi.SchemaKey, 0, len(codecs))
+	values := make(map[schema.Key]registeredCodec, len(codecs))
+	keys := make([]schema.Key, 0, len(codecs))
 
 	for _, codec := range codecs {
 		if codec == nil {
@@ -71,18 +72,18 @@ func NewRegistry(codecs ...providerapi.SchemaCodec) (*Registry, error) {
 	return &Registry{codecs: values, keys: keys}, nil
 }
 
-func (r *Registry) Keys() []providerapi.SchemaKey {
+func (r *Registry) Keys() []schema.Key {
 	if r == nil {
 		return nil
 	}
-	return append([]providerapi.SchemaKey(nil), r.keys...)
+	return append([]schema.Key(nil), r.keys...)
 }
 
 func (r *Registry) Canonicalize(
 	ctx context.Context,
 	raw []byte,
-) (providerapi.ParsedDocument, error) {
-	return r.CanonicalizeEntity(ctx, providerapi.EntityCollection, raw)
+) (schema.ParsedDocument, error) {
+	return r.CanonicalizeEntity(ctx, schema.EntityCollection, raw)
 }
 
 // CanonicalizeExpected canonicalizes raw content through the Artifact Store
@@ -93,19 +94,19 @@ func (r *Registry) Canonicalize(
 // JSON enforcement, and canonical output validation.
 func (r *Registry) CanonicalizeExpected(
 	ctx context.Context,
-	expected providerapi.SchemaKey,
+	expected schema.Key,
 	raw []byte,
-) (providerapi.ParsedDocument, error) {
+) (schema.ParsedDocument, error) {
 	if err := expected.Validate(); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 
 	value, err := r.CanonicalizeEntity(ctx, expected.Entity, raw)
 	if err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	if value.Key != expected {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: expected shareable schema %q/%q/%q, got %q/%q/%q",
 			basespec.ErrInvalid,
 			expected.Kind,
@@ -121,27 +122,27 @@ func (r *Registry) CanonicalizeExpected(
 
 func (r *Registry) CanonicalizeEntity(
 	ctx context.Context,
-	entity providerapi.EntityType,
+	entity schema.EntityType,
 	raw []byte,
-) (providerapi.ParsedDocument, error) {
+) (schema.ParsedDocument, error) {
 	if r == nil {
-		return providerapi.ParsedDocument{}, basespec.ErrClosed
+		return schema.ParsedDocument{}, basespec.ErrClosed
 	}
-	if entity != providerapi.EntityCollection && entity != providerapi.EntityArtifact {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+	if entity != schema.EntityCollection && entity != schema.EntityArtifact {
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: unsupported shareable entity %q",
 			basespec.ErrInvalid,
 			entity,
 		)
 	}
 	if ctx == nil {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: shareable document context is nil",
 			basespec.ErrInvalid,
 		)
 	}
 	if err := ctx.Err(); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 
 	canonical, err := jsonutil.CanonicalizeObject(
@@ -149,7 +150,7 @@ func (r *Registry) CanonicalizeEntity(
 		basespec.MaxDefinitionBytes,
 	)
 	if err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 
 	var header struct {
@@ -158,25 +159,25 @@ func (r *Registry) CanonicalizeEntity(
 		SchemaVersion string            `json:"schemaVersion"`
 	}
 	if err := json.Unmarshal(canonical, &header); err != nil {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: decode shareable document header: %w",
 			basespec.ErrInvalid,
 			err,
 		)
 	}
 
-	key := providerapi.SchemaKey{
+	key := schema.Key{
 		Entity:        entity,
-		Kind:          providerapi.SchemaKind(header.Kind),
+		Kind:          schema.Kind(header.Kind),
 		SchemaID:      header.SchemaID,
 		SchemaVersion: header.SchemaVersion,
 	}
 	if err := key.Validate(); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	registered, found := r.codecs[key]
 	if !found {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: shareable %s schema %q/%q/%q",
 			basespec.ErrUnsupported,
 			entity,
@@ -187,31 +188,31 @@ func (r *Registry) CanonicalizeEntity(
 	}
 
 	if err := validateJSONSchemaInstance(registered.schema, canonical); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 
 	value, err := registered.codec.Canonicalize(ctx, canonical)
 	if err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	if value.Key != key {
-		return providerapi.ParsedDocument{}, fmt.Errorf(
+		return schema.ParsedDocument{}, fmt.Errorf(
 			"%w: shareable codec returned another schema key",
 			basespec.ErrInvalid,
 		)
 	}
 	if err := validateJSONSchemaInstance(registered.schema, value.Raw); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	if err := validateCodecOutput(key, value); err != nil {
-		return providerapi.ParsedDocument{}, err
+		return schema.ParsedDocument{}, err
 	}
 	return value.Clone(), nil
 }
 
 func validateCodecOutput(
-	expected providerapi.SchemaKey,
-	value providerapi.ParsedDocument,
+	expected schema.Key,
+	value schema.ParsedDocument,
 ) error {
 	if err := value.Validate(); err != nil {
 		return err
@@ -250,9 +251,9 @@ func validateCodecOutput(
 			err,
 		)
 	}
-	actual := providerapi.SchemaKey{
+	actual := schema.Key{
 		Entity:        expected.Entity,
-		Kind:          providerapi.SchemaKind(header.Kind),
+		Kind:          schema.Kind(header.Kind),
 		SchemaID:      header.SchemaID,
 		SchemaVersion: header.SchemaVersion,
 	}
@@ -310,7 +311,7 @@ func compilePublishedJSONSchema(raw []byte) (*jsonschema.Schema, error) {
 }
 
 func validateJSONSchemaInstance(
-	schema *jsonschema.Schema,
+	sch *jsonschema.Schema,
 	raw []byte,
 ) error {
 	// Using jsonschema.UnmarshalJSON ensures proper float/integer typing alignment for v6.
@@ -322,7 +323,7 @@ func validateJSONSchemaInstance(
 			err,
 		)
 	}
-	if err := schema.Validate(value); err != nil {
+	if err := sch.Validate(value); err != nil {
 		return fmt.Errorf(
 			"%w: shareable document does not satisfy its JSON Schema: %w",
 			basespec.ErrInvalid,

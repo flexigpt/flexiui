@@ -10,18 +10,8 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
-
-// PackageFile is one owned copy of a regular package file relative to the
-// selected package root.
-//
-// It intentionally contains no host-native path. Built-in registries and
-// feature installers may decide package semantics, but Artifact Store owns the
-// generic bounded embedded-package read boundary.
-type PackageFile struct {
-	Locator basespec.Locator
-	Content []byte
-}
 
 // ReadPackageFiles reads a complete portable package directory from an fs.FS.
 //
@@ -36,7 +26,7 @@ func ReadPackageFiles(
 	ctx context.Context,
 	packages fs.FS,
 	packageRoot basespec.Locator,
-) ([]PackageFile, error) {
+) ([]source.ManagedPackageFile, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf(
 			"%w: embedded package context is nil",
@@ -80,7 +70,7 @@ func ReadPackageFiles(
 		)
 	}
 
-	files := make([]PackageFile, 0)
+	files := make([]source.ManagedPackageFile, 0)
 	seen := make(map[basespec.Locator]struct{})
 	var totalBytes int64
 
@@ -154,7 +144,7 @@ func ReadPackageFiles(
 				return err
 			}
 			totalBytes += int64(len(content))
-			files = append(files, PackageFile{
+			files = append(files, source.ManagedPackageFile{
 				Locator: relative,
 				Content: append([]byte(nil), content...),
 			})

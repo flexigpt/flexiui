@@ -6,7 +6,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 )
@@ -25,14 +24,12 @@ func (a *API) ResolveArtifact(
 	value, err := a.resources.ResolveArtifact(
 		ctx,
 		ref,
-		resource.ResolveOptions{
-			VerifySourceContent: options.VerifySourceContent,
-		},
+		options,
 	)
 	if err != nil {
 		return artifactConsumerAPIresource.ResolvedArtifact{}, err
 	}
-	return resolvedArtifactForAPI(value), nil
+	return value, nil
 }
 
 func (a *API) ResolveVerifiedLocalPath(
@@ -79,7 +76,7 @@ func (a *API) ReadCollectionEntry(
 	if err != nil {
 		return artifactConsumerAPIresource.VerifiedEntry{}, err
 	}
-	return verifiedEntryForAPI(value), nil
+	return value, nil
 }
 
 func (a *API) ResolveSourceLocalPath(
@@ -108,9 +105,10 @@ func (a *API) SupportsLocalPath(kind basespec.SourceKind) bool {
 		a.resources.SupportsLocalPath(kind)
 }
 
-func resolvedArtifactForAPI(
-	value resource.ResolvedArtifact,
+func resolvedArtifactForStore(
+	value artifactConsumerAPIresource.ResolvedArtifact,
 ) artifactConsumerAPIresource.ResolvedArtifact {
+	value = value.Clone()
 	return artifactConsumerAPIresource.ResolvedArtifact{
 		Artifact:         value.Artifact.Clone(),
 		Collection:       value.Collection.Clone(),
@@ -119,34 +117,5 @@ func resolvedArtifactForAPI(
 		Source:           value.Source.Clone(),
 		CatalogRevision:  value.CatalogRevision,
 		SourceGeneration: value.SourceGeneration,
-	}.Clone()
-}
-
-func resolvedArtifactForStore(
-	value artifactConsumerAPIresource.ResolvedArtifact,
-) resource.ResolvedArtifact {
-	value = value.Clone()
-	return resource.ResolvedArtifact{
-		Artifact:         value.Artifact.Clone(),
-		Collection:       value.Collection.Clone(),
-		Definition:       value.Definition.Clone(),
-		Occurrence:       value.Occurrence.Clone(),
-		Source:           value.Source.Clone(),
-		CatalogRevision:  value.CatalogRevision,
-		SourceGeneration: value.SourceGeneration,
 	}
-}
-
-func verifiedEntryForAPI(
-	value resource.VerifiedEntry,
-) artifactConsumerAPIresource.VerifiedEntry {
-	return artifactConsumerAPIresource.VerifiedEntry{
-		Collection:       value.Collection,
-		SourceID:         value.SourceID,
-		CatalogRevision:  value.CatalogRevision,
-		SourceRevision:   value.SourceRevision,
-		SourceGeneration: value.SourceGeneration,
-		Content:          append([]byte(nil), value.Content...),
-		Digest:           value.Digest,
-	}.Clone()
 }

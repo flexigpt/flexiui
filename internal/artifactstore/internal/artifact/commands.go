@@ -6,7 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -19,7 +19,7 @@ type SourceStateUpdate struct {
 	CollectionID       basespec.CollectionID
 	ResolvedDefinition *cryptoutil.Digest
 	State              artifact.State
-	Diagnostics        []providerapi.Diagnostic
+	Diagnostics        []diagnostic.Diagnostic
 	Revision           uint64
 	ModifiedAt         time.Time
 	ExpectedRevision   uint64
@@ -38,7 +38,7 @@ func (u SourceStateUpdate) Validate() error {
 	if err := u.State.Validate(u.ResolvedDefinition); err != nil {
 		return err
 	}
-	if err := providerapi.ValidateDiagnostics(u.Diagnostics); err != nil {
+	if err := diagnostic.Validate(u.Diagnostics); err != nil {
 		return err
 	}
 	if u.ExpectedRevision == 0 ||

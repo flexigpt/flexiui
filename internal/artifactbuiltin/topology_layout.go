@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 

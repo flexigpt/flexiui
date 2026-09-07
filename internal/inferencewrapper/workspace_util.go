@@ -10,7 +10,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
 )
 
@@ -287,10 +287,10 @@ func markWorkspaceSkillSessionUsage(
 
 		if !advertised {
 			current.Status = selection.ConversationSkillUsageUnavailable
-			current.Diagnostics = providerapi.AppendDiagnostics(
+			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
-				providerapi.Diagnostic{
-					Severity: providerapi.DiagnosticWarning,
+				diagnostic.Diagnostic{
+					Severity: diagnostic.SeverityWarning,
 					Code:     "workspace.conversation.skill-not-advertised",
 					Message:  "the selected Workspace Skill was not advertised to the model for this turn",
 				},
@@ -301,10 +301,10 @@ func markWorkspaceSkillSessionUsage(
 		key := workspaceArtifactRefKey(current.Artifact)
 		if _, selectedForSession := enabled[key]; !selectedForSession {
 			current.Status = selection.ConversationSkillUsageUnavailable
-			current.Diagnostics = providerapi.AppendDiagnostics(
+			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
-				providerapi.Diagnostic{
-					Severity: providerapi.DiagnosticWarning,
+				diagnostic.Diagnostic{
+					Severity: diagnostic.SeverityWarning,
 					Code:     "workspace.conversation.skill-not-in-session",
 					Message:  "the selected Workspace Skill was not present in the Skill session allow-list",
 				},
@@ -314,10 +314,10 @@ func markWorkspaceSkillSessionUsage(
 
 		if _, resolved := available[key]; !resolved {
 			current.Status = selection.ConversationSkillUsageUnavailable
-			current.Diagnostics = providerapi.AppendDiagnostics(
+			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
-				providerapi.Diagnostic{
-					Severity: providerapi.DiagnosticWarning,
+				diagnostic.Diagnostic{
+					Severity: diagnostic.SeverityWarning,
 					Code:     "workspace.conversation.skill-session-unavailable",
 					Message:  "the selected Workspace Skill did not resolve into the normal Skill Runtime session",
 				},

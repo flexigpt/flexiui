@@ -9,7 +9,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
@@ -22,7 +22,7 @@ import (
 // canonical-byte invariant, and document digest before MCP lifecycle code
 // consumes the typed projection.
 func BundleFromParsedDocument(
-	input providerapi.ParsedDocument,
+	input schema.ParsedDocument,
 ) (BundleDocument, error) {
 	expected := artifactbuiltin.MCPBundleSchemaKey
 	if err := validateParsedMCPDocument(
@@ -101,8 +101,8 @@ func decodeCanonicalDocument(
 }
 
 func validateParsedMCPDocument(
-	input providerapi.ParsedDocument,
-	expected providerapi.SchemaKey,
+	input schema.ParsedDocument,
+	expected schema.Key,
 	subject string,
 ) error {
 	if input.Key != expected {

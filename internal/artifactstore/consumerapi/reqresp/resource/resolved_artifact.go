@@ -7,8 +7,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
 // ResolveOptions controls Store-owned source verification.
@@ -28,7 +28,7 @@ type ResolveOptions struct {
 type ResolvedArtifact struct {
 	Artifact         artifact.Artifact
 	Collection       collection.Collection
-	Definition       providerapi.Definition
+	Definition       definition.Definition
 	Occurrence       catalog.Occurrence
 	Source           source.Summary
 	CatalogRevision  uint64

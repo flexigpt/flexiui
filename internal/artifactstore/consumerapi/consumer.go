@@ -8,11 +8,11 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
 // ConsumerAPI is the complete Artifact Store capability granted to
@@ -35,9 +35,9 @@ type ConsumerAPI interface {
 
 	CanonicalizeExpected(
 		ctx context.Context,
-		expected providerapi.SchemaKey,
+		expected schema.Key,
 		raw []byte,
-	) (providerapi.ParsedDocument, error)
+	) (schema.ParsedDocument, error)
 
 	CreateSource(
 		ctx context.Context,

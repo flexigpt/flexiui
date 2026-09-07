@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -21,7 +22,7 @@ type Snapshot struct {
 	PlanFingerprint     cryptoutil.Digest            `json:"planFingerprint"`
 	DecoderFingerprint  cryptoutil.Digest            `json:"decoderFingerprint"`
 	PublishedAt         time.Time                    `json:"publishedAt"`
-	Diagnostics         []providerapi.Diagnostic     `json:"diagnostics,omitempty"`
+	Diagnostics         []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
 	Occurrences         []Occurrence                 `json:"occurrences"`
 }
 
@@ -88,7 +89,7 @@ func (s Snapshot) Validate() error {
 	if s.PublishedAt.IsZero() {
 		return fmt.Errorf("%w: catalog publication time is required", basespec.ErrInvalid)
 	}
-	if err := providerapi.ValidateDiagnostics(s.Diagnostics); err != nil {
+	if err := diagnostic.Validate(s.Diagnostics); err != nil {
 		return err
 	}
 	seenOccurrences := make(map[OccurrenceKey]struct{}, len(s.Occurrences))
@@ -154,7 +155,7 @@ func (s Snapshot) Clone() Snapshot {
 		len(s.SourceGenerations),
 	)
 	maps.Copy(output.SourceGenerations, s.SourceGenerations)
-	output.Diagnostics = providerapi.CloneDiagnostics(s.Diagnostics)
+	output.Diagnostics = diagnostic.Clone(s.Diagnostics)
 	output.Occurrences = make([]Occurrence, len(s.Occurrences))
 	for index, occurrence := range s.Occurrences {
 		output.Occurrences[index] = occurrence.Clone()
@@ -166,14 +167,14 @@ func (s Snapshot) Clone() Snapshot {
 // one current catalog occurrence. It does not perform CAS lookup.
 func (s Snapshot) DefinitionForOccurrence(
 	key OccurrenceKey,
-) (providerapi.Definition, error) {
+) (definition.Definition, error) {
 	for _, occurrence := range s.Occurrences {
 		if occurrence.Key != key {
 			continue
 		}
 		if occurrence.State != OccurrenceValid ||
 			occurrence.Definition == nil {
-			return providerapi.Definition{}, fmt.Errorf(
+			return definition.Definition{}, fmt.Errorf(
 				"%w: occurrence %q has no available definition",
 				basespec.ErrDefinitionNotFound,
 				key.Locator,
@@ -181,7 +182,7 @@ func (s Snapshot) DefinitionForOccurrence(
 		}
 		return occurrence.Definition.Clone(), nil
 	}
-	return providerapi.Definition{}, fmt.Errorf(
+	return definition.Definition{}, fmt.Errorf(
 		"%w: occurrence %q",
 		basespec.ErrDefinitionNotFound,
 		key.Locator,
@@ -202,7 +203,7 @@ func EqualSnapshot(left, right Snapshot) bool {
 		!maps.Equal(left.AttachmentRevisions, right.AttachmentRevisions) ||
 		!maps.Equal(left.SourceRevisions, right.SourceRevisions) ||
 		!maps.Equal(left.SourceGenerations, right.SourceGenerations) ||
-		!providerapi.EqualDiagnostics(left.Diagnostics, right.Diagnostics) {
+		!diagnostic.Equal(left.Diagnostics, right.Diagnostics) {
 		return false
 	}
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 )
 
@@ -37,7 +37,7 @@ func NewService(
 
 func (s *Service) Create(
 	ctx context.Context,
-	draft artifactConsumerAPIroot.RootDraft,
+	draft root.RootDraft,
 ) (root.Root, error) {
 	if err := RequireMutableRoot(ctx, s.policy, draft.ID); err != nil {
 		return root.Root{}, err
@@ -49,7 +49,7 @@ func (s *Service) Create(
 // installer. Artifact Store does not assign any feature meaning to the Root.
 func (s *Service) EnsureSystem(
 	ctx context.Context,
-	draft artifactConsumerAPIroot.RootDraft,
+	draft root.RootDraft,
 ) (root.Root, error) {
 	if err := basespec.ValidateRootID(draft.ID); err != nil {
 		return root.Root{}, err
@@ -61,7 +61,7 @@ func (s *Service) EnsureSystem(
 			draft.ID,
 		)
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return root.Root{}, err
 	}
 	return s.create(ctx, draft)
@@ -84,7 +84,7 @@ func (s *Service) List(ctx context.Context) ([]root.Root, error) {
 func (s *Service) Update(
 	ctx context.Context,
 	id basespec.RootID,
-	update artifactConsumerAPIroot.RootUpdate,
+	update root.RootUpdate,
 ) (root.Root, error) {
 	if err := RequireMutableRoot(ctx, s.policy, id); err != nil {
 		return root.Root{}, err
@@ -189,7 +189,7 @@ func (s *Service) Purge(
 
 func (s *Service) create(
 	ctx context.Context,
-	draft artifactConsumerAPIroot.RootDraft,
+	draft root.RootDraft,
 ) (root.Root, error) {
 	if err := basespec.ValidateRootID(draft.ID); err != nil {
 		return root.Root{}, err
@@ -259,7 +259,7 @@ func RequireMutableRoot(
 	if policy == nil || !policy.IsProtectedRoot(rootID) {
 		return nil
 	}
-	if basespec.IsPrivilegedInstaller(ctx) {
+	if installer.IsPrivileged(ctx) {
 		return nil
 	}
 	return fmt.Errorf(

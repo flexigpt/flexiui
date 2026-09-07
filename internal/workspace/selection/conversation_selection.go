@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
@@ -69,7 +69,7 @@ type ConversationContextUsage struct {
 	OriginalBytes            int                            `json:"originalBytes,omitempty"`
 	IncludedBytes            int                            `json:"includedBytes,omitempty"`
 	Changed                  bool                           `json:"changed,omitempty"`
-	Diagnostics              []providerapi.Diagnostic       `json:"diagnostics,omitempty"`
+	Diagnostics              []diagnostic.Diagnostic        `json:"diagnostics,omitempty"`
 }
 
 type ConversationSkillUsage struct {
@@ -85,7 +85,7 @@ type ConversationSkillUsage struct {
 	SessionAvailable         bool                         `json:"sessionAvailable,omitempty"`
 	Active                   bool                         `json:"active,omitempty"`
 	Advertised               bool                         `json:"advertised,omitempty"`
-	Diagnostics              []providerapi.Diagnostic     `json:"diagnostics,omitempty"`
+	Diagnostics              []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
 }
 
 type ConversationUsage struct {
@@ -96,7 +96,7 @@ type ConversationUsage struct {
 	Status            ConversationSelectionStatus `json:"status"`
 	Contexts          []ConversationContextUsage  `json:"contexts,omitempty"`
 	Skills            []ConversationSkillUsage    `json:"skills,omitempty"`
-	Diagnostics       []providerapi.Diagnostic    `json:"diagnostics,omitempty"`
+	Diagnostics       []diagnostic.Diagnostic     `json:"diagnostics,omitempty"`
 }
 
 type ConversationResolution struct {
@@ -216,7 +216,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 		)
 		if composeErr != nil {
 			usage.Status = ConversationSelectionUnavailable
-			usage.Diagnostics = providerapi.AppendDiagnostics(
+			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				conversationSelectionDiagnostic(
 					"workspace.conversation.context-unavailable",
@@ -225,7 +225,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 			)
 		} else if contextPlan != nil && contextPlan.Body != nil {
 			usage.CatalogRevision = contextPlan.Body.CatalogRevision
-			usage.Diagnostics = providerapi.AppendDiagnostics(
+			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				contextPlan.Body.Diagnostics...,
 			)
@@ -315,7 +315,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 			},
 		)
 		if loadErr != nil {
-			usage.Diagnostics = providerapi.AppendDiagnostics(
+			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				conversationSelectionDiagnostic(
 					"workspace.conversation.skills-unavailable",
@@ -326,7 +326,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 			if skillPlan.Body.CatalogRevision > usage.CatalogRevision {
 				usage.CatalogRevision = skillPlan.Body.CatalogRevision
 			}
-			usage.Diagnostics = providerapi.AppendDiagnostics(
+			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				skillPlan.Body.Diagnostics...,
 			)
@@ -354,7 +354,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 
 				if skill.Skill.Insert != document.SkillInsertInstructions {
 					current.Status = ConversationSkillUsageUnavailable
-					current.Diagnostics = providerapi.AppendDiagnostics(
+					current.Diagnostics = diagnostic.Append(
 						current.Diagnostics,
 						conversationSelectionDiagnostic(
 							"workspace.conversation.skill-ineligible",
@@ -369,7 +369,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 				}
 
 				current.Status = ConversationSkillUsageAvailable
-				current.Diagnostics = providerapi.AppendDiagnostics(
+				current.Diagnostics = diagnostic.Append(
 					current.Diagnostics,
 					skill.Diagnostics...,
 				)
@@ -409,7 +409,7 @@ func unresolvedConversationUsage(
 		WorkspaceRevision: selection.WorkspaceRevision,
 		CatalogRevision:   selection.CatalogRevision,
 		Status:            ConversationSelectionUnavailable,
-		Diagnostics: []providerapi.Diagnostic{
+		Diagnostics: []diagnostic.Diagnostic{
 			conversationSelectionDiagnostic(
 				"workspace.conversation.unavailable",
 				message,
@@ -519,10 +519,10 @@ func ResolveConversationUsageStatus(usage *ConversationUsage) {
 func conversationSelectionDiagnostic(
 	code string,
 	message string,
-) providerapi.Diagnostic {
-	return providerapi.Diagnostic{
-		Severity: providerapi.DiagnosticError,
+) diagnostic.Diagnostic {
+	return diagnostic.Diagnostic{
+		Severity: diagnostic.SeverityError,
 		Code:     code,
-		Message:  providerapi.BoundedDiagnosticMessage(message),
+		Message:  diagnostic.BoundedMessage(message),
 	}
 }

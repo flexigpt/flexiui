@@ -9,7 +9,8 @@ import (
 	"sync"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
 )
 
 // Installer is implemented by one artifact-family-owned built-in installer.
@@ -103,23 +104,23 @@ func NewBootstrapRegistry(
 	}, nil
 }
 
-func (r *BootstrapRegistry) Register(installer Installer) error {
+func (r *BootstrapRegistry) Register(inst Installer) error {
 	if r == nil {
 		return fmt.Errorf("%w: built-in bootstrap registry is nil", basespec.ErrInvalid)
 	}
-	if installer == nil {
+	if inst == nil {
 		return fmt.Errorf("%w: built-in installer is nil", basespec.ErrInvalid)
 	}
 
-	name := installer.BuiltInName()
+	name := inst.BuiltInName()
 	if err := topology.ValidateHydrationInstallerName(name); err != nil {
 		return fmt.Errorf("built-in installer name: %w", err)
 	}
-	ids, err := normalizeIDs(installer.BuiltInIDs())
+	ids, err := normalizeIDs(inst.BuiltInIDs())
 	if err != nil {
 		return err
 	}
-	scopes, err := normalizePackageScopes(installer.BuiltInPackageScopes())
+	scopes, err := normalizePackageScopes(inst.BuiltInPackageScopes())
 	if err != nil {
 		return err
 	}
@@ -167,7 +168,7 @@ func (r *BootstrapRegistry) Register(installer Installer) error {
 		}
 	}
 
-	r.installers[name] = installer
+	r.installers[name] = inst
 	for _, id := range ids {
 		r.ids[id] = name
 	}
@@ -199,15 +200,15 @@ func (r *BootstrapRegistry) Ensure(ctx context.Context) error {
 		return entries[left].name < entries[right].name
 	})
 
-	ctx = basespec.WithPrivilegedInstaller(ctx)
+	ctx = installer.WithPrivilege(ctx)
 	prepared := make([]preparedHydration, 0, len(entries))
 
 	for _, entry := range entries {
-		installer, supported := entry.installer.(HydrationInstaller)
+		inst, supported := entry.installer.(HydrationInstaller)
 		if !supported {
 			continue
 		}
-		desired, err := installer.DesiredHydration(ctx)
+		desired, err := inst.DesiredHydration(ctx)
 		if err != nil {
 			return fmt.Errorf(
 				"build desired hydration for installer %q: %w",

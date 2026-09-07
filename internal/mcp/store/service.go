@@ -13,9 +13,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
@@ -311,7 +312,7 @@ func (a *API) EnsureBuiltInCurrent(
 	if a == nil {
 		return basespec.ErrClosed
 	}
-	if err := basespec.RequirePrivilegedInstaller(ctx); err != nil {
+	if err := installer.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if err := ref.Validate(); err != nil {
@@ -570,11 +571,11 @@ func validateCreateRegistrations(
 func definitionsForDocument(
 	document BundleDocument,
 ) (
-	map[basespec.SubresourceLocator]providerapi.Definition,
+	map[basespec.SubresourceLocator]definition.Definition,
 	error,
 ) {
 	output := make(
-		map[basespec.SubresourceLocator]providerapi.Definition,
+		map[basespec.SubresourceLocator]definition.Definition,
 		len(document.MCPServers)+len(document.BundleExtension.Policies),
 	)
 	for name := range document.MCPServers {

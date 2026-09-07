@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/providerregistry"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
@@ -38,7 +39,7 @@ func bindProviderSchemas(
 	}
 
 	available := make(
-		map[providerapi.SchemaKey]struct{},
+		map[schema.Key]struct{},
 	)
 	for _, key := range schemas.Keys() {
 		available[key] = struct{}{}
@@ -52,7 +53,7 @@ func bindProviderSchemas(
 
 		required := binder.RequiredSchemaKeys()
 		seen := make(
-			map[providerapi.SchemaKey]struct{},
+			map[schema.Key]struct{},
 			len(required),
 		)
 		for requiredIndex, key := range required {

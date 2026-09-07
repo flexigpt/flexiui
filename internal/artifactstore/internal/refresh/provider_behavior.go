@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"sort"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/discovery"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
@@ -315,7 +315,7 @@ func (s *Service) loadProviderRefreshInput(
 func (s *Service) buildProviderPlan(
 	ctx context.Context,
 	input providerRefreshInput,
-) (discovery.Plan, error) {
+) (providerapi.Plan, error) {
 	var (
 		plan providerapi.Plan
 		err  error
@@ -343,14 +343,14 @@ func (s *Service) buildProviderPlan(
 		)
 
 	default:
-		return discovery.Plan{}, fmt.Errorf(
+		return providerapi.Plan{}, fmt.Errorf(
 			"%w: collection behavior %q has no planning role",
 			basespec.ErrInvalid,
 			input.behavior.CollectionKind(),
 		)
 	}
 	if err != nil {
-		return discovery.Plan{}, err
+		return providerapi.Plan{}, err
 	}
 
 	revision := input.behavior.Revision()
@@ -359,11 +359,11 @@ func (s *Service) buildProviderPlan(
 		revision,
 		basespec.MaxVersionBytes,
 	); err != nil {
-		return discovery.Plan{}, err
+		return providerapi.Plan{}, err
 	}
 
 	if plan.Revision != "" && plan.Revision != revision {
-		return discovery.Plan{}, fmt.Errorf(
+		return providerapi.Plan{}, fmt.Errorf(
 			"%w: collection behavior %q returned plan revision %q, expected %q",
 			basespec.ErrInvalid,
 			input.behavior.CollectionKind(),
@@ -375,84 +375,10 @@ func (s *Service) buildProviderPlan(
 	plan = plan.Normalized()
 
 	if err := plan.Validate(); err != nil {
-		return discovery.Plan{}, err
+		return providerapi.Plan{}, err
 	}
 
-	return discoveryPlanFromProvider(plan)
-}
-
-func discoveryPlanFromProvider(
-	input providerapi.Plan,
-) (discovery.Plan, error) {
-	input = input.Normalized()
-	if err := input.Validate(); err != nil {
-		return discovery.Plan{}, err
-	}
-
-	output := discovery.Plan{
-		Revision: input.Revision,
-		Sources:  make([]discovery.SourcePlan, len(input.Sources)),
-	}
-
-	for index, sourcePlan := range input.Sources {
-		value := discovery.SourcePlan{
-			SourceID: sourcePlan.SourceID,
-			ExplicitLocators: append(
-				[]basespec.Locator(nil),
-				sourcePlan.ExplicitLocators...,
-			),
-			DirectoryRoots: make(
-				[]discovery.DirectoryRoot,
-				len(sourcePlan.DirectoryRoots),
-			),
-			DecoderHints: make(
-				[]discovery.DecoderHint,
-				len(sourcePlan.DecoderHints),
-			),
-			ExpectedContentDigests: maps.Clone(
-				sourcePlan.ExpectedContentDigests,
-			),
-			ExpectedGeneration: sourcePlan.ExpectedGeneration,
-			AllowedDecoderIDs: append(
-				[]basespec.DecoderID(nil),
-				sourcePlan.AllowedDecoderIDs...,
-			),
-			Authoritative:     sourcePlan.Authoritative,
-			MaxCandidateBytes: sourcePlan.MaxCandidateBytes,
-			MaxTotalBytes:     sourcePlan.MaxTotalBytes,
-			MaxCandidates:     sourcePlan.MaxCandidates,
-			MaxEntries:        sourcePlan.MaxEntries,
-			MaxDepth:          sourcePlan.MaxDepth,
-		}
-
-		for rootIndex, root := range sourcePlan.DirectoryRoots {
-			value.DirectoryRoots[rootIndex] = discovery.DirectoryRoot{
-				Root:      root.Root,
-				Recursive: root.Recursive,
-				IncludePatterns: append(
-					[]string(nil),
-					root.IncludePatterns...,
-				),
-			}
-		}
-		for hintIndex, hint := range sourcePlan.DecoderHints {
-			value.DecoderHints[hintIndex] = discovery.DecoderHint{
-				Locator:   hint.Locator,
-				Recursive: hint.Recursive,
-				DecoderIDs: append(
-					[]basespec.DecoderID(nil),
-					hint.DecoderIDs...,
-				),
-			}
-		}
-
-		output.Sources[index] = value.Normalized()
-	}
-
-	if err := output.Validate(); err != nil {
-		return discovery.Plan{}, err
-	}
-	return output, nil
+	return plan, nil
 }
 
 type providerAdoptionPolicy struct {
@@ -465,11 +391,11 @@ func (p providerAdoptionPolicy) Derive(
 	ctx context.Context,
 	collectionValue collection.Collection,
 	occurrence catalog.Occurrence,
-	definitionValue providerapi.Definition,
+	definitionValue definition.Definition,
 ) (
 	artifactimpl.Draft,
 	bool,
-	[]providerapi.Diagnostic,
+	[]diagnostic.Diagnostic,
 	error,
 ) {
 	if p.behavior == nil || p.ids == nil {
@@ -519,10 +445,10 @@ func (p providerAdoptionPolicy) Derive(
 		return artifactimpl.Draft{}, false, nil, err
 	}
 	if !decision.Adopt ||
-		providerapi.ContainsErrorDiagnostic(decision.Diagnostics) {
+		diagnostic.ContainsError(decision.Diagnostics) {
 		return artifactimpl.Draft{},
 			false,
-			providerapi.CloneDiagnostics(decision.Diagnostics),
+			diagnostic.Clone(decision.Diagnostics),
 			nil
 	}
 
@@ -544,7 +470,7 @@ func (p providerAdoptionPolicy) Derive(
 			),
 		},
 		true,
-		providerapi.CloneDiagnostics(decision.Diagnostics),
+		diagnostic.Clone(decision.Diagnostics),
 		nil
 }
 

@@ -8,6 +8,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 
 	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
@@ -31,8 +33,8 @@ func (*Decoder) Revision() string {
 	return artifactbuiltin.DecoderRevision
 }
 
-func (*Decoder) RequiredSchemaKeys() []providerapi.SchemaKey {
-	return []providerapi.SchemaKey{
+func (*Decoder) RequiredSchemaKeys() []schema.Key {
+	return []schema.Key{
 		artifactbuiltin.MCPBundleSchemaKey,
 	}
 }
@@ -75,7 +77,7 @@ func (d *Decoder) Recognize(
 func (d *Decoder) Decode(
 	ctx context.Context,
 	candidate providerapi.Candidate,
-) ([]providerapi.Decoded, []providerapi.Diagnostic) {
+) ([]providerapi.Decoded, []diagnostic.Diagnostic) {
 	if !candidate.RequestsDecoder(artifactbuiltin.DecoderID) ||
 		!mcpStore.IsBundleDocumentLocator(candidate.Locator) {
 		return nil, nil
@@ -162,14 +164,14 @@ func decoderError(
 	locator basespec.Locator,
 	subresource string,
 	err error,
-) []providerapi.Diagnostic {
-	return []providerapi.Diagnostic{{
-		Severity: providerapi.DiagnosticError,
+) []diagnostic.Diagnostic {
+	return []diagnostic.Diagnostic{{
+		Severity: diagnostic.SeverityError,
 		Code:     "mcp.mcpStore.subresource-invalid",
-		Message: providerapi.BoundedDiagnosticMessage(
+		Message: diagnostic.BoundedMessage(
 			fmt.Sprintf("%s: %v", subresource, err),
 		),
-		Location: &providerapi.DiagnosticLocation{
+		Location: &diagnostic.Location{
 			Locator: locator,
 		},
 	}}

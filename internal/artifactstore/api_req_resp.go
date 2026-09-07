@@ -6,17 +6,16 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
-// OpenConfig contains the application-composition inputs required to open one
+// Config contains the application-composition inputs required to open one
 // Artifact Store.
 //
 // Store implementation dependencies, source snapshots, source adapters,
 // metadata repositories, SQLite handles, clocks, and automatic Artifact ID
 // providers remain private to Artifact Store.
-type OpenConfig struct {
+type Config struct {
 	BaseDirectory string
 
 	ArtifactProviders []providerapi.Provider
@@ -26,7 +25,7 @@ type OpenConfig struct {
 }
 
 type CreateArtifactRootRequest struct {
-	Body *artifactConsumerAPIroot.RootDraft
+	Body *root.RootDraft
 }
 
 type CreateArtifactRootResponse struct {
@@ -53,7 +52,7 @@ type ListArtifactRootsResponse struct {
 
 type UpdateArtifactRootRequest struct {
 	RootID basespec.RootID `path:"rootID" required:"true"`
-	Body   *artifactConsumerAPIroot.RootUpdate
+	Body   *root.RootUpdate
 }
 
 type UpdateArtifactRootResponse struct {

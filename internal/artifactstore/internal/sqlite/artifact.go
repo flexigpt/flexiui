@@ -12,8 +12,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -1076,7 +1076,7 @@ func requirePinnedSourceStateTx(
 	}
 	if value.State != expectedState ||
 		!cryptoutil.IsDigestEqual(value.ResolvedDefinition, expectedDigest) ||
-		!providerapi.EqualDiagnostics(value.Diagnostics, expectedDiagnostics) {
+		!diagnostic.Equal(value.Diagnostics, expectedDiagnostics) {
 		return fmt.Errorf(
 			"%w: pinned artifact does not match the current source occurrence",
 			basespec.ErrConflict,
@@ -1169,7 +1169,7 @@ func sameArtifactImmutableFields(
 			next.ResolvedDefinition,
 		) &&
 		current.State == next.State &&
-		providerapi.EqualDiagnostics(current.Diagnostics, next.Diagnostics) &&
+		diagnostic.Equal(current.Diagnostics, next.Diagnostics) &&
 		current.CreatedAt.Equal(next.CreatedAt)
 }
 
@@ -1206,7 +1206,7 @@ func scanArtifact(row scanner) (artifact.Artifact, error) {
 		return artifact.Artifact{}, err
 	}
 
-	diagnostics := []providerapi.Diagnostic{}
+	diagnostics := []diagnostic.Diagnostic{}
 	if err := decodeJSON(diagnosticsRaw, &diagnostics); err != nil {
 		return artifact.Artifact{}, err
 	}

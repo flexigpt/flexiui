@@ -1,4 +1,4 @@
-package providerapi
+package diagnostic
 
 import (
 	"fmt"
@@ -15,15 +15,15 @@ const (
 	MaxDiagnostics            = 128
 )
 
-type DiagnosticSeverity string
+type Severity string
 
 const (
-	DiagnosticError   DiagnosticSeverity = "error"
-	DiagnosticWarning DiagnosticSeverity = "warning"
-	DiagnosticInfo    DiagnosticSeverity = "info"
+	SeverityError   Severity = "error"
+	SeverityWarning Severity = "warning"
+	SeverityInfo    Severity = "info"
 )
 
-type DiagnosticLocation struct {
+type Location struct {
 	Locator            basespec.Locator            `json:"locator,omitempty"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	Line               int                         `json:"line,omitempty"`
@@ -31,13 +31,13 @@ type DiagnosticLocation struct {
 }
 
 type Diagnostic struct {
-	Severity DiagnosticSeverity  `json:"severity"`
-	Code     string              `json:"code"`
-	Message  string              `json:"message"`
-	Location *DiagnosticLocation `json:"location,omitempty"`
+	Severity Severity  `json:"severity"`
+	Code     string    `json:"code"`
+	Message  string    `json:"message"`
+	Location *Location `json:"location,omitempty"`
 }
 
-func ValidateDiagnostics(values []Diagnostic) error {
+func Validate(values []Diagnostic) error {
 	if len(values) > MaxDiagnostics {
 		return fmt.Errorf(
 			"%w: diagnostics exceed %d entries",
@@ -55,7 +55,7 @@ func ValidateDiagnostics(values []Diagnostic) error {
 
 func (d Diagnostic) Validate() error {
 	switch d.Severity {
-	case DiagnosticError, DiagnosticWarning, DiagnosticInfo:
+	case SeverityError, SeverityWarning, SeverityInfo:
 	default:
 		return fmt.Errorf("%w: invalid diagnostic severity %q", basespec.ErrInvalid, d.Severity)
 	}
@@ -94,19 +94,19 @@ func (d Diagnostic) Validate() error {
 	return nil
 }
 
-func ContainsErrorDiagnostic(values []Diagnostic) bool {
+func ContainsError(values []Diagnostic) bool {
 	for _, value := range values {
-		if value.Severity == DiagnosticError {
+		if value.Severity == SeverityError {
 			return true
 		}
 	}
 	return false
 }
 
-// BoundedDiagnosticMessage converts dynamically generated text into a value
+// BoundedMessage converts dynamically generated text into a value
 // accepted by Diagnostic.Validate. It is intended for internal errors whose
 // text can contain untrusted JSON keys, paths, or decoder output.
-func BoundedDiagnosticMessage(value string) string {
+func BoundedMessage(value string) string {
 	value = strings.ToValidUTF8(value, "\uFFFD")
 	value = strings.Map(func(character rune) rune {
 		if unicode.IsControl(character) {
@@ -134,11 +134,11 @@ func BoundedDiagnosticMessage(value string) string {
 	return value + suffix
 }
 
-func AppendDiagnostics(
+func Append(
 	current []Diagnostic,
 	incoming ...Diagnostic,
 ) []Diagnostic {
-	output := append(CloneDiagnostics(current), CloneDiagnostics(incoming)...)
+	output := append(Clone(current), Clone(incoming)...)
 	if len(output) <= MaxDiagnostics {
 		return output
 	}
@@ -149,7 +149,7 @@ func AppendDiagnostics(
 	}
 	excess := len(output) - MaxDiagnostics
 	for index := len(output) - 1; index >= 0 && excess > 0; index-- {
-		if output[index].Severity == DiagnosticError {
+		if output[index].Severity == SeverityError {
 			continue
 		}
 		keep[index] = false
@@ -169,7 +169,7 @@ func AppendDiagnostics(
 	return trimmed
 }
 
-func CloneDiagnostics(values []Diagnostic) []Diagnostic {
+func Clone(values []Diagnostic) []Diagnostic {
 	if values == nil {
 		return nil
 	}
@@ -185,7 +185,7 @@ func CloneDiagnostics(values []Diagnostic) []Diagnostic {
 	return output
 }
 
-func EqualDiagnostics(left, right []Diagnostic) bool {
+func Equal(left, right []Diagnostic) bool {
 	if len(left) != len(right) {
 		return false
 	}

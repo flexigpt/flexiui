@@ -10,6 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
@@ -90,7 +91,7 @@ func NewService(
 func (s *Service) refresh(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	plan discovery.Plan,
+	plan providerapi.Plan,
 	policy artifactimpl.Policy,
 ) (refresh.RefreshCollectionResult, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
@@ -169,7 +170,7 @@ func (s *Service) refresh(
 	expectedSourceRevisions := make(map[basespec.SourceID]uint64)
 	sourceGenerations := make(map[basespec.SourceID]string)
 	finalOccurrences := make([]catalog.Occurrence, 0)
-	allDiagnostics := make([]providerapi.Diagnostic, 0)
+	allDiagnostics := make([]diagnostic.Diagnostic, 0)
 	snapshots := make([]sourceimpl.Snapshot, 0)
 	candidates := 0
 
@@ -275,7 +276,7 @@ func (s *Service) refresh(
 			finalOccurrences,
 			discovered.Occurrences...,
 		)
-		allDiagnostics = providerapi.AppendDiagnostics(
+		allDiagnostics = diagnostic.Append(
 			allDiagnostics,
 			discovered.Diagnostics...,
 		)
@@ -315,7 +316,7 @@ func (s *Service) refresh(
 		return refresh.RefreshCollectionResult{}, err
 	}
 
-	allDiagnostics = providerapi.AppendDiagnostics(
+	allDiagnostics = diagnostic.Append(
 		allDiagnostics,
 		reconciliation.Diagnostics...,
 	)
@@ -382,7 +383,7 @@ func (s *Service) refresh(
 		PlanFingerprint:     planFingerprint,
 		DecoderFingerprint:  decoderFingerprint,
 		PublishedAt:         publication.PublishedAt,
-		Diagnostics:         providerapi.CloneDiagnostics(allDiagnostics),
+		Diagnostics:         diagnostic.Clone(allDiagnostics),
 		Occurrences:         make([]catalog.Occurrence, len(finalOccurrences)),
 	}
 	for index, occurrence := range finalOccurrences {
@@ -404,7 +405,7 @@ func (s *Service) refresh(
 
 	result := refresh.RefreshCollectionResult{
 		Catalog:     published.Clone(),
-		Diagnostics: providerapi.CloneDiagnostics(allDiagnostics),
+		Diagnostics: diagnostic.Clone(allDiagnostics),
 		Candidates:  candidates,
 	}
 	for _, value := range reconciliation.Creates {
