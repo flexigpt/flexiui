@@ -118,22 +118,6 @@ func ValidatePackageVersion(value LogicalVersion) error {
 	return ValidatePortableName("package version", string(value))
 }
 
-func ValidateAttachmentRole(value AttachmentRole) error {
-	return ValidateIdentifier("attachment role", string(value), MaxKindBytes)
-}
-
-func ValidateDecoderID(value DecoderID) error {
-	return ValidateIdentifier("decoder ID", string(value), MaxKindBytes)
-}
-
-func ValidateSourceGeneration(value string) error {
-	return ValidateRequiredText(
-		"source generation",
-		value,
-		MaxSourceGenerationBytes,
-	)
-}
-
 func ValidateLogicalName(value LogicalName) error {
 	return ValidateRequiredText(
 		"logical name",
@@ -150,6 +134,18 @@ func ValidateLogicalVersion(value LogicalVersion, optional bool) error {
 		"logical version",
 		string(value),
 		MaxVersionBytes,
+	)
+}
+
+func ValidateDecoderID(value DecoderID) error {
+	return ValidateIdentifier("decoder ID", string(value), MaxKindBytes)
+}
+
+func ValidateSourceGeneration(value string) error {
+	return ValidateRequiredText(
+		"source generation",
+		value,
+		MaxSourceGenerationBytes,
 	)
 }
 

@@ -37,13 +37,13 @@ func (c Collection) Clone() Collection {
 
 // Attachment is a provider-safe view of a persisted Collection attachment.
 type Attachment struct {
-	RootID       root.RootID             `json:"rootID"`
-	CollectionID collection.CollectionID `json:"collectionID"`
-	SourceID     source.SourceID         `json:"sourceID"`
-	Role         basespec.AttachmentRole `json:"role"`
-	Enabled      bool                    `json:"enabled"`
-	Revision     uint64                  `json:"revision"`
-	Data         json.RawMessage         `json:"data"`
+	RootID       root.RootID               `json:"rootID"`
+	CollectionID collection.CollectionID   `json:"collectionID"`
+	SourceID     source.SourceID           `json:"sourceID"`
+	Role         collection.AttachmentRole `json:"role"`
+	Enabled      bool                      `json:"enabled"`
+	Revision     uint64                    `json:"revision"`
+	Data         json.RawMessage           `json:"data"`
 }
 
 func (a Attachment) Clone() Attachment {

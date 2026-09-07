@@ -604,7 +604,7 @@ func (a *API) PurgeSkill(
 	if err != nil {
 		return err
 	}
-	var role basespec.AttachmentRole
+	var role collection.AttachmentRole
 	for _, attachment := range bundle.Attachments {
 		if attachment.SourceID == value.Binding.SourceID {
 			role = attachment.Role
@@ -947,7 +947,7 @@ func (a *API) createBundle(
 	}
 
 	attachments := make([]collection.AttachmentDraft, 0, len(request.Attachments))
-	roleCounts := make(map[basespec.AttachmentRole]int)
+	roleCounts := make(map[collection.AttachmentRole]int)
 	for _, draft := range request.Attachments {
 		if draft.Role == artifactbuiltin.BuiltInAttachmentRole &&
 			!allowBuiltInAttachment {
@@ -1749,7 +1749,7 @@ func (a *API) validateAttachment(
 	return validateRoleSourceKind(value.Role, sourceValue.Kind)
 }
 
-func validateRole(role basespec.AttachmentRole) error {
+func validateRole(role collection.AttachmentRole) error {
 	switch role {
 	case artifactbuiltin.ManagedAttachmentRole, artifactbuiltin.BuiltInAttachmentRole, RoleExternal, RoleLibrary:
 		return nil
@@ -1763,7 +1763,7 @@ func validateRole(role basespec.AttachmentRole) error {
 }
 
 func validateRoleSourceKind(
-	role basespec.AttachmentRole,
+	role collection.AttachmentRole,
 	kind source.SourceKind,
 ) error {
 	switch role {
@@ -1791,7 +1791,7 @@ func validateRoleSourceKind(
 
 func managedAttachmentForRole(
 	value Bundle,
-	role basespec.AttachmentRole,
+	role collection.AttachmentRole,
 ) (collection.Attachment, source.Summary, error) {
 	sources := make(map[source.SourceID]source.Summary, len(value.Sources))
 	for _, sourceValue := range value.Sources {
@@ -1847,7 +1847,7 @@ func managedAttachmentForRole(
 func bundleAttachmentRole(
 	value Bundle,
 	sourceID source.SourceID,
-) (basespec.AttachmentRole, error) {
+) (collection.AttachmentRole, error) {
 	for _, attachment := range value.Attachments {
 		if attachment.SourceID == sourceID {
 			return attachment.Role, nil

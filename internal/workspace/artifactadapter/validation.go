@@ -205,7 +205,7 @@ func validateWorkspaceState(
 	}
 }
 
-func validateRole(role basespec.AttachmentRole) error {
+func validateRole(role collection.AttachmentRole) error {
 	if _, supported := attachmentdata.AttachmentOperationFor(role); supported {
 		return nil
 	}

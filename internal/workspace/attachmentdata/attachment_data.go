@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
 
 type AttachmentOperation struct {
-	Role                                 basespec.AttachmentRole
+	Role                                 collection.AttachmentRole
 	CanAttach                            bool
 	IsPrimary                            bool
 	RequiredSourceKind                   source.SourceKind
@@ -56,7 +57,7 @@ var attachmentOperationMatrix = [...]AttachmentOperation{
 }
 
 func ValidateAttachmentDataForRole(
-	role basespec.AttachmentRole,
+	role collection.AttachmentRole,
 	value spec.AttachmentData,
 ) error {
 	operation, supported := AttachmentOperationFor(role)
@@ -115,7 +116,7 @@ func DecodeAttachmentData(
 }
 
 func AttachmentOperationFor(
-	role basespec.AttachmentRole,
+	role collection.AttachmentRole,
 ) (AttachmentOperation, bool) {
 	for _, operation := range attachmentOperationMatrix {
 		if operation.Role == role {

@@ -69,13 +69,11 @@ type (
 	StorageKey  string
 	PackageKind string
 
-	AttachmentRole string
-
 	DecoderID string
-
-	Locator            string
-	SubresourceLocator string
 
 	LogicalName    string
 	LogicalVersion string
+
+	Locator            string
+	SubresourceLocator string
 )

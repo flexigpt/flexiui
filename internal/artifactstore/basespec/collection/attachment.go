@@ -11,15 +11,21 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
+type AttachmentRole string
+
+func (v AttachmentRole) Validate() error {
+	return basespec.ValidateIdentifier("attachment role", string(v), basespec.MaxKindBytes)
+}
+
 type Attachment struct {
-	RootID       root.RootID             `json:"rootID"`
-	CollectionID CollectionID            `json:"collectionID"`
-	SourceID     source.SourceID         `json:"sourceID"`
-	Role         basespec.AttachmentRole `json:"role"`
-	Enabled      bool                    `json:"enabled"`
-	Revision     uint64                  `json:"revision"`
-	CreatedAt    time.Time               `json:"createdAt"`
-	ModifiedAt   time.Time               `json:"modifiedAt"`
+	RootID       root.RootID     `json:"rootID"`
+	CollectionID CollectionID    `json:"collectionID"`
+	SourceID     source.SourceID `json:"sourceID"`
+	Role         AttachmentRole  `json:"role"`
+	Enabled      bool            `json:"enabled"`
+	Revision     uint64          `json:"revision"`
+	CreatedAt    time.Time       `json:"createdAt"`
+	ModifiedAt   time.Time       `json:"modifiedAt"`
 
 	Data json.RawMessage `json:"-"`
 }
@@ -34,7 +40,7 @@ func (a Attachment) Validate() error {
 	if err := a.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateAttachmentRole(a.Role); err != nil {
+	if err := a.Role.Validate(); err != nil {
 		return err
 	}
 	if _, err := jsonutil.CanonicalizeObject(
@@ -75,18 +81,18 @@ func (a Attachment) Clone() Attachment {
 }
 
 type AttachmentDraft struct {
-	SourceID source.SourceID         `json:"sourceID"`
-	Role     basespec.AttachmentRole `json:"role"`
-	Enabled  bool                    `json:"enabled"`
-	Data     json.RawMessage         `json:"data"`
+	SourceID source.SourceID `json:"sourceID"`
+	Role     AttachmentRole  `json:"role"`
+	Enabled  bool            `json:"enabled"`
+	Data     json.RawMessage `json:"data"`
 }
 
 type AttachmentUpdate struct {
-	ExpectedCollectionRevision uint64                  `json:"expectedCollectionRevision"`
-	ExpectedAttachmentRevision uint64                  `json:"expectedAttachmentRevision"`
-	Role                       basespec.AttachmentRole `json:"role"`
-	Enabled                    bool                    `json:"enabled"`
-	Data                       json.RawMessage         `json:"data"`
+	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision"`
+	ExpectedAttachmentRevision uint64          `json:"expectedAttachmentRevision"`
+	Role                       AttachmentRole  `json:"role"`
+	Enabled                    bool            `json:"enabled"`
+	Data                       json.RawMessage `json:"data"`
 }
 
 type AttachmentReplacement struct {

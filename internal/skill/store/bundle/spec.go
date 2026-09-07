@@ -14,13 +14,13 @@ import (
 const (
 	DiscoveryPolicyRevision = "skill.bundle.discovery.v1"
 
-	RoleExternal basespec.AttachmentRole = "external"
-	RoleLibrary  basespec.AttachmentRole = "library"
+	RoleExternal collection.AttachmentRole = "external"
+	RoleLibrary  collection.AttachmentRole = "library"
 )
 
 type AttachmentDraft struct {
 	SourceID              source.SourceID
-	Role                  basespec.AttachmentRole
+	Role                  collection.AttachmentRole
 	Enabled               bool
 	DiscoveryRoot         basespec.Locator
 	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest

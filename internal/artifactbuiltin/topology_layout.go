@@ -107,8 +107,8 @@ type (
 )
 
 const (
-	ManagedAttachmentRole basespec.AttachmentRole = "managed"
-	BuiltInAttachmentRole basespec.AttachmentRole = "builtin"
+	ManagedAttachmentRole collection.AttachmentRole = "managed"
+	BuiltInAttachmentRole collection.AttachmentRole = "builtin"
 
 	AgentSkillArtifactKind   artifact.ArtifactKind = "agent.skill"
 	AgentSkillSchemaID       schema.SchemaID       = "agent.skill.v1"

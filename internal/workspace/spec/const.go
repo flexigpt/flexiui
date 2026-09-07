@@ -1,12 +1,10 @@
 package spec
 
-import (
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-)
+import "github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 
 const (
-	RolePrimary         basespec.AttachmentRole = "primary"
-	RoleLibrary         basespec.AttachmentRole = "library"
-	RoleAttachedPackage basespec.AttachmentRole = "attached-package"
-	RoleOverlay         basespec.AttachmentRole = "overlay"
+	RolePrimary         collection.AttachmentRole = "primary"
+	RoleLibrary         collection.AttachmentRole = "library"
+	RoleAttachedPackage collection.AttachmentRole = "attached-package"
+	RoleOverlay         collection.AttachmentRole = "overlay"
 )

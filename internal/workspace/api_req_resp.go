@@ -47,7 +47,7 @@ type WorkspaceOccurrenceRef struct {
 type WorkspaceAttachmentView struct {
 	SourceID          source.SourceID             `json:"sourceID"`
 	Revision          uint64                      `json:"revision"`
-	Role              basespec.AttachmentRole     `json:"role"`
+	Role              collection.AttachmentRole   `json:"role"`
 	Enabled           bool                        `json:"enabled"`
 	SourceDisplayName string                      `json:"sourceDisplayName,omitempty"`
 	SourceKind        string                      `json:"sourceKind,omitempty"`
@@ -372,7 +372,7 @@ type PurgeWorkspaceResponse struct {
 type AttachWorkspaceSourceRequestBody struct {
 	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision" required:"true"`
 	SourceID                   source.SourceID             `json:"sourceID"                   required:"true"`
-	Role                       basespec.AttachmentRole     `json:"role"                       required:"true"`
+	Role                       collection.AttachmentRole   `json:"role"                       required:"true"`
 	Enabled                    bool                        `json:"enabled"                    required:"true"`
 	Settings                   WorkspaceAttachmentSettings `json:"settings"`
 }
@@ -389,7 +389,7 @@ type AttachWorkspaceSourceResponse struct {
 type UpdateWorkspaceAttachmentRequestBody struct {
 	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision" required:"true"`
 	ExpectedAttachmentRevision uint64                      `json:"expectedAttachmentRevision" required:"true"`
-	Role                       basespec.AttachmentRole     `json:"role"                       required:"true"`
+	Role                       collection.AttachmentRole   `json:"role"                       required:"true"`
 	Enabled                    bool                        `json:"enabled"                    required:"true"`
 	Settings                   WorkspaceAttachmentSettings `json:"settings"`
 }

@@ -635,7 +635,7 @@ func validateWorkspaceProviderAttachment(
 	if err := value.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateAttachmentRole(value.Role); err != nil {
+	if err := value.Role.Validate(); err != nil {
 		return err
 	}
 	if _, supported := attachmentdata.AttachmentOperationFor(value.Role); !supported {

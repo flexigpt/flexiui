@@ -1157,7 +1157,7 @@ func scanCollectionAttachment(row scanner) (collection.Attachment, error) {
 		RootID:       root.RootID(rootID),
 		CollectionID: collection.CollectionID(collectionID),
 		SourceID:     source.SourceID(sourceID),
-		Role:         basespec.AttachmentRole(role),
+		Role:         collection.AttachmentRole(role),
 		Enabled:      enabled != 0,
 		Data:         append(json.RawMessage(nil), data...),
 		Revision:     revision,

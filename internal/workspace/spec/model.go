@@ -123,12 +123,12 @@ type UpdateRequest struct {
 }
 
 type AttachRequest struct {
-	Workspace                  WorkspaceRef            `json:"workspace"`
-	ExpectedCollectionRevision uint64                  `json:"expectedCollectionRevision"`
-	SourceID                   source.SourceID         `json:"sourceID"`
-	Role                       basespec.AttachmentRole `json:"role"`
-	Enabled                    bool                    `json:"enabled"`
-	Data                       AttachmentData          `json:"data"`
+	Workspace                  WorkspaceRef              `json:"workspace"`
+	ExpectedCollectionRevision uint64                    `json:"expectedCollectionRevision"`
+	SourceID                   source.SourceID           `json:"sourceID"`
+	Role                       collection.AttachmentRole `json:"role"`
+	Enabled                    bool                      `json:"enabled"`
+	Data                       AttachmentData            `json:"data"`
 }
 
 type UpdateAttachmentRequest struct {
@@ -136,7 +136,7 @@ type UpdateAttachmentRequest struct {
 	SourceID                   source.SourceID
 	ExpectedCollectionRevision uint64
 	ExpectedAttachmentRevision uint64
-	Role                       basespec.AttachmentRole
+	Role                       collection.AttachmentRole
 	Enabled                    bool
 	Data                       AttachmentData
 }
