@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
@@ -154,12 +155,12 @@ type ConsumerAPI interface {
 
 	AdoptArtifact(
 		ctx context.Context,
-		request artifact.AdoptRequest,
+		request artifactConsumerAPIartifact.AdoptRequest,
 	) (artifact.Artifact, error)
 
 	PinArtifact(
 		ctx context.Context,
-		request artifact.PinRequest,
+		request artifactConsumerAPIartifact.PinRequest,
 	) (artifact.Artifact, error)
 
 	SetArtifactEnabled(
@@ -209,7 +210,7 @@ type ConsumerAPI interface {
 
 	SuppressBinding(
 		ctx context.Context,
-		request artifact.SuppressRequest,
+		request artifactConsumerAPIartifact.SuppressRequest,
 	) (artifact.Suppression, error)
 
 	UnsuppressBinding(

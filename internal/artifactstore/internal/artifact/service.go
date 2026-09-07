@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
@@ -95,7 +96,7 @@ func (s *Service) ListSuppressions(
 
 func (s *Service) Adopt(
 	ctx context.Context,
-	request artifact.AdoptRequest,
+	request artifactConsumerAPIartifact.AdoptRequest,
 ) (artifact.Artifact, error) {
 	if err := rootimpl.RequireMutableRoot(
 		ctx,
@@ -206,7 +207,7 @@ func (s *Service) Adopt(
 
 func (s *Service) Pin(
 	ctx context.Context,
-	request artifact.PinRequest,
+	request artifactConsumerAPIartifact.PinRequest,
 ) (artifact.Artifact, error) {
 	if err := rootimpl.RequireMutableRoot(
 		ctx,
@@ -505,7 +506,7 @@ func (s *Service) Unadopt(
 
 func (s *Service) Suppress(
 	ctx context.Context,
-	request artifact.SuppressRequest,
+	request artifactConsumerAPIartifact.SuppressRequest,
 ) (artifact.Suppression, error) {
 	if err := rootimpl.RequireMutableRoot(
 		ctx,

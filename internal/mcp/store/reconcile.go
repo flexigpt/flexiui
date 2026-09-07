@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -285,7 +286,7 @@ func (a *API) pinRegisteredArtifact(
 
 	return a.dependencies.Store.PinArtifact(
 		ctx,
-		artifact.PinRequest{
+		artifactConsumerAPIartifact.PinRequest{
 			ArtifactID:                 registration.ArtifactID,
 			Collection:                 bundle.Collection.Ref(),
 			ExpectedCollectionRevision: bundle.Collection.Revision,

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 )
@@ -26,7 +27,7 @@ type PinRequest struct {
 	ArtifactID                 basespec.ArtifactID
 	Collection                 collection.CollectionRef
 	ExpectedCollectionRevision uint64
-	Binding                    SourceBinding
+	Binding                    artifact.SourceBinding
 	Name                       string
 	Enabled                    bool
 	Data                       json.RawMessage
@@ -37,5 +38,5 @@ type PinRequest struct {
 type SuppressRequest struct {
 	Collection                 collection.CollectionRef
 	ExpectedCollectionRevision uint64
-	Binding                    SourceBinding
+	Binding                    artifact.SourceBinding
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
@@ -461,7 +462,7 @@ func (a *API) AdoptSkill(
 	if err := basespec.ValidateArtifactID(request.ArtifactID); err != nil {
 		return artifact.Artifact{}, err
 	}
-	return a.dependencies.Store.AdoptArtifact(ctx, artifact.AdoptRequest{
+	return a.dependencies.Store.AdoptArtifact(ctx, artifactConsumerAPIartifact.AdoptRequest{
 		ArtifactID:              request.ArtifactID,
 		Collection:              request.Bundle,
 		Occurrence:              request.Occurrence,
@@ -501,7 +502,7 @@ func (a *API) PinSkill(
 			basespec.ErrUnsupported,
 		)
 	}
-	return a.dependencies.Store.PinArtifact(ctx, artifact.PinRequest{
+	return a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
 		ArtifactID:                 request.ArtifactID,
 		Collection:                 request.Bundle,
 		ExpectedCollectionRevision: request.ExpectedCollectionRevision,
@@ -1438,7 +1439,7 @@ func (a *API) createManagedSkill(
 			return CreateManagedSkillResponse{}, basespec.ErrConflict
 		}
 
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifact.PinRequest{
+		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
 			ArtifactID:                 request.ArtifactID,
 			Collection:                 request.Bundle,
 			ExpectedCollectionRevision: request.ExpectedCollectionRevision,

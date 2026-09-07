@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -377,7 +378,7 @@ func (a *API) ensurePinnedManagedSkill(
 		if err != nil {
 			return artifact.Artifact{}, err
 		}
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifact.PinRequest{
+		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
 			ArtifactID:                 artifactID,
 			Collection:                 bundle,
 			ExpectedCollectionRevision: expectedCollectionRevision,

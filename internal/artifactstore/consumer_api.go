@@ -9,10 +9,25 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
+
+func (a *API) IsProtectedRoot(rootID basespec.RootID) bool {
+	return a != nil &&
+		a.components != nil &&
+		a.components.RootMutationPolicy() != nil &&
+		a.components.RootMutationPolicy().IsProtectedRoot(rootID)
+}
+
+func (a *API) RequirePrivilegedInstaller(ctx context.Context) error {
+	if err := a.check(ctx); err != nil {
+		return err
+	}
+	return basespec.RequirePrivilegedInstaller(ctx)
+}
 
 func (a *API) CreateCollection(
 	ctx context.Context,
@@ -224,7 +239,7 @@ func (a *API) ListCollectionArtifacts(
 
 func (a *API) AdoptArtifact(
 	ctx context.Context,
-	request artifact.AdoptRequest,
+	request artifactConsumerAPIartifact.AdoptRequest,
 ) (artifact.Artifact, error) {
 	if err := a.requireStore(ctx); err != nil {
 		return artifact.Artifact{}, err
@@ -235,7 +250,7 @@ func (a *API) AdoptArtifact(
 
 func (a *API) PinArtifact(
 	ctx context.Context,
-	request artifact.PinRequest,
+	request artifactConsumerAPIartifact.PinRequest,
 ) (artifact.Artifact, error) {
 	if err := a.requireStore(ctx); err != nil {
 		return artifact.Artifact{}, err
@@ -354,7 +369,7 @@ func (a *API) ListCollectionSuppressions(
 
 func (a *API) SuppressBinding(
 	ctx context.Context,
-	request artifact.SuppressRequest,
+	request artifactConsumerAPIartifact.SuppressRequest,
 ) (artifact.Suppression, error) {
 	if err := a.requireStore(ctx); err != nil {
 		return artifact.Suppression{}, err
