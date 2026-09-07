@@ -18,9 +18,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -293,7 +293,7 @@ func (a *API) AttachSource(
 func (a *API) RefreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.Result, error) {
+) (refresh.RefreshCollectionResult, error) {
 	return a.refreshBundle(ctx, ref, false)
 }
 
@@ -1246,20 +1246,20 @@ func (a *API) refreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	allowProtected bool,
-) (refresh.Result, error) {
+) (refresh.RefreshCollectionResult, error) {
 	if err := a.requireBundleMutation(
 		ctx,
 		ref.RootID,
 		allowProtected,
 	); err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	bundle, err := a.GetBundle(ctx, ref)
 	if err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	if !bundle.Collection.Enabled {
-		return refresh.Result{}, fmt.Errorf(
+		return refresh.RefreshCollectionResult{}, fmt.Errorf(
 			"%w: skill bundle %q is disabled",
 			basespec.ErrConflict,
 			ref.CollectionID,

@@ -11,13 +11,13 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/discovery"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/protection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
 
@@ -40,37 +40,37 @@ type providerRefreshInput struct {
 func (s *Service) RefreshCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.Result, error) {
+) (refresh.RefreshCollectionResult, error) {
 	if s == nil || s.providers == nil || s.artifactIDs == nil {
-		return refresh.Result{}, basespec.ErrClosed
+		return refresh.RefreshCollectionResult{}, basespec.ErrClosed
 	}
 	if ctx == nil {
-		return refresh.Result{}, fmt.Errorf(
+		return refresh.RefreshCollectionResult{}, fmt.Errorf(
 			"%w: collection refresh context is nil",
 			basespec.ErrInvalid,
 		)
 	}
 	if err := ctx.Err(); err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	if err := ref.Validate(); err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	if err := protection.RequireMutableRoot(
 		ctx,
 		s.policy,
 		ref.RootID,
 	); err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 
 	input, err := s.loadProviderRefreshInput(ctx, ref)
 	if err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	plan, err := s.buildProviderPlan(ctx, input)
 	if err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 
 	return s.refresh(

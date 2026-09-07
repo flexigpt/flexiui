@@ -10,8 +10,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/refresh"
 )
 
 func (a *API) CreateCollection(
@@ -382,9 +382,9 @@ func (a *API) UnsuppressBinding(
 func (a *API) RefreshCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.Result, error) {
+) (refresh.RefreshCollectionResult, error) {
 	if err := a.requireStore(ctx); err != nil {
-		return refresh.Result{}, err
+		return refresh.RefreshCollectionResult{}, err
 	}
 	return a.components.Refresh.RefreshCollection(ctx, ref)
 }

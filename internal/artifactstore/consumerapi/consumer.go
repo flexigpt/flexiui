@@ -9,8 +9,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
 
@@ -222,7 +222,7 @@ type ConsumerAPI interface {
 	RefreshCollection(
 		ctx context.Context,
 		ref collection.CollectionRef,
-	) (refresh.Result, error)
+	) (refresh.RefreshCollectionResult, error)
 
 	CurrentCollectionCatalog(
 		ctx context.Context,
