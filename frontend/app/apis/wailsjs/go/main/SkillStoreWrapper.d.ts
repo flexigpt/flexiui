@@ -3,7 +3,7 @@
 import {bundle} from '../models';
 import {artifact} from '../models';
 import {collection} from '../models';
-import {basespec} from '../models';
+import {root} from '../models';
 import {store} from '../models';
 
 export function AdoptSkill(arg1:bundle.AdoptSkillRequest):Promise<artifact.Artifact>;
@@ -20,7 +20,7 @@ export function GetSkillBundle(arg1:collection.CollectionRef):Promise<bundle.Bun
 
 export function ListBundleSkills(arg1:collection.CollectionRef):Promise<Array<artifact.Artifact>>;
 
-export function ListSkillBundles(arg1:basespec.RootID):Promise<Array<bundle.Bundle>>;
+export function ListSkillBundles(arg1:root.RootID):Promise<Array<bundle.Bundle>>;
 
 export function PinSkill(arg1:bundle.PinSkillRequest):Promise<artifact.Artifact>;
 

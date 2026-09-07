@@ -4,7 +4,7 @@ import {store} from '../models';
 import {collection} from '../models';
 import {artifact} from '../models';
 import {server} from '../models';
-import {basespec} from '../models';
+import {root} from '../models';
 
 export function CreateMCPBundle(arg1:store.CreateRequest):Promise<store.Bundle>;
 
@@ -24,4 +24,4 @@ export function ListMCPBundlePolicies(arg1:collection.CollectionRef):Promise<Arr
 
 export function ListMCPBundleServers(arg1:collection.CollectionRef):Promise<Array<artifact.Artifact>>;
 
-export function ListMCPBundles(arg1:basespec.RootID):Promise<Array<store.Bundle>>;
+export function ListMCPBundles(arg1:root.RootID):Promise<Array<store.Bundle>>;

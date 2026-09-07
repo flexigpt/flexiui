@@ -50,7 +50,7 @@ export namespace artifact {
 	    adoption: string;
 	    resolvedDefinition?: string;
 	    state: string;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	    revision: number;
 	    // Go type: time
 	    createdAt: any;
@@ -73,7 +73,7 @@ export namespace artifact {
 	        this.adoption = source["adoption"];
 	        this.resolvedDefinition = source["resolvedDefinition"];
 	        this.state = source["state"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	        this.revision = source["revision"];
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
@@ -2301,6 +2301,138 @@ export namespace conversation {
 
 }
 
+export namespace definition {
+	
+	export class Selector {
+	    kind: string;
+	    logicalName?: string;
+	    versionConstraint?: string;
+	    labels?: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new Selector(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.logicalName = source["logicalName"];
+	        this.versionConstraint = source["versionConstraint"];
+	        this.labels = source["labels"];
+	    }
+	}
+	export class Definition {
+	    digest: string;
+	    kind: string;
+	    schemaID: string;
+	    schemaVersion: string;
+	    logicalName: string;
+	    logicalVersion?: string;
+	    displayName?: string;
+	    description?: string;
+	    labels?: Record<string, string>;
+	    body: number[];
+	    dependencies?: Selector[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Definition(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.digest = source["digest"];
+	        this.kind = source["kind"];
+	        this.schemaID = source["schemaID"];
+	        this.schemaVersion = source["schemaVersion"];
+	        this.logicalName = source["logicalName"];
+	        this.logicalVersion = source["logicalVersion"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.labels = source["labels"];
+	        this.body = source["body"];
+	        this.dependencies = this.convertValues(source["dependencies"], Selector);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace diagnostic {
+	
+	export class Location {
+	    locator?: string;
+	    subresourceLocator?: string;
+	    line?: number;
+	    column?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Location(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.locator = source["locator"];
+	        this.subresourceLocator = source["subresourceLocator"];
+	        this.line = source["line"];
+	        this.column = source["column"];
+	    }
+	}
+	export class Diagnostic {
+	    severity: string;
+	    code: string;
+	    message: string;
+	    location?: Location;
+	
+	    static createFrom(source: any = {}) {
+	        return new Diagnostic(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.severity = source["severity"];
+	        this.code = source["code"];
+	        this.message = source["message"];
+	        this.location = this.convertValues(source["location"], Location);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace document {
 	
 	export class SkillArgument {
@@ -2634,134 +2766,6 @@ export namespace provider {
 	        this.moreLocations = source["moreLocations"];
 	    }
 	}
-
-}
-
-export namespace providerapi {
-	
-	export class Selector {
-	    kind: string;
-	    logicalName?: string;
-	    versionConstraint?: string;
-	    labels?: Record<string, string>;
-	
-	    static createFrom(source: any = {}) {
-	        return new Selector(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.kind = source["kind"];
-	        this.logicalName = source["logicalName"];
-	        this.versionConstraint = source["versionConstraint"];
-	        this.labels = source["labels"];
-	    }
-	}
-	export class Definition {
-	    digest: string;
-	    kind: string;
-	    schemaID: string;
-	    schemaVersion: string;
-	    logicalName: string;
-	    logicalVersion?: string;
-	    displayName?: string;
-	    description?: string;
-	    labels?: Record<string, string>;
-	    body: number[];
-	    dependencies?: Selector[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Definition(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.digest = source["digest"];
-	        this.kind = source["kind"];
-	        this.schemaID = source["schemaID"];
-	        this.schemaVersion = source["schemaVersion"];
-	        this.logicalName = source["logicalName"];
-	        this.logicalVersion = source["logicalVersion"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.labels = source["labels"];
-	        this.body = source["body"];
-	        this.dependencies = this.convertValues(source["dependencies"], Selector);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class DiagnosticLocation {
-	    locator?: string;
-	    subresourceLocator?: string;
-	    line?: number;
-	    column?: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new DiagnosticLocation(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.locator = source["locator"];
-	        this.subresourceLocator = source["subresourceLocator"];
-	        this.line = source["line"];
-	        this.column = source["column"];
-	    }
-	}
-	export class Diagnostic {
-	    severity: string;
-	    code: string;
-	    message: string;
-	    location?: DiagnosticLocation;
-	
-	    static createFrom(source: any = {}) {
-	        return new Diagnostic(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.severity = source["severity"];
-	        this.code = source["code"];
-	        this.message = source["message"];
-	        this.location = this.convertValues(source["location"], DiagnosticLocation);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
 
 }
 
@@ -3641,7 +3645,7 @@ export namespace selection {
 	    originalBytes?: number;
 	    includedBytes?: number;
 	    changed?: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ConversationContextUsage(source);
@@ -3660,7 +3664,7 @@ export namespace selection {
 	        this.originalBytes = source["originalBytes"];
 	        this.includedBytes = source["includedBytes"];
 	        this.changed = source["changed"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -3772,7 +3776,7 @@ export namespace selection {
 	    sessionAvailable?: boolean;
 	    active?: boolean;
 	    advertised?: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ConversationSkillUsage(source);
@@ -3792,7 +3796,7 @@ export namespace selection {
 	        this.sessionAvailable = source["sessionAvailable"];
 	        this.active = source["active"];
 	        this.advertised = source["advertised"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -3821,7 +3825,7 @@ export namespace selection {
 	    status: string;
 	    contexts?: ConversationContextUsage[];
 	    skills?: ConversationSkillUsage[];
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ConversationUsage(source);
@@ -3836,7 +3840,7 @@ export namespace selection {
 	        this.status = source["status"];
 	        this.contexts = this.convertValues(source["contexts"], ConversationContextUsage);
 	        this.skills = this.convertValues(source["skills"], ConversationSkillUsage);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -10365,7 +10369,7 @@ export namespace store {
 	    artifact: artifact.Artifact;
 	    collection: collection.CollectionRef;
 	    catalogRevision: number;
-	    definition: providerapi.Definition;
+	    definition: definition.Definition;
 	    body: policy.MCPPolicy;
 	    effectiveEnabled: boolean;
 	    builtIn: boolean;
@@ -10379,7 +10383,7 @@ export namespace store {
 	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
 	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
 	        this.catalogRevision = source["catalogRevision"];
-	        this.definition = this.convertValues(source["definition"], providerapi.Definition);
+	        this.definition = this.convertValues(source["definition"], definition.Definition);
 	        this.body = this.convertValues(source["body"], policy.MCPPolicy);
 	        this.effectiveEnabled = source["effectiveEnabled"];
 	        this.builtIn = source["builtIn"];
@@ -10845,7 +10849,7 @@ export namespace workspace {
 	    locator: string;
 	    subresourceLocator?: string;
 	    runtimeDisabled: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceArtifactView(source);
@@ -10865,7 +10869,7 @@ export namespace workspace {
 	        this.locator = source["locator"];
 	        this.subresourceLocator = source["subresourceLocator"];
 	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -11010,7 +11014,7 @@ export namespace workspace {
 	    sourceKind?: string;
 	    path?: string;
 	    settings: WorkspaceAttachmentSettings;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceAttachmentView(source);
@@ -11026,7 +11030,7 @@ export namespace workspace {
 	        this.sourceKind = source["sourceKind"];
 	        this.path = source["path"];
 	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -11335,7 +11339,7 @@ export namespace workspace {
 	    catalogRevision: number;
 	    contributions: WorkspaceContextContribution[];
 	    prompt: string;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	    decisions: WorkspaceContextDecision[];
 	    promptBytes: number;
 	
@@ -11349,7 +11353,7 @@ export namespace workspace {
 	        this.catalogRevision = source["catalogRevision"];
 	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
 	        this.prompt = source["prompt"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	        this.decisions = this.convertValues(source["decisions"], WorkspaceContextDecision);
 	        this.promptBytes = source["promptBytes"];
 	    }
@@ -11772,7 +11776,7 @@ export namespace workspace {
 	    state: string;
 	    recorded: boolean;
 	    artifact?: artifact.ArtifactRef;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceOccurrenceView(source);
@@ -11791,7 +11795,7 @@ export namespace workspace {
 	        this.state = source["state"];
 	        this.recorded = source["recorded"];
 	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -11853,7 +11857,7 @@ export namespace workspace {
 	    locator: string;
 	    catalogCurrent: boolean;
 	    projectionValid: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceResourceView(source);
@@ -11867,7 +11871,7 @@ export namespace workspace {
 	        this.locator = source["locator"];
 	        this.catalogCurrent = source["catalogCurrent"];
 	        this.projectionValid = source["projectionValid"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -11892,7 +11896,7 @@ export namespace workspace {
 	    workspace: WorkspaceView;
 	    catalogRevision: number;
 	    catalogCurrent: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	    resources: WorkspaceResourceView[];
 	    groups: WorkspaceResourceGroupView[];
 	    occurrences: WorkspaceOccurrenceView[];
@@ -11913,7 +11917,7 @@ export namespace workspace {
 	        this.workspace = this.convertValues(source["workspace"], WorkspaceView);
 	        this.catalogRevision = source["catalogRevision"];
 	        this.catalogCurrent = source["catalogCurrent"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	        this.resources = this.convertValues(source["resources"], WorkspaceResourceView);
 	        this.groups = this.convertValues(source["groups"], WorkspaceResourceGroupView);
 	        this.occurrences = this.convertValues(source["occurrences"], WorkspaceOccurrenceView);
@@ -12169,7 +12173,7 @@ export namespace workspace {
 	    catalogCurrent: boolean;
 	    projectionValid: boolean;
 	    runtimeDisabled: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceContextView(source);
@@ -12190,7 +12194,7 @@ export namespace workspace {
 	        this.catalogCurrent = source["catalogCurrent"];
 	        this.projectionValid = source["projectionValid"];
 	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -12385,7 +12389,7 @@ export namespace workspace {
 	    projectionValid: boolean;
 	    catalogCurrent: boolean;
 	    runtimeDisabled: boolean;
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceSkillView(source);
@@ -12405,7 +12409,7 @@ export namespace workspace {
 	        this.projectionValid = source["projectionValid"];
 	        this.catalogCurrent = source["catalogCurrent"];
 	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -12758,7 +12762,7 @@ export namespace workspace {
 	    workspace: collection.CollectionRef;
 	    catalogRevision: number;
 	    contributions: WorkspaceContextContribution[];
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceContextInspectionView(source);
@@ -12769,7 +12773,7 @@ export namespace workspace {
 	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
 	        this.catalogRevision = source["catalogRevision"];
 	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -12887,7 +12891,7 @@ export namespace workspace {
 	    workspace: collection.CollectionRef;
 	    catalogRevision: number;
 	    skills: WorkspaceSkillView[];
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkspaceSkillLoadView(source);
@@ -12898,7 +12902,7 @@ export namespace workspace {
 	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
 	        this.catalogRevision = source["catalogRevision"];
 	        this.skills = this.convertValues(source["skills"], WorkspaceSkillView);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -13275,7 +13279,7 @@ export namespace workspace {
 	    catalogRevision: number;
 	    createdArtifacts: artifact.ArtifactRef[];
 	    updatedArtifacts: artifact.ArtifactRef[];
-	    diagnostics?: providerapi.Diagnostic[];
+	    diagnostics?: diagnostic.Diagnostic[];
 	    candidates: number;
 	
 	    static createFrom(source: any = {}) {
@@ -13288,7 +13292,7 @@ export namespace workspace {
 	        this.catalogRevision = source["catalogRevision"];
 	        this.createdArtifacts = this.convertValues(source["createdArtifacts"], artifact.ArtifactRef);
 	        this.updatedArtifacts = this.convertValues(source["updatedArtifacts"], artifact.ArtifactRef);
-	        this.diagnostics = this.convertValues(source["diagnostics"], providerapi.Diagnostic);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
 	        this.candidates = source["candidates"];
 	    }
 	
