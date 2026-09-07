@@ -9,11 +9,11 @@ import (
 	"sync"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 )
 
-// Installer is implemented by one artifact-family-owned built-in installer.
+// Installer is implemented by one artifact-family-owned built-in installerapi.
 // The generic built-in layer deliberately does not inspect package contents,
 // artifact definitions, or artifact-specific manifests.
 type Installer interface {
@@ -200,7 +200,7 @@ func (r *BootstrapRegistry) Ensure(ctx context.Context) error {
 		return entries[left].name < entries[right].name
 	})
 
-	ctx = installer.WithPrivilege(ctx)
+	ctx = installerapi.WithPrivilege(ctx)
 	prepared := make([]preparedHydration, 0, len(entries))
 
 	for _, entry := range entries {

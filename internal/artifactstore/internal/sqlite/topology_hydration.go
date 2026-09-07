@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 

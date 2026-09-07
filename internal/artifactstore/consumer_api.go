@@ -10,10 +10,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 )
 
 func (a *API) IsProtectedRoot(rootID basespec.RootID) bool {
@@ -27,7 +27,7 @@ func (a *API) RequirePrivilegedInstaller(ctx context.Context) error {
 	if err := a.check(ctx); err != nil {
 		return err
 	}
-	return installer.RequirePrivileged(ctx)
+	return installerapi.RequirePrivileged(ctx)
 }
 
 func (a *API) CreateCollection(

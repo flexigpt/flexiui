@@ -19,10 +19,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -305,7 +305,7 @@ func (a *API) EnsureBuiltInBundleCurrent(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) error {
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	bundle, err := a.GetBundle(ctx, ref)
@@ -686,7 +686,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 	ctx context.Context,
 	request BuiltInBundleTopology,
 ) (Bundle, error) {
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return Bundle{}, err
 	}
 	bundle, err := a.createBundle(ctx, CreateBundleRequest{

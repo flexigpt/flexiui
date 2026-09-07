@@ -1,9 +1,9 @@
-package installer
+package installerapi
 
 import (
 	"context"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 )
 
 // API is the privileged application-composition capability for protected

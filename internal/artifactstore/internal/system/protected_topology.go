@@ -6,8 +6,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 )
 
 // EnsureProtectedTopology creates or verifies a declared protected Root and
@@ -20,7 +20,7 @@ func (c *Components) EnsureProtectedTopology(
 	if c == nil || c.Roots == nil || c.Sources == nil {
 		return topology.Installed{}, basespec.ErrClosed
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return topology.Installed{}, err
 	}
 	if err := declaration.Validate(); err != nil {

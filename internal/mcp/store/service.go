@@ -16,7 +16,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
@@ -312,7 +312,7 @@ func (a *API) EnsureBuiltInCurrent(
 	if a == nil {
 		return basespec.ErrClosed
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if err := ref.Validate(); err != nil {

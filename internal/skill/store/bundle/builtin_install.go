@@ -12,9 +12,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 )
@@ -47,7 +47,7 @@ func (a *API) InstallBuiltInCollection(
 	ctx context.Context,
 	request BuiltInCollectionInstallRequest,
 ) ([]CreateManagedSkillResponse, error) {
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return nil, err
 	}
 	if err := a.Ready(); err != nil {

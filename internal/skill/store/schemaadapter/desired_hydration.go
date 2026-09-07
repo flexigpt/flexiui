@@ -8,8 +8,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -55,7 +55,7 @@ func (i *Installer) DesiredHydration(
 	if err := ctx.Err(); err != nil {
 		return topology.Hydration{}, err
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return topology.Hydration{}, err
 	}
 
@@ -79,7 +79,7 @@ func (i *Installer) EnsureHydration(
 	ctx context.Context,
 	current bool,
 ) error {
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if current {
@@ -103,7 +103,7 @@ func (i *Installer) FinalizeHydration(
 	if i == nil {
 		return basespec.ErrClosed
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	return i.ensureBuiltInCatalogsCurrent(ctx)

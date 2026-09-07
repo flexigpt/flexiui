@@ -1,4 +1,4 @@
-package installer
+package installerapi
 
 import (
 	"context"

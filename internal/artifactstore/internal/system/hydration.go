@@ -7,8 +7,8 @@ import (
 	"slices"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer/topology"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 )
 
 // PrepareTopologyHydrations reconciles all installer desired states before
@@ -30,7 +30,7 @@ func (c *Components) PrepareTopologyHydrations(
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func (c *Components) CommitTopologyHydration(
 	ctx context.Context,
 	desired topology.Hydration,
 ) error {
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	return c.PutTopologyHydration(ctx, desired)
@@ -148,7 +148,7 @@ func (c *Components) PutTopologyHydration(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if err := value.Validate(); err != nil {
@@ -209,7 +209,7 @@ func (c *Components) ResetTopologyHydration(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return err
 	}
 	if err := topology.ValidateHydrationInstallerName(installerName); err != nil {

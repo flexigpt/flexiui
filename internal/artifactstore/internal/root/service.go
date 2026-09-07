@@ -7,7 +7,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/installer"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 )
 
@@ -46,7 +46,7 @@ func (s *Service) Create(
 }
 
 // EnsureSystem is reserved for an application-owned protected-topology
-// installer. Artifact Store does not assign any feature meaning to the Root.
+// installerapi. Artifact Store does not assign any feature meaning to the Root.
 func (s *Service) EnsureSystem(
 	ctx context.Context,
 	draft root.RootDraft,
@@ -61,7 +61,7 @@ func (s *Service) EnsureSystem(
 			draft.ID,
 		)
 	}
-	if err := installer.RequirePrivileged(ctx); err != nil {
+	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return root.Root{}, err
 	}
 	return s.create(ctx, draft)
@@ -259,7 +259,7 @@ func RequireMutableRoot(
 	if policy == nil || !policy.IsProtectedRoot(rootID) {
 		return nil
 	}
-	if installer.IsPrivileged(ctx) {
+	if installerapi.IsPrivileged(ctx) {
 		return nil
 	}
 	return fmt.Errorf(

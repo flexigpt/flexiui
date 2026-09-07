@@ -9,7 +9,7 @@ import (
 )
 
 // Hydration records the successfully installed desired state for one
-// application-owned topology installer. It intentionally has no foreign keys:
+// application-owned topology installerapi. It intentionally has no foreign keys:
 // the record must survive removal of an old Root until replacement hydration
 // succeeds and commits a new record.
 type Hydration struct {
