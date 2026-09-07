@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	skillRuntime "github.com/flexigpt/flexigpt-app/internal/skill/runtime"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )

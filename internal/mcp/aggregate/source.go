@@ -5,7 +5,7 @@ import (
 	"errors"
 	"maps"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"

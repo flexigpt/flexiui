@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/bundleitemutils"
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	modelpresetSpec "github.com/flexigpt/flexigpt-app/internal/modelpreset/spec"

@@ -8,9 +8,9 @@ import (
 
 	"github.com/flexigpt/agentskills-go/provider"
 	"github.com/flexigpt/agentskills-go/provider/fs"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )

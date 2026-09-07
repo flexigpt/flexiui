@@ -3,7 +3,7 @@ package secret
 import (
 	"errors"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 )
 
 var ErrNotFound = errors.New("MCP secret not found")

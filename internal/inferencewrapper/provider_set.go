@@ -17,7 +17,7 @@ import (
 	"github.com/flexigpt/inference-go/modelpreset"
 	inferenceSpec "github.com/flexigpt/inference-go/spec"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/inferencewrapper/spec"
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	modelpresetSpec "github.com/flexigpt/flexigpt-app/internal/modelpreset/spec"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
