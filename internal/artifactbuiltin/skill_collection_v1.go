@@ -22,7 +22,7 @@ import (
 
 const (
 	SkillCollectionV1Kind          collection.CollectionKind = "skill.bundle"
-	SkillCollectionV1SchemaID      basespec.SchemaID         = "skill.bundle.v1"
+	SkillCollectionV1SchemaID      schema.SchemaID           = "skill.bundle.v1"
 	SkillCollectionV1SchemaVersion                           = "v1"
 	SkillCollectionV1MemberFormat                            = "agent.skill-entrypoint/v1"
 	SkillCollectionV1MemberRole                              = "agent.skill"

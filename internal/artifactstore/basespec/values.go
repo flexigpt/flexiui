@@ -69,8 +69,6 @@ type (
 	StorageKey  string
 	PackageKind string
 
-	SchemaID string
-
 	AttachmentRole string
 
 	DecoderID string

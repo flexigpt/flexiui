@@ -10,6 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -183,7 +184,7 @@ type DefinitionValidator func(definition.Definition) error
 
 type ArtifactSupport struct {
 	Kind      artifact.ArtifactKind
-	SchemaID  basespec.SchemaID
+	SchemaID  schema.SchemaID
 	DecoderID basespec.DecoderID
 	Validator DefinitionValidator
 }
@@ -192,7 +193,7 @@ func (s ArtifactSupport) Validate() error {
 	if err := s.Kind.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSchemaID(s.SchemaID); err != nil {
+	if err := s.SchemaID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateDecoderID(s.DecoderID); err != nil {

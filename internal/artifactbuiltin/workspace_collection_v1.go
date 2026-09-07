@@ -21,7 +21,7 @@ import (
 
 const (
 	WorkspaceCollectionV1Kind          collection.CollectionKind = "workspace.collection"
-	WorkspaceCollectionV1SchemaID      basespec.SchemaID         = "workspace.collection.v1"
+	WorkspaceCollectionV1SchemaID      schema.SchemaID           = "workspace.collection.v1"
 	WorkspaceCollectionV1SchemaVersion                           = "v1"
 
 	maxWorkspaceCollectionV1Members      = 100_000

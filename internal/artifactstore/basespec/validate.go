@@ -118,10 +118,6 @@ func ValidatePackageVersion(value LogicalVersion) error {
 	return ValidatePortableName("package version", string(value))
 }
 
-func ValidateSchemaID(value SchemaID) error {
-	return ValidateIdentifier("schema ID", string(value), MaxSchemaIDBytes)
-}
-
 func ValidateAttachmentRole(value AttachmentRole) error {
 	return ValidateIdentifier("attachment role", string(value), MaxKindBytes)
 }

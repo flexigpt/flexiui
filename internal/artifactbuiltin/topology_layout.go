@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -110,7 +111,7 @@ const (
 	BuiltInAttachmentRole basespec.AttachmentRole = "builtin"
 
 	AgentSkillArtifactKind   artifact.ArtifactKind = "agent.skill"
-	AgentSkillSchemaID       basespec.SchemaID     = "agent.skill.v1"
+	AgentSkillSchemaID       schema.SchemaID       = "agent.skill.v1"
 	AgentSkillDecoderID      basespec.DecoderID    = "agent.skill-markdown"
 	AgentSkillSchemaVersion                        = "v1"
 	AgentSkillInsertLabelKey                       = "skill.insert"
@@ -122,7 +123,7 @@ const (
 	AgentSkillHydrationFingerprintSchemaVersion = "agent.skill.builtin-hydration/v1"
 
 	WorkspaceContextArtifactKind  artifact.ArtifactKind = "workspace.context"
-	WorkspaceContextSchemaID      basespec.SchemaID     = "workspace.context.v1"
+	WorkspaceContextSchemaID      schema.SchemaID       = "workspace.context.v1"
 	WorkspaceContextDecoderID     basespec.DecoderID    = "workspace.context-markdown"
 	WorkspaceContextSchemaVersion                       = "v1"
 	WorkspaceContextRoleLabelKey                        = "context.role"

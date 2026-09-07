@@ -154,9 +154,9 @@ func (r *Registry) CanonicalizeEntity(
 	}
 
 	var header struct {
-		Kind          string            `json:"kind"`
-		SchemaID      basespec.SchemaID `json:"schemaID"`
-		SchemaVersion string            `json:"schemaVersion"`
+		Kind          string          `json:"kind"`
+		SchemaID      schema.SchemaID `json:"schemaID"`
+		SchemaVersion string          `json:"schemaVersion"`
 	}
 	if err := json.Unmarshal(canonical, &header); err != nil {
 		return schema.ParsedDocument{}, fmt.Errorf(
@@ -239,10 +239,10 @@ func validateCodecOutput(
 	}
 
 	var header struct {
-		Kind          string            `json:"kind"`
-		SchemaID      basespec.SchemaID `json:"schemaID"`
-		SchemaVersion string            `json:"schemaVersion"`
-		Digest        string            `json:"digest"`
+		Kind          string          `json:"kind"`
+		SchemaID      schema.SchemaID `json:"schemaID"`
+		SchemaVersion string          `json:"schemaVersion"`
+		Digest        string          `json:"digest"`
 	}
 	if err := json.Unmarshal(canonical, &header); err != nil {
 		return fmt.Errorf(

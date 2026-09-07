@@ -29,9 +29,9 @@ const (
 	ServerKind artifact.ArtifactKind     = "mcp.server"
 	PolicyKind artifact.ArtifactKind     = "mcp.policy"
 
-	BundleSchemaID basespec.SchemaID = "mcp.bundle.v1"
-	ServerSchemaID basespec.SchemaID = "mcp.server.v1"
-	PolicySchemaID basespec.SchemaID = "mcp.policy.v1"
+	BundleSchemaID schema.SchemaID = "mcp.bundle.v1"
+	ServerSchemaID schema.SchemaID = "mcp.server.v1"
+	PolicySchemaID schema.SchemaID = "mcp.policy.v1"
 
 	MCPBuiltInInstallerName = "mcp.bundle"
 

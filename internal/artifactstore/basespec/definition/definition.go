@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -18,7 +19,7 @@ import (
 type Definition struct {
 	Digest         cryptoutil.Digest       `json:"digest"`
 	Kind           artifact.ArtifactKind   `json:"kind"`
-	SchemaID       basespec.SchemaID       `json:"schemaID"`
+	SchemaID       schema.SchemaID         `json:"schemaID"`
 	SchemaVersion  string                  `json:"schemaVersion"`
 	LogicalName    basespec.LogicalName    `json:"logicalName"`
 	LogicalVersion basespec.LogicalVersion `json:"logicalVersion,omitempty"`
@@ -36,7 +37,7 @@ func (d Definition) Validate() error {
 	if err := d.Kind.Validate(); err != nil {
 		return fmt.Errorf("definition: %w", err)
 	}
-	if err := basespec.ValidateSchemaID(d.SchemaID); err != nil {
+	if err := d.SchemaID.Validate(); err != nil {
 		return fmt.Errorf("definition: %w", err)
 	}
 	if err := basespec.ValidateRequiredText(

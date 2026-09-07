@@ -3,6 +3,7 @@ package store
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	mcpStorePolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/policy"
@@ -25,7 +26,7 @@ type BundleExtension struct {
 
 type BundleDocument struct {
 	Kind          collection.CollectionKind `json:"kind"`
-	SchemaID      basespec.SchemaID         `json:"schemaID"`
+	SchemaID      schema.SchemaID           `json:"schemaID"`
 	SchemaVersion string                    `json:"schemaVersion"`
 	Digest        cryptoutil.Digest         `json:"digest,omitempty"`
 
