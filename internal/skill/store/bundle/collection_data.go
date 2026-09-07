@@ -8,6 +8,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
@@ -21,7 +22,7 @@ type CollectionData struct {
 	// ManagedSourceID identifies the managed Source provisioned exclusively
 	// for this bundle. An empty value means attached Sources are externally
 	// administered and are not deleted with the bundle.
-	ManagedSourceID basespec.SourceID `json:"managedSourceID,omitempty"`
+	ManagedSourceID source.SourceID `json:"managedSourceID,omitempty"`
 }
 
 func EncodeCollectionData(value CollectionData) (json.RawMessage, error) {
@@ -97,7 +98,7 @@ func ValidateCollectionData(value CollectionData) error {
 		return err
 	}
 	if value.ManagedSourceID != "" {
-		if err := basespec.ValidateSourceID(value.ManagedSourceID); err != nil {
+		if err := value.ManagedSourceID.Validate(); err != nil {
 			return err
 		}
 	}

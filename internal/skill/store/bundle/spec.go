@@ -19,7 +19,7 @@ const (
 )
 
 type AttachmentDraft struct {
-	SourceID              basespec.SourceID
+	SourceID              source.SourceID
 	Role                  basespec.AttachmentRole
 	Enabled               bool
 	DiscoveryRoot         basespec.Locator
@@ -28,7 +28,7 @@ type AttachmentDraft struct {
 type CreateBundleRequest struct {
 	RootID                  root.RootID
 	CollectionID            basespec.CollectionID
-	ManagedSourceID         basespec.SourceID
+	ManagedSourceID         source.SourceID
 	ManagedSourceStorageKey basespec.StorageKey
 	DisplayName             string
 	Description             string
@@ -88,7 +88,7 @@ type PinSkillRequest struct {
 type BuiltInBundleTopology struct {
 	RootID                root.RootID                            `json:"-"`
 	CollectionID          basespec.CollectionID                  `json:"-"`
-	SourceID              basespec.SourceID                      `json:"-"`
+	SourceID              source.SourceID                        `json:"-"`
 	LogicalName           basespec.LogicalName                   `json:"-"`
 	LogicalVersion        basespec.LogicalVersion                `json:"-"`
 	DisplayName           string                                 `json:"-"`

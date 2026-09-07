@@ -14,6 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -38,14 +39,14 @@ type workspaceCollectionBehavior struct {
 
 type workspacePlanningTopology struct {
 	attachments     []providerapi.Attachment
-	attachmentData  map[basespec.SourceID]spec.AttachmentData
-	sources         map[basespec.SourceID]providerapi.Source
-	primarySourceID basespec.SourceID
+	attachmentData  map[source.SourceID]spec.AttachmentData
+	sources         map[source.SourceID]providerapi.Source
+	primarySourceID source.SourceID
 }
 
 type workspaceDescriptorObservation struct {
 	Preferences            spec.DiscoveryPreferences
-	SourceID               basespec.SourceID
+	SourceID               source.SourceID
 	Generation             string
 	ExpectedContentDigests map[basespec.Locator]cryptoutil.Digest
 }
@@ -446,16 +447,16 @@ func workspacePlanningTopologyFor(
 			len(attachments),
 		),
 		attachmentData: make(
-			map[basespec.SourceID]spec.AttachmentData,
+			map[source.SourceID]spec.AttachmentData,
 			len(attachments),
 		),
 		sources: make(
-			map[basespec.SourceID]providerapi.Source,
+			map[source.SourceID]providerapi.Source,
 			len(sources),
 		),
 	}
 	attachmentsBySource := make(
-		map[basespec.SourceID]struct{},
+		map[source.SourceID]struct{},
 		len(attachments),
 	)
 
@@ -629,7 +630,7 @@ func validateWorkspaceProviderAttachment(
 			spec.ErrInvalidWorkspace,
 		)
 	}
-	if err := basespec.ValidateSourceID(value.SourceID); err != nil {
+	if err := value.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateAttachmentRole(value.Role); err != nil {
@@ -661,13 +662,13 @@ func validateWorkspaceProviderSource(
 			spec.ErrInvalidWorkspace,
 		)
 	}
-	if err := basespec.ValidateSourceID(value.ID); err != nil {
+	if err := value.ID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceKind(value.Kind); err != nil {
+	if err := value.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(
@@ -688,7 +689,7 @@ func validateWorkspaceProviderSource(
 
 func readWorkspaceDescriptor(
 	ctx context.Context,
-	primarySourceID basespec.SourceID,
+	primarySourceID source.SourceID,
 	reader providerapi.PlanningDocumentReader,
 ) (workspaceDescriptorObservation, error) {
 	if primarySourceID == "" {

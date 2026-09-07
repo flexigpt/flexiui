@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -46,7 +47,7 @@ type WorkspaceSkill struct {
 	Workspace        collection.CollectionRef `json:"workspace"`
 	Artifact         artifact.ArtifactRef     `json:"artifact"`
 	DefinitionDigest cryptoutil.Digest        `json:"definitionDigest"`
-	SourceID         basespec.SourceID        `json:"sourceID"`
+	SourceID         source.SourceID          `json:"sourceID"`
 	Locator          basespec.Locator         `json:"locator"`
 	Skill            SkillSummary             `json:"skill"`
 	MarkdownBody     string                   `json:"markdownBody,omitempty"`
@@ -406,7 +407,7 @@ func sortWorkspaceSkills(values []WorkspaceSkill) {
 }
 
 func (f *Adapter) supportsRuntimePath(
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) bool {
 	return f.resources.SupportsLocalPath(kind)
 }

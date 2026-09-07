@@ -7,13 +7,14 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
 type providerPlanningDocumentReader struct {
 	rootID    root.RootID
-	attached  map[basespec.SourceID]struct{}
+	attached  map[source.SourceID]struct{}
 	runtime   sourceimpl.Runtime
 	documents providerapi.ExpectedCanonicalizer
 }
@@ -24,7 +25,7 @@ func newProviderPlanningDocumentReader(
 	documents providerapi.ExpectedCanonicalizer,
 ) providerPlanningDocumentReader {
 	attached := make(
-		map[basespec.SourceID]struct{},
+		map[source.SourceID]struct{},
 		len(input.providerAttachments),
 	)
 	for _, attachment := range input.providerAttachments {

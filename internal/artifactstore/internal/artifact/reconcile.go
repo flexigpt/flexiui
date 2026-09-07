@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/clockutil"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -26,7 +27,7 @@ type bindingIdentity struct {
 // location. Existing Artifacts must become incompatible rather than silently
 // becoming missing while a second automatically adopted Artifact is created.
 type occurrenceIdentity struct {
-	SourceID           basespec.SourceID
+	SourceID           source.SourceID
 	Locator            basespec.Locator
 	SubresourceLocator basespec.SubresourceLocator
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
@@ -141,7 +142,7 @@ func (a *API) AttachCollectionSource(
 func (a *API) GetCollectionAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (collection.Attachment, error) {
 	if err := a.requireStore(ctx); err != nil {
 		return collection.Attachment{}, err
@@ -166,7 +167,7 @@ func (a *API) ListCollectionAttachments(
 func (a *API) UpdateCollectionAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	update collection.AttachmentUpdate,
 ) (collection.Collection, collection.Attachment, error) {
 	if err := a.requireStore(ctx); err != nil {
@@ -184,7 +185,7 @@ func (a *API) UpdateCollectionAttachment(
 func (a *API) DetachCollectionSource(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 ) (collection.Collection, error) {

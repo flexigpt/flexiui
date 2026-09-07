@@ -75,7 +75,7 @@ const (
 	BuiltinRootDisplayName                     = "Application Built-ins"
 	BuiltinRootDescription                     = "Protected application-provided portable artifact packages."
 
-	BuiltinSourceID          basespec.SourceID   = "0192c4c0-0001-7000-8000-000000000001"
+	BuiltinSourceID          source.SourceID     = "0192c4c0-0001-7000-8000-000000000001"
 	BuiltinSourceStorageKey  basespec.StorageKey = "catalog"
 	BuiltinSourceDisplayName                     = "Application Built-in Packages"
 
@@ -90,7 +90,7 @@ const (
 	MCPUserRootDescription                     = "Local namespace for user-managed MCP Bundles."
 
 	DefaultMCPBundleCollectionID basespec.CollectionID = "0198f097-0d5b-7000-8000-000000000020"
-	DefaultMCPBundleSourceID     basespec.SourceID     = "0198f097-0d5b-7000-8000-000000000021"
+	DefaultMCPBundleSourceID     source.SourceID       = "0198f097-0d5b-7000-8000-000000000021"
 	DefaultMCPBundleSourceKey    basespec.StorageKey   = "base"
 	DefaultMCPBundleLogicalName                        = "base"
 	DefaultMCPBundleDisplayName                        = "Base MCP Servers"
@@ -224,7 +224,7 @@ func BuiltinTopologyDeclaration() topology.Declaration {
 		Sources: []source.Draft{{
 			ID:          BuiltinSourceID,
 			StorageKey:  BuiltinSourceStorageKey,
-			Kind:        basespec.SourceKindManagedDirectory,
+			Kind:        source.SourceKindManagedDirectory,
 			DisplayName: BuiltinSourceDisplayName,
 			Enabled:     true,
 			Config:      json.RawMessage(jsonutil.EmptyObject),

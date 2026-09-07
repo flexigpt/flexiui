@@ -19,7 +19,7 @@ import (
 type EnsureBuiltInRequest struct {
 	RootID         root.RootID
 	CollectionID   basespec.CollectionID
-	SourceID       basespec.SourceID
+	SourceID       source.SourceID
 	PackageAddress source.ManagedPackageAddress
 
 	PackageFiles  []source.ManagedPackageFile
@@ -46,7 +46,7 @@ func (a *API) EnsureBuiltIn(
 	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateSourceID(request.SourceID); err != nil {
+	if err := request.SourceID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := validateBundlePackageAddress(request.PackageAddress); err != nil {
@@ -89,7 +89,7 @@ func (a *API) EnsureBuiltIn(
 	if err != nil {
 		return Bundle{}, err
 	}
-	if sourceValue.Kind != basespec.SourceKindManagedDirectory ||
+	if sourceValue.Kind != source.SourceKindManagedDirectory ||
 		!sourceValue.Enabled {
 		return Bundle{}, fmt.Errorf(
 			"%w: protected MCP Bundle requires an enabled managed Source",

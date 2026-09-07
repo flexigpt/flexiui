@@ -295,7 +295,7 @@ func Open(
 			GetSourceState: func(
 				ctx context.Context,
 				rootID root.RootID,
-				sourceID basespec.SourceID,
+				sourceID source.SourceID,
 			) (managedartifactimpl.SourceState, error) {
 				result, err := components.getManagedSourceState(
 					ctx,
@@ -313,7 +313,7 @@ func Open(
 			PublishPackage: func(
 				ctx context.Context,
 				rootID root.RootID,
-				sourceID basespec.SourceID,
+				sourceID source.SourceID,
 				expectedRevision uint64,
 				publication source.ManagedPackagePublication,
 			) (managedartifactimpl.SourceState, error) {
@@ -335,7 +335,7 @@ func Open(
 			PublishProtectedPackage: func(
 				ctx context.Context,
 				rootID root.RootID,
-				sourceID basespec.SourceID,
+				sourceID source.SourceID,
 				expectedRevision uint64,
 				publication source.ManagedPackagePublication,
 			) (managedartifactimpl.SourceState, error) {
@@ -393,7 +393,7 @@ func (c *Components) Close() error {
 func (c *Components) getManagedSourceState(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (ManagedPackageResult, error) {
 	if c == nil ||
 		c.SourceRuntime == nil ||
@@ -444,7 +444,7 @@ func (c *Components) getManagedSourceState(
 func (c *Components) publishManagedPackageForMutableRoot(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
 ) (ManagedPackageResult, error) {
@@ -465,7 +465,7 @@ func (c *Components) publishManagedPackageForMutableRoot(
 func (c *Components) publishProtectedManagedPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
 ) (ManagedPackageResult, error) {
@@ -494,7 +494,7 @@ func (c *Components) publishProtectedManagedPackage(
 func (c *Components) removeManagedPackageForMutableRoot(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,
@@ -515,7 +515,7 @@ func (c *Components) removeManagedPackageForMutableRoot(
 func (c *Components) removeProtectedManagedPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,
@@ -544,7 +544,7 @@ func (c *Components) removeProtectedManagedPackage(
 func (c *Components) publishManagedPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
 	allowProtected bool,
@@ -628,7 +628,7 @@ func (c *Components) publishManagedPackage(
 func (c *Components) removeManagedPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,
@@ -785,7 +785,7 @@ func (c *Components) isProtectedRoot(
 func (c *Components) managedSource(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 ) (source.Source, error) {
 	if c == nil ||
@@ -847,7 +847,7 @@ func sourceSnapshotGeneration(
 func (c *Components) removeManagedArtifactPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,
@@ -872,7 +872,7 @@ func (c *Components) removeManagedArtifactPackage(
 func (c *Components) removeProtectedManagedArtifactPackage(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,

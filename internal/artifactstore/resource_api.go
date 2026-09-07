@@ -7,6 +7,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 )
@@ -57,7 +58,7 @@ func (a *API) ResolveVerifiedLocalPath(
 func (a *API) ReadCollectionEntry(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 	maximumBytes int64,
 ) (artifactConsumerAPIresource.VerifiedEntry, error) {
@@ -83,7 +84,7 @@ func (a *API) ReadCollectionEntry(
 func (a *API) ResolveSourceLocalPath(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 ) (string, error) {
 	if err := a.check(ctx); err != nil {
@@ -100,7 +101,7 @@ func (a *API) ResolveSourceLocalPath(
 	)
 }
 
-func (a *API) SupportsLocalPath(kind basespec.SourceKind) bool {
+func (a *API) SupportsLocalPath(kind source.SourceKind) bool {
 	return a != nil &&
 		a.resources != nil &&
 		a.resources.SupportsLocalPath(kind)

@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -22,7 +23,7 @@ const (
 
 type OccurrenceKey struct {
 	CollectionID       basespec.CollectionID       `json:"collectionID"`
-	SourceID           basespec.SourceID           `json:"sourceID"`
+	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 }
@@ -172,7 +173,7 @@ func (k OccurrenceKey) Validate() error {
 	if err := basespec.ValidateCollectionID(k.CollectionID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(k.SourceID); err != nil {
+	if err := k.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateLocator(k.Locator, false); err != nil {

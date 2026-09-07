@@ -24,13 +24,13 @@ type SourceState struct {
 type GetSourceStateFunc func(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (SourceState, error)
 
 type PublishPackageFunc func(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
 ) (SourceState, error)
@@ -38,7 +38,7 @@ type PublishPackageFunc func(
 type RemovePackageFunc func(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
 	expectedGeneration string,
@@ -77,7 +77,7 @@ type CollectionReader interface {
 	GetAttachment(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 	) (collection.Attachment, error)
 }
 
@@ -135,7 +135,7 @@ func (s *Service) PublishCollection(
 	if err := request.Collection.Validate(); err != nil {
 		return managedartifact.PublishCollectionResult{}, err
 	}
-	if err := basespec.ValidateSourceID(request.SourceID); err != nil {
+	if err := request.SourceID.Validate(); err != nil {
 		return managedartifact.PublishCollectionResult{}, err
 	}
 
@@ -571,7 +571,7 @@ func (s *Service) requireMutable(
 func (s *Service) requireCollectionSource(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	requireEnabled bool,
 ) error {
 	value, err := s.dependencies.Collections.Get(ctx, ref)
@@ -619,7 +619,7 @@ func (s *Service) requireCollectionSource(
 func validateManagedSourceState(
 	state SourceState,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	requireEnabled bool,
 ) error {
 	if err := state.Source.Validate(); err != nil {

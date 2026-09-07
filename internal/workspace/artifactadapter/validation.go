@@ -69,7 +69,7 @@ func validateWorkspaceState(
 	data spec.CollectionData,
 	attachments []collection.Attachment,
 	sources []source.Summary,
-) (spec.Mode, basespec.SourceID, error) {
+) (spec.Mode, source.SourceID, error) {
 	if err := value.Validate(); err != nil {
 		return "", "", fmt.Errorf("%w: invalid Workspace collection: %w", spec.ErrInvalidWorkspace, err)
 	}
@@ -84,7 +84,7 @@ func validateWorkspaceState(
 	if err := collectiondata.ValidateCollectionData(data); err != nil {
 		return "", "", err
 	}
-	sourcesByID := make(map[basespec.SourceID]source.Summary, len(sources))
+	sourcesByID := make(map[source.SourceID]source.Summary, len(sources))
 
 	for _, sourceValue := range sources {
 		if err := sourceValue.Validate(); err != nil {
@@ -112,8 +112,8 @@ func validateWorkspaceState(
 	}
 
 	primaryCount := 0
-	var primarySourceID basespec.SourceID
-	seenAttachments := make(map[basespec.SourceID]struct{}, len(attachments))
+	var primarySourceID source.SourceID
+	seenAttachments := make(map[source.SourceID]struct{}, len(attachments))
 	for _, attachment := range attachments {
 		if err := attachment.Validate(); err != nil {
 			return "", "", fmt.Errorf(

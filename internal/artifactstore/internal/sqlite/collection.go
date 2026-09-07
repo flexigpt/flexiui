@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 const collectionColumns = `
@@ -30,7 +31,7 @@ func (s *Store) createCollection(
 		return err
 	}
 
-	seenSources := make(map[basespec.SourceID]struct{}, len(attachments))
+	seenSources := make(map[source.SourceID]struct{}, len(attachments))
 	for index, attachment := range attachments {
 		if err := attachment.Validate(); err != nil {
 			return fmt.Errorf("attachment %d: %w", index, err)
@@ -417,12 +418,12 @@ func (s *Store) attachCollectionSource(
 func (s *Store) getCollectionAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (collection.Attachment, error) {
 	if err := ref.Validate(); err != nil {
 		return collection.Attachment{}, err
 	}
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return collection.Attachment{}, err
 	}
 
@@ -614,7 +615,7 @@ func (s *Store) updateCollectionAttachment(
 func (s *Store) detachCollectionSource(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 	modifiedAt time.Time,
@@ -622,7 +623,7 @@ func (s *Store) detachCollectionSource(
 	if err := ref.Validate(); err != nil {
 		return collection.Collection{}, err
 	}
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return collection.Collection{}, err
 	}
 	if expectedCollectionRevision == 0 ||
@@ -704,7 +705,7 @@ func (s *Store) detachCollectionSource(
 func (s *Store) replaceCollectionAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	previousSourceID basespec.SourceID,
+	previousSourceID source.SourceID,
 	expectedPreviousRevision uint64,
 	replacement collection.Attachment,
 	expectedCollectionRevision uint64,
@@ -712,7 +713,7 @@ func (s *Store) replaceCollectionAttachment(
 	if err := ref.Validate(); err != nil {
 		return collection.Collection{}, err
 	}
-	if err := basespec.ValidateSourceID(previousSourceID); err != nil {
+	if err := previousSourceID.Validate(); err != nil {
 		return collection.Collection{}, err
 	}
 	if err := replacement.Validate(); err != nil {
@@ -818,7 +819,7 @@ func requireNoAttachmentBoundRecordsTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) error {
 	var exists int
 	err := tx.QueryRowContext(
@@ -864,9 +865,9 @@ func requireAttachedSourceTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) error {
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return err
 	}
 	if _, err := getActiveCollectionTx(ctx, tx, ref); err != nil {
@@ -939,7 +940,7 @@ func requireAttachableSourceTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	attachmentEnabled bool,
 ) error {
 	var enabled int
@@ -1003,7 +1004,7 @@ func getCollectionAttachmentTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (collection.Attachment, error) {
 	value, err := scanCollectionAttachment(tx.QueryRowContext(
 		ctx,
@@ -1155,7 +1156,7 @@ func scanCollectionAttachment(row scanner) (collection.Attachment, error) {
 	value := collection.Attachment{
 		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
-		SourceID:     basespec.SourceID(sourceID),
+		SourceID:     source.SourceID(sourceID),
 		Role:         basespec.AttachmentRole(role),
 		Enabled:      enabled != 0,
 		Data:         append(json.RawMessage(nil), data...),

@@ -19,7 +19,7 @@ type sourceReader interface {
 	Get(
 		ctx context.Context,
 		rootID root.RootID,
-		id basespec.SourceID,
+		id source.SourceID,
 	) (source.Summary, error)
 }
 
@@ -90,7 +90,7 @@ func (s *Service) Create(
 	}
 
 	seenSources := make(
-		map[basespec.SourceID]struct{},
+		map[source.SourceID]struct{},
 		len(attachmentDrafts),
 	)
 	attachments := make([]collection.Attachment, 0, len(attachmentDrafts))
@@ -312,7 +312,7 @@ func (s *Service) ListAttachments(
 func (s *Service) GetAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (collection.Attachment, error) {
 	if _, err := s.repository.Get(ctx, ref); err != nil {
 		return collection.Attachment{}, err
@@ -380,7 +380,7 @@ func (s *Service) Attach(
 func (s *Service) UpdateAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	update collection.AttachmentUpdate,
 ) (collection.Collection, collection.Attachment, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, ref.RootID); err != nil {
@@ -445,7 +445,7 @@ func (s *Service) UpdateAttachment(
 func (s *Service) Detach(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 ) (collection.Collection, error) {

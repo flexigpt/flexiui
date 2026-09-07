@@ -21,7 +21,7 @@ type Runtime interface {
 	Get(
 		ctx context.Context,
 		rootID root.RootID,
-		id basespec.SourceID,
+		id source.SourceID,
 	) (source.Source, error)
 
 	Open(
@@ -43,7 +43,7 @@ type LocalPathRuntime interface {
 	) (string, error)
 
 	SupportsLocalPath(
-		kind basespec.SourceKind,
+		kind source.SourceKind,
 	) bool
 }
 
@@ -313,7 +313,7 @@ func VerifySnapshotContentDigest(
 func (r *runtime) Get(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 ) (source.Source, error) {
 	if r == nil || r.reader == nil {
 		return source.Source{}, basespec.ErrClosed
@@ -330,7 +330,7 @@ func (r *runtime) Get(
 	if err := rootID.Validate(); err != nil {
 		return source.Source{}, err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return source.Source{}, err
 	}
 	value, err := r.reader.Get(ctx, rootID, id)
@@ -430,7 +430,7 @@ func (r *runtime) ResolveLocalPath(
 }
 
 func (r *runtime) SupportsLocalPath(
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) bool {
 	if r == nil || r.localKinds == nil {
 		return false

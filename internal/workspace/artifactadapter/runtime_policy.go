@@ -7,6 +7,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
@@ -31,7 +32,7 @@ type RuntimePolicyRequest struct {
 	Workspace        spec.Workspace
 	Artifact         artifact.Artifact
 	DefinitionDigest cryptoutil.Digest
-	SourceID         basespec.SourceID
+	SourceID         source.SourceID
 }
 
 type RuntimeDecision struct {

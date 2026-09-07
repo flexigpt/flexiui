@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
@@ -20,7 +21,7 @@ type ContextContribution struct {
 	Artifact         artifact.ArtifactRef                      `json:"artifact"`
 	ArtifactRevision uint64                                    `json:"artifactRevision"`
 	DefinitionDigest cryptoutil.Digest                         `json:"definitionDigest"`
-	SourceID         basespec.SourceID                         `json:"sourceID"`
+	SourceID         source.SourceID                           `json:"sourceID"`
 	Locator          basespec.Locator                          `json:"locator"`
 	Name             string                                    `json:"name"`
 	Role             artifactbuiltin.WorkspaceContextRole      `json:"role"`
@@ -46,7 +47,7 @@ type ContextDocument struct {
 	Artifact         artifact.ArtifactRef                      `json:"artifact"`
 	ArtifactRevision uint64                                    `json:"artifactRevision"`
 	DefinitionDigest cryptoutil.Digest                         `json:"definitionDigest"`
-	SourceID         basespec.SourceID                         `json:"sourceID"`
+	SourceID         source.SourceID                           `json:"sourceID"`
 	Locator          basespec.Locator                          `json:"locator"`
 	Name             string                                    `json:"name"`
 	Role             artifactbuiltin.WorkspaceContextRole      `json:"role"`

@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -25,8 +26,8 @@ const (
 // calculation, and source generation confirmation. A decoder receives only
 // the candidate bytes and generic source identity.
 type Candidate struct {
-	SourceID            basespec.SourceID
-	SourceKind          basespec.SourceKind
+	SourceID            source.SourceID
+	SourceKind          source.SourceKind
 	Locator             basespec.Locator
 	SourceContentDigest cryptoutil.Digest
 	Content             []byte

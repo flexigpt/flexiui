@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
@@ -62,7 +61,7 @@ func (r *SourceRepository) Create(
 func (r *SourceRepository) Get(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 ) (source.Source, error) {
 	return r.store.getSource(ctx, rootID, id)
 }
@@ -93,7 +92,7 @@ func (r *SourceRepository) Retire(
 func (r *SourceRepository) Discard(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	return r.store.discardSource(ctx, rootID, id, expectedRevision)
@@ -102,7 +101,7 @@ func (r *SourceRepository) Discard(
 func (r *SourceRepository) Purge(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	return r.store.purgeSource(ctx, rootID, id, expectedRevision)
@@ -218,7 +217,7 @@ func (r *CollectionRepository) Attach(
 func (r *CollectionRepository) GetAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (collection.Attachment, error) {
 	return r.store.getCollectionAttachment(ctx, ref, sourceID)
 }
@@ -247,7 +246,7 @@ func (r *CollectionRepository) UpdateAttachment(
 func (r *CollectionRepository) Detach(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 	modifiedAt time.Time,
@@ -265,7 +264,7 @@ func (r *CollectionRepository) Detach(
 func (r *CollectionRepository) ReplaceAttachment(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	previousSourceID basespec.SourceID,
+	previousSourceID source.SourceID,
 	expectedPreviousRevision uint64,
 	replacement collection.Attachment,
 	expectedCollectionRevision uint64,

@@ -29,7 +29,7 @@ type providerRefreshInput struct {
 	providerAttachments []providerapi.Attachment
 	providerSources     []providerapi.Source
 
-	attachmentsBySource map[basespec.SourceID]providerapi.Attachment
+	attachmentsBySource map[source.SourceID]providerapi.Attachment
 }
 
 // RefreshCollection is the Store-owned collection refresh entrypoint.
@@ -228,7 +228,7 @@ func (s *Service) loadProviderRefreshInput(
 		len(attachments),
 	)
 	attachmentsBySource := make(
-		map[basespec.SourceID]providerapi.Attachment,
+		map[source.SourceID]providerapi.Attachment,
 		len(attachments),
 	)
 
@@ -383,7 +383,7 @@ func (s *Service) buildProviderPlan(
 
 type providerAdoptionPolicy struct {
 	behavior    providerapi.CollectionBehavior
-	attachments map[basespec.SourceID]providerapi.Attachment
+	attachments map[source.SourceID]providerapi.Attachment
 	ids         artifactid.Provider
 }
 

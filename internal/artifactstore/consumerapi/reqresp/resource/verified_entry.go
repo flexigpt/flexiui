@@ -5,6 +5,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -12,7 +13,7 @@ import (
 // generation. The bytes are owned by the returned value.
 type VerifiedEntry struct {
 	Collection       collection.CollectionRef
-	SourceID         basespec.SourceID
+	SourceID         source.SourceID
 	CatalogRevision  uint64
 	SourceRevision   uint64
 	SourceGeneration string
@@ -24,7 +25,7 @@ func (e VerifiedEntry) Validate() error {
 	if err := e.Collection.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(e.SourceID); err != nil {
+	if err := e.SourceID.Validate(); err != nil {
 		return err
 	}
 	if e.CatalogRevision == 0 || e.SourceRevision == 0 {

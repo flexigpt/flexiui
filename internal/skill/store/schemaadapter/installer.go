@@ -72,11 +72,11 @@ func NewInstaller(
 		return nil, err
 	}
 	if len(builtInTopology.Sources) != 1 ||
-		builtInTopology.Sources[0].Kind != basespec.SourceKindManagedDirectory {
+		builtInTopology.Sources[0].Kind != source.SourceKindManagedDirectory {
 		return nil, fmt.Errorf(
 			"%w: built-in Source kind must be %q",
 			basespec.ErrInvalid,
-			basespec.SourceKindManagedDirectory,
+			source.SourceKindManagedDirectory,
 		)
 	}
 	hydrated, err := dependencies.SkillRegistry.Hydrate(

@@ -17,9 +17,9 @@ type verificationSessionContextKey struct{}
 
 type verificationSessionKey struct {
 	RootID         root.RootID
-	SourceID       basespec.SourceID
+	SourceID       source.SourceID
 	SourceRevision uint64
-	SourceKind     basespec.SourceKind
+	SourceKind     source.SourceKind
 	Generation     string
 }
 

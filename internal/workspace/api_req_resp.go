@@ -10,6 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
@@ -38,13 +39,13 @@ type WorkspaceArtifactSettings struct {
 }
 
 type WorkspaceOccurrenceRef struct {
-	SourceID           basespec.SourceID           `json:"sourceID"`
+	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 }
 
 type WorkspaceAttachmentView struct {
-	SourceID          basespec.SourceID           `json:"sourceID"`
+	SourceID          source.SourceID             `json:"sourceID"`
 	Revision          uint64                      `json:"revision"`
 	Role              basespec.AttachmentRole     `json:"role"`
 	Enabled           bool                        `json:"enabled"`
@@ -67,7 +68,7 @@ type WorkspaceView struct {
 	Description     string                    `json:"description,omitempty"`
 	Enabled         bool                      `json:"enabled"`
 	Mode            spec.Mode                 `json:"mode"`
-	PrimarySourceID basespec.SourceID         `json:"primarySourceID,omitempty"`
+	PrimarySourceID source.SourceID           `json:"primarySourceID,omitempty"`
 	PrimaryPath     string                    `json:"primaryPath,omitempty"`
 	Discovery       WorkspaceDiscovery        `json:"discovery"`
 	Attachments     []WorkspaceAttachmentView `json:"attachments"`
@@ -82,7 +83,7 @@ type WorkspaceArtifactView struct {
 	State              artifact.State              `json:"state"`
 	Adoption           artifact.AdoptionMode       `json:"adoption"`
 	ResolvedDefinition *cryptoutil.Digest          `json:"resolvedDefinition,omitempty"`
-	SourceID           basespec.SourceID           `json:"sourceID"`
+	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	RuntimeDisabled    bool                        `json:"runtimeDisabled"`
@@ -100,7 +101,7 @@ type WorkspaceSuppressionView struct {
 type WorkspaceResourceView struct {
 	Artifact         WorkspaceArtifactView   `json:"artifact"`
 	DefinitionDigest cryptoutil.Digest       `json:"definitionDigest"`
-	SourceID         basespec.SourceID       `json:"sourceID"`
+	SourceID         source.SourceID         `json:"sourceID"`
 	Locator          basespec.Locator        `json:"locator"`
 	CatalogCurrent   bool                    `json:"catalogCurrent"`
 	ProjectionValid  bool                    `json:"projectionValid"`
@@ -108,7 +109,7 @@ type WorkspaceResourceView struct {
 }
 
 type WorkspaceOccurrenceView struct {
-	SourceID            basespec.SourceID           `json:"sourceID"`
+	SourceID            source.SourceID             `json:"sourceID"`
 	Locator             basespec.Locator            `json:"locator"`
 	SubresourceLocator  basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	Kind                basespec.ArtifactKind       `json:"kind,omitempty"`
@@ -158,7 +159,7 @@ type WorkspaceContextContribution struct {
 	Artifact         artifact.ArtifactRef                      `json:"artifact"`
 	RecordRevision   uint64                                    `json:"recordRevision"`
 	DefinitionDigest cryptoutil.Digest                         `json:"definitionDigest"`
-	SourceID         basespec.SourceID                         `json:"sourceID"`
+	SourceID         source.SourceID                           `json:"sourceID"`
 	Locator          basespec.Locator                          `json:"locator"`
 	Name             string                                    `json:"name"`
 	Role             artifactbuiltin.WorkspaceContextRole      `json:"role"`
@@ -192,7 +193,7 @@ type WorkspaceContextView struct {
 	Artifact         artifact.ArtifactRef                      `json:"artifact"`
 	RecordRevision   uint64                                    `json:"recordRevision"`
 	DefinitionDigest cryptoutil.Digest                         `json:"definitionDigest"`
-	SourceID         basespec.SourceID                         `json:"sourceID"`
+	SourceID         source.SourceID                           `json:"sourceID"`
 	Locator          basespec.Locator                          `json:"locator"`
 	Name             string                                    `json:"name"`
 	Role             artifactbuiltin.WorkspaceContextRole      `json:"role"`
@@ -237,7 +238,7 @@ type WorkspaceSkillView struct {
 	Workspace        WorkspaceRef            `json:"workspace"`
 	Artifact         artifact.ArtifactRef    `json:"artifact"`
 	DefinitionDigest cryptoutil.Digest       `json:"definitionDigest"`
-	SourceID         basespec.SourceID       `json:"sourceID"`
+	SourceID         source.SourceID         `json:"sourceID"`
 	Locator          basespec.Locator        `json:"locator"`
 	Skill            WorkspaceSkillSummary   `json:"skill"`
 	MarkdownBody     string                  `json:"markdownBody,omitempty"`
@@ -258,7 +259,7 @@ type WorkspaceSkillLoadView struct {
 
 type CreateFilesystemWorkspaceRequestBody struct {
 	WorkspaceID      basespec.CollectionID `json:"workspaceID"           required:"true"`
-	SourceID         basespec.SourceID     `json:"sourceID"              required:"true"`
+	SourceID         source.SourceID       `json:"sourceID"              required:"true"`
 	SourceStorageKey basespec.StorageKey   `json:"sourceStorageKey"      required:"true"`
 	DisplayName      string                `json:"displayName"           required:"true"`
 	Description      string                `json:"description,omitempty"`
@@ -325,11 +326,11 @@ type UpdateWorkspaceResponse struct {
 }
 
 type SetWorkspacePrimarySourceRequestBody struct {
-	ExpectedCollectionRevision         uint64            `json:"expectedCollectionRevision"                   required:"true"`
-	PreviousSourceID                   basespec.SourceID `json:"previousSourceID,omitempty"`
-	ExpectedPreviousAttachmentRevision uint64            `json:"expectedPreviousAttachmentRevision,omitempty"`
-	SourceID                           basespec.SourceID `json:"sourceID,omitempty"`
-	Clear                              bool              `json:"clear,omitempty"`
+	ExpectedCollectionRevision         uint64          `json:"expectedCollectionRevision"                   required:"true"`
+	PreviousSourceID                   source.SourceID `json:"previousSourceID,omitempty"`
+	ExpectedPreviousAttachmentRevision uint64          `json:"expectedPreviousAttachmentRevision,omitempty"`
+	SourceID                           source.SourceID `json:"sourceID,omitempty"`
+	Clear                              bool            `json:"clear,omitempty"`
 }
 
 type SetWorkspacePrimarySourceRequest struct {
@@ -370,7 +371,7 @@ type PurgeWorkspaceResponse struct {
 
 type AttachWorkspaceSourceRequestBody struct {
 	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision" required:"true"`
-	SourceID                   basespec.SourceID           `json:"sourceID"                   required:"true"`
+	SourceID                   source.SourceID             `json:"sourceID"                   required:"true"`
 	Role                       basespec.AttachmentRole     `json:"role"                       required:"true"`
 	Enabled                    bool                        `json:"enabled"                    required:"true"`
 	Settings                   WorkspaceAttachmentSettings `json:"settings"`
@@ -394,8 +395,8 @@ type UpdateWorkspaceAttachmentRequestBody struct {
 }
 
 type UpdateWorkspaceAttachmentRequest struct {
-	Workspace WorkspaceRef      `json:"workspace" required:"true"`
-	SourceID  basespec.SourceID `json:"sourceID"  required:"true"`
+	Workspace WorkspaceRef    `json:"workspace" required:"true"`
+	SourceID  source.SourceID `json:"sourceID"  required:"true"`
 	Body      *UpdateWorkspaceAttachmentRequestBody
 }
 
@@ -404,10 +405,10 @@ type UpdateWorkspaceAttachmentResponse struct {
 }
 
 type DetachWorkspaceSourceRequest struct {
-	Workspace                  WorkspaceRef      `json:"workspace"                  required:"true"`
-	SourceID                   basespec.SourceID `json:"sourceID"                   required:"true"`
-	ExpectedCollectionRevision uint64            `json:"expectedCollectionRevision" required:"true"`
-	ExpectedAttachmentRevision uint64            `json:"expectedAttachmentRevision" required:"true"`
+	Workspace                  WorkspaceRef    `json:"workspace"                  required:"true"`
+	SourceID                   source.SourceID `json:"sourceID"                   required:"true"`
+	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision" required:"true"`
+	ExpectedAttachmentRevision uint64          `json:"expectedAttachmentRevision" required:"true"`
 }
 
 type DetachWorkspaceSourceResponse struct {

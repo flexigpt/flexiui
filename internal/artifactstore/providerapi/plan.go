@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -56,7 +57,7 @@ func (p Plan) Validate() error {
 		return err
 	}
 
-	seen := make(map[basespec.SourceID]struct{}, len(p.Sources))
+	seen := make(map[source.SourceID]struct{}, len(p.Sources))
 	for index, sourcePlan := range p.Sources {
 		if err := sourcePlan.Validate(); err != nil {
 			return fmt.Errorf(
@@ -140,7 +141,7 @@ type decoderHintScope struct {
 
 // SourcePlan declares discovery scope for one attached Source.
 type SourcePlan struct {
-	SourceID               basespec.SourceID                      `json:"sourceID"`
+	SourceID               source.SourceID                        `json:"sourceID"`
 	ExplicitLocators       []basespec.Locator                     `json:"explicitLocators,omitempty"`
 	DirectoryRoots         []DirectoryRoot                        `json:"directoryRoots,omitempty"`
 	DecoderHints           []DecoderHint                          `json:"decoderHints,omitempty"`
@@ -186,7 +187,7 @@ func (p SourcePlan) Clone() SourcePlan {
 }
 
 func (p SourcePlan) Validate() error {
-	if err := basespec.ValidateSourceID(p.SourceID); err != nil {
+	if err := p.SourceID.Validate(); err != nil {
 		return err
 	}
 	if len(p.ExplicitLocators) == 0 &&
@@ -552,8 +553,8 @@ func (p Plan) Fingerprint() (cryptoutil.Digest, error) {
 // Validate must be called by the Store before execution. This helper exists so
 // Store internals can execute the provider-owned plan model directly without
 // maintaining an identical internal plan type.
-func (p Plan) BySource() map[basespec.SourceID]SourcePlan {
-	output := make(map[basespec.SourceID]SourcePlan, len(p.Sources))
+func (p Plan) BySource() map[source.SourceID]SourcePlan {
+	output := make(map[source.SourceID]SourcePlan, len(p.Sources))
 	for _, value := range p.Sources {
 		value = value.Normalized()
 		output[value.SourceID] = value

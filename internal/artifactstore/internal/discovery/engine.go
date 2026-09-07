@@ -68,8 +68,8 @@ func (e *Engine) Discover(
 	ctx context.Context,
 	rootID root.RootID,
 	collectionID basespec.CollectionID,
-	sourceID basespec.SourceID,
-	sourceKind basespec.SourceKind,
+	sourceID source.SourceID,
+	sourceKind source.SourceKind,
 	snapshot sourceimpl.Snapshot,
 	plan providerapi.SourcePlan,
 	previous []catalog.Occurrence,
@@ -86,10 +86,10 @@ func (e *Engine) Discover(
 	if err := basespec.ValidateCollectionID(collectionID); err != nil {
 		return Result{}, err
 	}
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return Result{}, err
 	}
-	if err := basespec.ValidateSourceKind(sourceKind); err != nil {
+	if err := sourceKind.Validate(); err != nil {
 		return Result{}, err
 	}
 	if snapshot == nil {
@@ -958,7 +958,7 @@ func applyInvalidForLocator(
 	values map[catalog.OccurrenceKey]catalog.Occurrence,
 	rootID root.RootID,
 	collectionID basespec.CollectionID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 	sourceDigest *cryptoutil.Digest,
 	decoderID basespec.DecoderID,
@@ -1004,7 +1004,7 @@ func applyInvalidForLocator(
 func markObservedKeysForLocator(
 	seenKeys map[catalog.OccurrenceKey]struct{},
 	values map[catalog.OccurrenceKey]catalog.Occurrence,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 ) {
 	for key, value := range values {
@@ -1022,7 +1022,7 @@ func markObservedKeysForLocator(
 // this refresh and must not leave a previous Artifact falsely available.
 func markUnrecognizedForLocator(
 	values map[catalog.OccurrenceKey]catalog.Occurrence,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 	now time.Time,
 ) []diagnostic.Diagnostic {

@@ -8,9 +8,9 @@ import (
 )
 
 type Draft struct {
-	ID          basespec.SourceID   `json:"id"`
+	ID          SourceID            `json:"id"`
 	StorageKey  basespec.StorageKey `json:"storageKey"`
-	Kind        basespec.SourceKind `json:"kind"`
+	Kind        SourceKind          `json:"kind"`
 	DisplayName string              `json:"displayName"`
 	Enabled     bool                `json:"enabled"`
 	Config      json.RawMessage     `json:"config"`

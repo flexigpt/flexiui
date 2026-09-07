@@ -9,22 +9,23 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
 type Snapshot struct {
-	RootID              root.RootID                  `json:"rootID"`
-	CollectionID        basespec.CollectionID        `json:"collectionID"`
-	Revision            uint64                       `json:"revision"`
-	CollectionRevision  uint64                       `json:"collectionRevision"`
-	AttachmentRevisions map[basespec.SourceID]uint64 `json:"attachmentRevisions"`
-	SourceRevisions     map[basespec.SourceID]uint64 `json:"sourceRevisions"`
-	SourceGenerations   map[basespec.SourceID]string `json:"sourceGenerations"`
-	PlanFingerprint     cryptoutil.Digest            `json:"planFingerprint"`
-	DecoderFingerprint  cryptoutil.Digest            `json:"decoderFingerprint"`
-	PublishedAt         time.Time                    `json:"publishedAt"`
-	Diagnostics         []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
-	Occurrences         []Occurrence                 `json:"occurrences"`
+	RootID              root.RootID                `json:"rootID"`
+	CollectionID        basespec.CollectionID      `json:"collectionID"`
+	Revision            uint64                     `json:"revision"`
+	CollectionRevision  uint64                     `json:"collectionRevision"`
+	AttachmentRevisions map[source.SourceID]uint64 `json:"attachmentRevisions"`
+	SourceRevisions     map[source.SourceID]uint64 `json:"sourceRevisions"`
+	SourceGenerations   map[source.SourceID]string `json:"sourceGenerations"`
+	PlanFingerprint     cryptoutil.Digest          `json:"planFingerprint"`
+	DecoderFingerprint  cryptoutil.Digest          `json:"decoderFingerprint"`
+	PublishedAt         time.Time                  `json:"publishedAt"`
+	Diagnostics         []diagnostic.Diagnostic    `json:"diagnostics,omitempty"`
+	Occurrences         []Occurrence               `json:"occurrences"`
 }
 
 func (s Snapshot) Validate() error {
@@ -44,7 +45,7 @@ func (s Snapshot) Validate() error {
 		return fmt.Errorf("catalog decoder fingerprint: %w", err)
 	}
 	for sourceID, revision := range s.AttachmentRevisions {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if revision == 0 {
@@ -60,7 +61,7 @@ func (s Snapshot) Validate() error {
 		}
 	}
 	for sourceID, revision := range s.SourceRevisions {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if revision == 0 {
@@ -74,7 +75,7 @@ func (s Snapshot) Validate() error {
 		}
 	}
 	for sourceID, generation := range s.SourceGenerations {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if _, exists := s.SourceRevisions[sourceID]; !exists {
@@ -142,17 +143,17 @@ func (s Snapshot) Validate() error {
 func (s Snapshot) Clone() Snapshot {
 	output := s
 	output.AttachmentRevisions = make(
-		map[basespec.SourceID]uint64,
+		map[source.SourceID]uint64,
 		len(s.AttachmentRevisions),
 	)
 	maps.Copy(output.AttachmentRevisions, s.AttachmentRevisions)
 	output.SourceRevisions = make(
-		map[basespec.SourceID]uint64,
+		map[source.SourceID]uint64,
 		len(s.SourceRevisions),
 	)
 	maps.Copy(output.SourceRevisions, s.SourceRevisions)
 	output.SourceGenerations = make(
-		map[basespec.SourceID]string,
+		map[source.SourceID]string,
 		len(s.SourceGenerations),
 	)
 	maps.Copy(output.SourceGenerations, s.SourceGenerations)

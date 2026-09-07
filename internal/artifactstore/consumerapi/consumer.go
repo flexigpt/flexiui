@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
@@ -55,14 +54,14 @@ type ConsumerAPI interface {
 	DiscardSource(
 		ctx context.Context,
 		rootID root.RootID,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 		expectedRevision uint64,
 	) error
 
 	GetSource(
 		ctx context.Context,
 		rootID root.RootID,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 	) (source.Summary, error)
 
 	CreateCollection(
@@ -115,7 +114,7 @@ type ConsumerAPI interface {
 	GetCollectionAttachment(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 	) (collection.Attachment, error)
 
 	ListCollectionAttachments(
@@ -126,14 +125,14 @@ type ConsumerAPI interface {
 	UpdateCollectionAttachment(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 		update collection.AttachmentUpdate,
 	) (collection.Collection, collection.Attachment, error)
 
 	DetachCollectionSource(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 		expectedCollectionRevision uint64,
 		expectedAttachmentRevision uint64,
 	) (collection.Collection, error)

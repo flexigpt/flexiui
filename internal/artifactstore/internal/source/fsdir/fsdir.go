@@ -48,8 +48,8 @@ func NewWithTraversalPolicy(policy *TraversalPolicy) (*Adapter, error) {
 	return &Adapter{traversalPolicy: normalized}, nil
 }
 
-func (a *Adapter) Kind() basespec.SourceKind {
-	return basespec.SourceKindFilesystemDirectory
+func (a *Adapter) Kind() source.SourceKind {
+	return source.SourceKindFilesystemDirectory
 }
 
 func (a *Adapter) NormalizeConfig(
@@ -91,7 +91,7 @@ func (a *Adapter) Open(
 	ctx context.Context,
 	value source.Source,
 ) (sourceimpl.Snapshot, error) {
-	if value.Kind != basespec.SourceKindFilesystemDirectory {
+	if value.Kind != source.SourceKindFilesystemDirectory {
 		return nil, fmt.Errorf(
 			"%w: filesystem adapter received source kind %q",
 			basespec.ErrInvalid,
@@ -127,7 +127,7 @@ func (a *Adapter) ResolveLocalPath(
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	if value.Kind != basespec.SourceKindFilesystemDirectory {
+	if value.Kind != source.SourceKindFilesystemDirectory {
 		return "", fmt.Errorf(
 			"%w: filesystem adapter received source kind %q",
 			basespec.ErrInvalid,

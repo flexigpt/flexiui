@@ -7,13 +7,14 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 type Attachment struct {
 	RootID       root.RootID             `json:"rootID"`
 	CollectionID basespec.CollectionID   `json:"collectionID"`
-	SourceID     basespec.SourceID       `json:"sourceID"`
+	SourceID     source.SourceID         `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
 	Enabled      bool                    `json:"enabled"`
 	Revision     uint64                  `json:"revision"`
@@ -30,7 +31,7 @@ func (a Attachment) Validate() error {
 	if err := basespec.ValidateCollectionID(a.CollectionID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(a.SourceID); err != nil {
+	if err := a.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateAttachmentRole(a.Role); err != nil {
@@ -74,7 +75,7 @@ func (a Attachment) Clone() Attachment {
 }
 
 type AttachmentDraft struct {
-	SourceID basespec.SourceID       `json:"sourceID"`
+	SourceID source.SourceID         `json:"sourceID"`
 	Role     basespec.AttachmentRole `json:"role"`
 	Enabled  bool                    `json:"enabled"`
 	Data     json.RawMessage         `json:"data"`
@@ -89,8 +90,8 @@ type AttachmentUpdate struct {
 }
 
 type AttachmentReplacement struct {
-	ExpectedCollectionRevision uint64            `json:"expectedCollectionRevision"`
-	PreviousSourceID           basespec.SourceID `json:"previousSourceID,omitempty"`
-	PreviousAttachmentRevision uint64            `json:"previousAttachmentRevision,omitempty"`
-	Replacement                AttachmentDraft   `json:"replacement"`
+	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision"`
+	PreviousSourceID           source.SourceID `json:"previousSourceID,omitempty"`
+	PreviousAttachmentRevision uint64          `json:"previousAttachmentRevision,omitempty"`
+	Replacement                AttachmentDraft `json:"replacement"`
 }

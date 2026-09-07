@@ -362,7 +362,7 @@ func (a *API) ensurePinnedManagedSkill(
 	bundle collection.CollectionRef,
 	expectedCollectionRevision uint64,
 	artifactID basespec.ArtifactID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	skillLocator basespec.Locator,
 	name string,
 	enabled bool,

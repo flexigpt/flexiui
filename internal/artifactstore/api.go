@@ -227,7 +227,7 @@ func (a *API) CreateSourceWithStatus(
 func (a *API) DiscardSource(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedRevision uint64,
 ) error {
 	if err := a.check(ctx); err != nil {
@@ -244,7 +244,7 @@ func (a *API) DiscardSource(
 func (a *API) GetSource(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (source.Summary, error) {
 	if err := a.check(ctx); err != nil {
 		return source.Summary{}, err

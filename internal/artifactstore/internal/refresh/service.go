@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
@@ -157,7 +158,7 @@ func (s *Service) refresh(
 	}
 
 	previousBySource := make(
-		map[basespec.SourceID][]catalog.Occurrence,
+		map[source.SourceID][]catalog.Occurrence,
 	)
 	for _, occurrence := range previous.Occurrences {
 		previousBySource[occurrence.Key.SourceID] = append(
@@ -166,9 +167,9 @@ func (s *Service) refresh(
 		)
 	}
 
-	expectedAttachmentRevisions := make(map[basespec.SourceID]uint64)
-	expectedSourceRevisions := make(map[basespec.SourceID]uint64)
-	sourceGenerations := make(map[basespec.SourceID]string)
+	expectedAttachmentRevisions := make(map[source.SourceID]uint64)
+	expectedSourceRevisions := make(map[source.SourceID]uint64)
+	sourceGenerations := make(map[source.SourceID]string)
 	finalOccurrences := make([]catalog.Occurrence, 0)
 	allDiagnostics := make([]diagnostic.Diagnostic, 0)
 	snapshots := make([]sourceimpl.Snapshot, 0)

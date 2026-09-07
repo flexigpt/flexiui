@@ -9,6 +9,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -51,7 +52,7 @@ func (s *Store) GetTopologyHydration(
 	value := topology.Hydration{
 		InstallerName: installerName,
 		RootID:        root.RootID(rootID),
-		SourceID:      basespec.SourceID(sourceID),
+		SourceID:      source.SourceID(sourceID),
 		Fingerprint:   cryptoutil.Digest(fingerprint),
 	}
 	if err := value.Validate(); err != nil {

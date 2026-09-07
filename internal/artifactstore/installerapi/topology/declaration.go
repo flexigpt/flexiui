@@ -63,15 +63,15 @@ func (d Declaration) Validate() error {
 		)
 	}
 
-	seen := make(map[basespec.SourceID]struct{}, len(d.Sources))
+	seen := make(map[source.SourceID]struct{}, len(d.Sources))
 	for index, draft := range d.Sources {
-		if err := basespec.ValidateSourceID(draft.ID); err != nil {
+		if err := draft.ID.Validate(); err != nil {
 			return fmt.Errorf("protected Sources[%d]: %w", index, err)
 		}
 		if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
 			return fmt.Errorf("protected Sources[%d]: %w", index, err)
 		}
-		if err := basespec.ValidateSourceKind(draft.Kind); err != nil {
+		if err := draft.Kind.Validate(); err != nil {
 			return fmt.Errorf("protected Sources[%d]: %w", index, err)
 		}
 		if err := basespec.ValidateRequiredText(

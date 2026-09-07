@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 type Reader interface {
@@ -23,7 +23,7 @@ type Reader interface {
 	GetAttachment(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 	) (collection.Attachment, error)
 
 	ListAttachments(
@@ -86,7 +86,7 @@ type Repository interface {
 	Detach(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		sourceID basespec.SourceID,
+		sourceID source.SourceID,
 		expectedCollectionRevision uint64,
 		expectedAttachmentRevision uint64,
 		modifiedAt time.Time,
@@ -95,7 +95,7 @@ type Repository interface {
 	ReplaceAttachment(
 		ctx context.Context,
 		ref collection.CollectionRef,
-		previousSourceID basespec.SourceID,
+		previousSourceID source.SourceID,
 		expectedPreviousRevision uint64,
 		replacement collection.Attachment,
 		expectedCollectionRevision uint64,

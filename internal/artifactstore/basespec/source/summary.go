@@ -9,11 +9,11 @@ import (
 )
 
 type Summary struct {
-	ID             basespec.SourceID   `json:"id"`
+	ID             SourceID            `json:"id"`
 	RootID         root.RootID         `json:"rootID"`
 	RootStorageKey basespec.StorageKey `json:"rootStorageKey"`
 	StorageKey     basespec.StorageKey `json:"storageKey"`
-	Kind           basespec.SourceKind `json:"kind"`
+	Kind           SourceKind          `json:"kind"`
 	DisplayName    string              `json:"displayName"`
 	Enabled        bool                `json:"enabled"`
 	Revision       uint64              `json:"revision"`
@@ -29,14 +29,14 @@ func (s Summary) Validate() error {
 	if err := basespec.ValidateStorageKey(s.RootStorageKey); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(s.ID); err != nil {
+	if err := s.ID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateStorageKey(s.StorageKey); err != nil {
 		return err
 	}
 
-	if err := basespec.ValidateSourceKind(s.Kind); err != nil {
+	if err := s.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(

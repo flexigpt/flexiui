@@ -1,7 +1,6 @@
 package managedartifact
 
 import (
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -29,7 +28,7 @@ type PublishResult struct {
 // Collection Source and refreshes the Collection when required.
 type PublishCollectionRequest struct {
 	Collection     collection.CollectionRef
-	SourceID       basespec.SourceID
+	SourceID       source.SourceID
 	Package        source.ManagedPackagePublication
 	AllowProtected bool
 	ForceRefresh   bool

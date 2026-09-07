@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 // PlanningDocumentReader is the only source-read capability available to a
@@ -25,13 +26,13 @@ type PlanningDocumentReader interface {
 // PlanningDocumentRequest identifies one source-relative portable document
 // needed to derive a provider discovery plan.
 type PlanningDocumentRequest struct {
-	SourceID       basespec.SourceID
+	SourceID       source.SourceID
 	Locator        basespec.Locator
 	ExpectedSchema schema.Key
 }
 
 func (r PlanningDocumentRequest) Validate() error {
-	if err := basespec.ValidateSourceID(r.SourceID); err != nil {
+	if err := r.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateLocator(r.Locator, false); err != nil {
@@ -47,7 +48,7 @@ func (r PlanningDocumentRequest) Validate() error {
 // so the provider can place it into the resulting SourcePlan as an optimistic
 // precondition.
 type PlanningDocument struct {
-	SourceID   basespec.SourceID
+	SourceID   source.SourceID
 	Generation string
 	Found      bool
 	Document   *schema.ParsedDocument
@@ -63,7 +64,7 @@ func (d PlanningDocument) Clone() PlanningDocument {
 }
 
 func (d PlanningDocument) Validate() error {
-	if err := basespec.ValidateSourceID(d.SourceID); err != nil {
+	if err := d.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceGeneration(d.Generation); err != nil {

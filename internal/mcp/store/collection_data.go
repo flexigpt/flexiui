@@ -42,7 +42,7 @@ func EncodeCollectionData(
 		return nil, err
 	}
 	if value.ManagedSourceID != "" {
-		if err := basespec.ValidateSourceID(value.ManagedSourceID); err != nil {
+		if err := value.ManagedSourceID.Validate(); err != nil {
 			return nil, err
 		}
 	}

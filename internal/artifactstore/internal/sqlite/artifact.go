@@ -14,6 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -917,8 +918,8 @@ func requireCurrentCatalogTx(
 		)
 	}
 
-	catalogAttachmentRevisions := map[basespec.SourceID]uint64{}
-	catalogSourceRevisions := map[basespec.SourceID]uint64{}
+	catalogAttachmentRevisions := map[source.SourceID]uint64{}
+	catalogSourceRevisions := map[source.SourceID]uint64{}
 	if err := decodeJSON(
 		attachmentRevisionsRaw,
 		&catalogAttachmentRevisions,
@@ -981,8 +982,8 @@ func requireCatalogUnavailableOrStaleTx(
 		return err
 	}
 
-	catalogAttachmentRevisions := map[basespec.SourceID]uint64{}
-	catalogSourceRevisions := map[basespec.SourceID]uint64{}
+	catalogAttachmentRevisions := map[source.SourceID]uint64{}
+	catalogSourceRevisions := map[source.SourceID]uint64{}
 	if err := decodeJSON(
 		attachmentRevisionsRaw,
 		&catalogAttachmentRevisions,
@@ -1216,7 +1217,7 @@ func scanArtifact(row scanner) (artifact.Artifact, error) {
 		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
-			SourceID:           basespec.SourceID(sourceID),
+			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
 			ExpectedKind:       basespec.ArtifactKind(kind),
@@ -1268,7 +1269,7 @@ func scanSuppression(row scanner) (artifact.Suppression, error) {
 		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
-			SourceID:           basespec.SourceID(sourceID),
+			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
 			ExpectedKind:       basespec.ArtifactKind(kind),

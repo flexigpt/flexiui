@@ -47,8 +47,8 @@ func New(providers map[string]fs.FS) (*Adapter, error) {
 	return &Adapter{providers: output}, nil
 }
 
-func (*Adapter) Kind() basespec.SourceKind {
-	return basespec.SourceKindEmbeddedDirectory
+func (*Adapter) Kind() source.SourceKind {
+	return source.SourceKindEmbeddedDirectory
 }
 
 func (a *Adapter) NormalizeConfig(
@@ -87,7 +87,7 @@ func (a *Adapter) Open(
 	ctx context.Context,
 	value source.Source,
 ) (sourceimpl.Snapshot, error) {
-	if value.Kind != basespec.SourceKindEmbeddedDirectory {
+	if value.Kind != source.SourceKindEmbeddedDirectory {
 		return nil, fmt.Errorf(
 			"%w: embedded adapter received source kind %q",
 			basespec.ErrInvalid,

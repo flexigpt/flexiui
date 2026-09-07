@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
@@ -14,7 +15,7 @@ type AttachmentOperation struct {
 	Role                                 basespec.AttachmentRole
 	CanAttach                            bool
 	IsPrimary                            bool
-	RequiredSourceKind                   basespec.SourceKind
+	RequiredSourceKind                   source.SourceKind
 	DefaultAuthoritative                 bool
 	IncludeReadmeWhenRequested           bool
 	AppliesWorkspaceDiscoveryPreferences bool
@@ -29,7 +30,7 @@ var attachmentOperationMatrix = [...]AttachmentOperation{
 	{
 		Role:                                 spec.RolePrimary,
 		IsPrimary:                            true,
-		RequiredSourceKind:                   basespec.SourceKindFilesystemDirectory,
+		RequiredSourceKind:                   source.SourceKindFilesystemDirectory,
 		DefaultAuthoritative:                 true,
 		IncludeReadmeWhenRequested:           true,
 		AppliesWorkspaceDiscoveryPreferences: true,

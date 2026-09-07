@@ -74,7 +74,7 @@ type Registration struct {
 type CreateRequest struct {
 	RootID           root.RootID
 	CollectionID     basespec.CollectionID
-	SourceID         basespec.SourceID
+	SourceID         source.SourceID
 	SourceStorageKey basespec.StorageKey
 
 	// Document is raw portable JSON. It remains raw until the Artifact Store
@@ -111,7 +111,7 @@ func (a *API) Create(
 	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateSourceID(request.SourceID); err != nil {
+	if err := request.SourceID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 
@@ -140,7 +140,7 @@ func (a *API) Create(
 		source.Draft{
 			ID:          request.SourceID,
 			StorageKey:  request.SourceStorageKey,
-			Kind:        basespec.SourceKindManagedDirectory,
+			Kind:        source.SourceKindManagedDirectory,
 			DisplayName: displayName(document),
 			Enabled:     true,
 			Config:      json.RawMessage(jsonutil.EmptyObject),
@@ -407,7 +407,7 @@ func (a *API) Get(
 	if err != nil {
 		return Bundle{}, err
 	}
-	if sourceValue.Kind != basespec.SourceKindManagedDirectory {
+	if sourceValue.Kind != source.SourceKindManagedDirectory {
 		return Bundle{}, fmt.Errorf(
 			"%w: MCP Bundle requires a managed Source",
 			basespec.ErrInvalid,

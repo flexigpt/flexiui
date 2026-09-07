@@ -52,7 +52,7 @@ func NewService(
 type Request struct {
 	RootID           root.RootID
 	CollectionID     basespec.CollectionID
-	SourceID         basespec.SourceID
+	SourceID         source.SourceID
 	SourceStorageKey basespec.StorageKey
 	DisplayName      string
 	Description      string
@@ -89,7 +89,7 @@ func (s *Service) CreateFilesystem(
 		source.Draft{
 			ID:          request.SourceID,
 			StorageKey:  request.SourceStorageKey,
-			Kind:        basespec.SourceKindFilesystemDirectory,
+			Kind:        source.SourceKindFilesystemDirectory,
 			DisplayName: request.DisplayName,
 			Enabled:     true,
 			Config:      config,

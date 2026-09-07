@@ -100,14 +100,6 @@ func ValidatePortableName(label, value string) error {
 	return nil
 }
 
-func ValidateSourceID(value SourceID) error {
-	err := uuidutil.ValidateUUIDv7(string(value))
-	if err != nil {
-		return fmt.Errorf("source ID: %w", err)
-	}
-	return nil
-}
-
 func ValidateCollectionID(value CollectionID) error {
 	err := uuidutil.ValidateUUIDv7(string(value))
 	if err != nil {
@@ -122,10 +114,6 @@ func ValidateArtifactID(value ArtifactID) error {
 		return fmt.Errorf("artifact ID: %w", err)
 	}
 	return nil
-}
-
-func ValidateSourceKind(value SourceKind) error {
-	return ValidateIdentifier("source kind", string(value), MaxKindBytes)
 }
 
 func ValidateCollectionKind(value CollectionKind) error {

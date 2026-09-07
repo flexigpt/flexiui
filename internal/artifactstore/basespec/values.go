@@ -66,26 +66,24 @@ var portableReservedBaseNames = map[string]struct{}{
 }
 
 type (
-	SourceID           string
-	CollectionID       string
-	ArtifactID         string
-	StorageKey         string
-	PackageKind        string
-	SourceKind         string
-	CollectionKind     string
-	ArtifactKind       string
-	SchemaID           string
-	AttachmentRole     string
-	DecoderID          string
+	ArtifactID   string
+	ArtifactKind string
+
+	StorageKey  string
+	PackageKind string
+
+	CollectionID   string
+	CollectionKind string
+
+	SchemaID string
+
+	AttachmentRole string
+
+	DecoderID string
+
 	Locator            string
 	SubresourceLocator string
 
 	LogicalName    string
 	LogicalVersion string
-)
-
-const (
-	SourceKindFilesystemDirectory SourceKind = "fs-directory"
-	SourceKindEmbeddedDirectory   SourceKind = "embedded-directory"
-	SourceKindManagedDirectory    SourceKind = "managed-directory"
 )

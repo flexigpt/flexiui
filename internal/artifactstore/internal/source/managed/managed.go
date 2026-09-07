@@ -86,8 +86,8 @@ func New(
 	}, nil
 }
 
-func (*Adapter) Kind() basespec.SourceKind {
-	return basespec.SourceKindManagedDirectory
+func (*Adapter) Kind() source.SourceKind {
+	return source.SourceKindManagedDirectory
 }
 
 func (a *Adapter) ResolveLocalPath(
@@ -562,7 +562,7 @@ func (a *Adapter) validateSource(ctx context.Context, value source.Source) error
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	if value.Kind != basespec.SourceKindManagedDirectory {
+	if value.Kind != source.SourceKindManagedDirectory {
 		return fmt.Errorf(
 			"%w: managed adapter received source kind %q",
 			basespec.ErrInvalid,
@@ -586,7 +586,7 @@ func (a *Adapter) sourceRootPath(
 	value source.Source,
 	create bool,
 ) (string, error) {
-	if err := basespec.ValidateSourceID(value.ID); err != nil {
+	if err := value.ID.Validate(); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
@@ -610,7 +610,7 @@ func (a *Adapter) sourceStagingPath(
 	value source.Source,
 	create bool,
 ) (string, error) {
-	if err := basespec.ValidateSourceID(value.ID); err != nil {
+	if err := value.ID.Validate(); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateStorageKey(value.StorageKey); err != nil {
@@ -689,7 +689,7 @@ func (a *Adapter) filesystemSource(
 		return source.Source{}, err
 	}
 	output := value.Clone()
-	output.Kind = basespec.SourceKindFilesystemDirectory
+	output.Kind = source.SourceKindFilesystemDirectory
 	output.Config = raw
 	return output, nil
 }

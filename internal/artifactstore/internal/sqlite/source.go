@@ -68,7 +68,7 @@ func (s *Store) createSource(
 func (s *Store) getSource(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 ) (source.Source, error) {
 	if err := s.requireActiveRoot(ctx, rootID); err != nil {
 		return source.Source{}, err
@@ -258,13 +258,13 @@ func (s *Store) retireSource(
 func (s *Store) discardSource(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return err
 	}
 	if expectedRevision == 0 {
@@ -316,13 +316,13 @@ func (s *Store) discardSource(
 func (s *Store) purgeSource(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return err
 	}
 	if expectedRevision == 0 {
@@ -391,11 +391,11 @@ func scanSource(row scanner) (source.Source, error) {
 		return source.Source{}, err
 	}
 	value := source.Source{
-		ID:             basespec.SourceID(id),
+		ID:             source.SourceID(id),
 		RootID:         root.RootID(rootID),
 		RootStorageKey: basespec.StorageKey(rootStorageKey),
 		StorageKey:     basespec.StorageKey(storageKey),
-		Kind:           basespec.SourceKind(kind),
+		Kind:           source.SourceKind(kind),
 		DisplayName:    displayName,
 		Enabled:        enabled != 0,
 		Config:         append([]byte(nil), config...),

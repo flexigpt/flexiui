@@ -14,7 +14,7 @@ type Reader interface {
 	Get(
 		ctx context.Context,
 		rootID root.RootID,
-		id basespec.SourceID,
+		id source.SourceID,
 	) (source.Source, error)
 }
 
@@ -46,14 +46,14 @@ type Repository interface {
 	Discard(
 		ctx context.Context,
 		rootID root.RootID,
-		id basespec.SourceID,
+		id source.SourceID,
 		expectedRevision uint64,
 	) error
 
 	Purge(
 		ctx context.Context,
 		rootID root.RootID,
-		id basespec.SourceID,
+		id source.SourceID,
 		expectedRevision uint64,
 	) error
 }
@@ -106,7 +106,7 @@ type LocalPathResolver interface {
 // native paths. It avoids consumer hard-coding of concrete adapter kinds.
 type LocalPathCapability interface {
 	SupportsLocalPath(
-		kind basespec.SourceKind,
+		kind source.SourceKind,
 	) bool
 }
 
@@ -166,7 +166,7 @@ type ManagedRootRemover interface {
 }
 
 type Adapter interface {
-	Kind() basespec.SourceKind
+	Kind() source.SourceKind
 
 	NormalizeConfig(
 		ctx context.Context,

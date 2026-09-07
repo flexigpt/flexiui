@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	refreshimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -281,7 +282,7 @@ func requirePublishedSourceGenerationsTx(
 	tx *sql.Tx,
 	rootID root.RootID,
 	collectionID basespec.CollectionID,
-	generations map[basespec.SourceID]string,
+	generations map[source.SourceID]string,
 ) error {
 	rows, err := tx.QueryContext(
 		ctx,
@@ -304,13 +305,13 @@ func requirePublishedSourceGenerationsTx(
 	}
 	defer rows.Close()
 
-	expected := make(map[basespec.SourceID]struct{})
+	expected := make(map[source.SourceID]struct{})
 	for rows.Next() {
 		var sourceID string
 		if err := rows.Scan(&sourceID); err != nil {
 			return err
 		}
-		expected[basespec.SourceID(sourceID)] = struct{}{}
+		expected[source.SourceID(sourceID)] = struct{}{}
 	}
 	if err := rows.Err(); err != nil {
 		return err

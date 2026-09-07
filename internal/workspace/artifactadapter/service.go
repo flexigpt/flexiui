@@ -181,7 +181,7 @@ func (s *Service) ValidateFilesystemCreate(
 	); err != nil {
 		return err
 	}
-	return basespec.ValidateSourceID(request.PrimarySourceID)
+	return request.PrimarySourceID.Validate()
 }
 
 func (s *Service) List(
@@ -390,12 +390,12 @@ func (s *Service) SetPrimary(
 		)
 	}
 	if request.SourceID != "" {
-		if err := basespec.ValidateSourceID(request.SourceID); err != nil {
+		if err := request.SourceID.Validate(); err != nil {
 			return spec.Workspace{}, err
 		}
 	}
 	if request.PreviousSourceID != "" {
-		if err := basespec.ValidateSourceID(request.PreviousSourceID); err != nil {
+		if err := request.PreviousSourceID.Validate(); err != nil {
 			return spec.Workspace{}, err
 		}
 	}
@@ -536,7 +536,7 @@ func (s *Service) SetPrimary(
 func (s *Service) Detach(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 ) (spec.Workspace, error) {
@@ -752,7 +752,7 @@ func (s *Service) requireWorkspaceRoot(
 func (s *Service) requirePrimarySource(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) error {
 	sourceValue, err := s.store.GetSource(ctx, rootID, sourceID)
 	if err != nil {

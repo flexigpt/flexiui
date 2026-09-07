@@ -10,6 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -46,13 +47,13 @@ type Publication struct {
 	// older source observation.
 	ExpectedCatalogRevision     uint64
 	ExpectedCollectionRevision  uint64
-	ExpectedAttachmentRevisions map[basespec.SourceID]uint64
-	ExpectedSourceRevisions     map[basespec.SourceID]uint64
+	ExpectedAttachmentRevisions map[source.SourceID]uint64
+	ExpectedSourceRevisions     map[source.SourceID]uint64
 
 	// SourceGenerations contains one confirmed generation for every Source
 	// whose attachment and Source are enabled at publication time. Publisher
 	// verifies that set against persisted metadata.
-	SourceGenerations map[basespec.SourceID]string
+	SourceGenerations map[source.SourceID]string
 
 	PlanFingerprint    cryptoutil.Digest
 	DecoderFingerprint cryptoutil.Digest
@@ -79,9 +80,9 @@ func (p Publication) Validate() error {
 	if err := cryptoutil.ValidateDigest(p.DecoderFingerprint); err != nil {
 		return err
 	}
-	knownSources := make(map[basespec.SourceID]struct{}, len(p.ExpectedSourceRevisions))
+	knownSources := make(map[source.SourceID]struct{}, len(p.ExpectedSourceRevisions))
 	for sourceID, revision := range p.ExpectedSourceRevisions {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if revision == 0 {
@@ -101,7 +102,7 @@ func (p Publication) Validate() error {
 		}
 	}
 	for sourceID, revision := range p.ExpectedAttachmentRevisions {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if revision == 0 {
@@ -115,7 +116,7 @@ func (p Publication) Validate() error {
 		}
 	}
 	for sourceID, generation := range p.SourceGenerations {
-		if err := basespec.ValidateSourceID(sourceID); err != nil {
+		if err := sourceID.Validate(); err != nil {
 			return err
 		}
 		if _, exists := knownSources[sourceID]; !exists {

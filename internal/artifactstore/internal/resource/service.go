@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
@@ -256,7 +257,7 @@ func (s *Service) ResolveVerifiedLocalPath(
 func (s *Service) ReadCollectionEntry(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 	maximumBytes int64,
 ) (artifactConsumerAPIresource.VerifiedEntry, error) {
@@ -269,7 +270,7 @@ func (s *Service) ReadCollectionEntry(
 	if err := ref.Validate(); err != nil {
 		return artifactConsumerAPIresource.VerifiedEntry{}, err
 	}
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return artifactConsumerAPIresource.VerifiedEntry{}, err
 	}
 	if err := basespec.ValidateLocator(locator, false); err != nil {
@@ -334,7 +335,7 @@ func (s *Service) ReadCollectionEntry(
 func (s *Service) ResolveSourceLocalPath(
 	ctx context.Context,
 	rootID root.RootID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 ) (string, error) {
 	if err := validateContext(ctx, "Source local-path resolution"); err != nil {
@@ -346,7 +347,7 @@ func (s *Service) ResolveSourceLocalPath(
 	if err := rootID.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateSourceID(sourceID); err != nil {
+	if err := sourceID.Validate(); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateLocator(locator, true); err != nil {
@@ -375,7 +376,7 @@ func (s *Service) ResolveSourceLocalPath(
 	return localPaths.ResolveLocalPath(ctx, sourceValue, locator)
 }
 
-func (s *Service) SupportsLocalPath(kind basespec.SourceKind) bool {
+func (s *Service) SupportsLocalPath(kind source.SourceKind) bool {
 	if s == nil || s.sources == nil {
 		return false
 	}

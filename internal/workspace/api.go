@@ -14,6 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
@@ -1099,7 +1100,7 @@ func (a *API) enrichWorkspaceSourcePresentation(
 				attachment.SourceID,
 			)
 		}
-		sourceKind := basespec.SourceKind(attachment.SourceKind)
+		sourceKind := source.SourceKind(attachment.SourceKind)
 		if !a.dependencies.Store.SupportsLocalPath(sourceKind) {
 			continue
 		}
@@ -1564,7 +1565,7 @@ func workspaceArtifactViewOf(value artifact.Artifact) WorkspaceArtifactView {
 }
 
 func occurrenceViewKey(
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	locator basespec.Locator,
 	subresource basespec.SubresourceLocator,
 	kind basespec.ArtifactKind,

@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -83,9 +84,9 @@ func (s *Store) getCurrentCatalog(
 		return catalog.Snapshot{}, err
 	}
 
-	attachmentRevisions := map[basespec.SourceID]uint64{}
-	sourceRevisions := map[basespec.SourceID]uint64{}
-	sourceGenerations := map[basespec.SourceID]string{}
+	attachmentRevisions := map[source.SourceID]uint64{}
+	sourceRevisions := map[source.SourceID]uint64{}
+	sourceGenerations := map[source.SourceID]string{}
 	diagnostics := []diagnostic.Diagnostic{}
 	if err := decodeJSON(attachmentRevisionsRaw, &attachmentRevisions); err != nil {
 		return catalog.Snapshot{}, err
@@ -221,7 +222,7 @@ func scanOccurrence(row scanner) (catalog.Occurrence, error) {
 		CollectionID: basespec.CollectionID(collectionID),
 		Key: catalog.OccurrenceKey{
 			CollectionID:       basespec.CollectionID(collectionID),
-			SourceID:           basespec.SourceID(sourceID),
+			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
 		},
@@ -247,8 +248,8 @@ func currentAttachmentSourceRevisionsTx(
 	tx *sql.Tx,
 	ref collection.CollectionRef,
 ) (
-	currentAttachments map[basespec.SourceID]uint64,
-	currentSources map[basespec.SourceID]uint64,
+	currentAttachments map[source.SourceID]uint64,
+	currentSources map[source.SourceID]uint64,
 	err error,
 ) {
 	rows, err := tx.QueryContext(
@@ -268,8 +269,8 @@ func currentAttachmentSourceRevisionsTx(
 	}
 	defer rows.Close()
 
-	attachments := make(map[basespec.SourceID]uint64)
-	sources := make(map[basespec.SourceID]uint64)
+	attachments := make(map[source.SourceID]uint64)
+	sources := make(map[source.SourceID]uint64)
 	for rows.Next() {
 		var sourceID string
 		var attachmentRevision, sourceRevision uint64
@@ -280,7 +281,7 @@ func currentAttachmentSourceRevisionsTx(
 		); err != nil {
 			return nil, nil, err
 		}
-		id := basespec.SourceID(sourceID)
+		id := source.SourceID(sourceID)
 		attachments[id] = attachmentRevision
 		sources[id] = sourceRevision
 	}

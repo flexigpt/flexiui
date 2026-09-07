@@ -74,7 +74,7 @@ type Workspace struct {
 	Collection      collection.Collection   `json:"-"`
 	Data            CollectionData          `json:"-"`
 	Mode            Mode                    `json:"-"`
-	PrimarySourceID basespec.SourceID       `json:"-"`
+	PrimarySourceID source.SourceID         `json:"-"`
 	Attachments     []collection.Attachment `json:"-"`
 	Sources         []source.Summary        `json:"-"`
 }
@@ -108,7 +108,7 @@ type FilesystemWorkspaceRequest struct {
 	RootID          root.RootID           `json:"rootID"`
 	DisplayName     string                `json:"displayName"`
 	Description     string                `json:"description,omitempty"`
-	PrimarySourceID basespec.SourceID     `json:"primarySourceID"`
+	PrimarySourceID source.SourceID       `json:"primarySourceID"`
 	Discovery       DiscoveryPreferences  `json:"discovery"`
 }
 
@@ -124,7 +124,7 @@ type UpdateRequest struct {
 type AttachRequest struct {
 	Workspace                  WorkspaceRef            `json:"workspace"`
 	ExpectedCollectionRevision uint64                  `json:"expectedCollectionRevision"`
-	SourceID                   basespec.SourceID       `json:"sourceID"`
+	SourceID                   source.SourceID         `json:"sourceID"`
 	Role                       basespec.AttachmentRole `json:"role"`
 	Enabled                    bool                    `json:"enabled"`
 	Data                       AttachmentData          `json:"data"`
@@ -132,7 +132,7 @@ type AttachRequest struct {
 
 type UpdateAttachmentRequest struct {
 	Workspace                  WorkspaceRef
-	SourceID                   basespec.SourceID
+	SourceID                   source.SourceID
 	ExpectedCollectionRevision uint64
 	ExpectedAttachmentRevision uint64
 	Role                       basespec.AttachmentRole
@@ -143,9 +143,9 @@ type UpdateAttachmentRequest struct {
 type SetPrimaryRequest struct {
 	Workspace                  WorkspaceRef
 	ExpectedCollectionRevision uint64
-	PreviousSourceID           basespec.SourceID
+	PreviousSourceID           source.SourceID
 	PreviousAttachmentRevision uint64
-	SourceID                   basespec.SourceID
+	SourceID                   source.SourceID
 	Clear                      bool
 }
 

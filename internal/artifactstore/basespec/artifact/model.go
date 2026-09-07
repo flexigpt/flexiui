@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -100,7 +101,7 @@ func (a ArtifactAddress) Validate() error {
 }
 
 type SourceBinding struct {
-	SourceID           basespec.SourceID           `json:"sourceID"`
+	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	ExpectedKind       basespec.ArtifactKind       `json:"expectedKind"`
@@ -272,7 +273,7 @@ func (s Suppression) Validate() error {
 }
 
 func (b SourceBinding) Validate() error {
-	if err := basespec.ValidateSourceID(b.SourceID); err != nil {
+	if err := b.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateLocator(b.Locator, true); err != nil {

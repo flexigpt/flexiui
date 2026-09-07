@@ -90,13 +90,13 @@ func (s *Service) CreateWithStatus(
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, false, err
 	}
-	if err := basespec.ValidateSourceID(draft.ID); err != nil {
+	if err := draft.ID.Validate(); err != nil {
 		return source.Summary{}, false, err
 	}
 	if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
 		return source.Summary{}, false, err
 	}
-	if err := basespec.ValidateSourceKind(draft.Kind); err != nil {
+	if err := draft.Kind.Validate(); err != nil {
 		return source.Summary{}, false, err
 	}
 	if err := basespec.ValidateRequiredText(
@@ -243,12 +243,12 @@ func sourceCreationIntentMatches(
 func (s *Service) Get(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 ) (source.Summary, error) {
 	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	value, err := s.repository.Get(ctx, rootID, id)
@@ -279,7 +279,7 @@ func (s *Service) List(
 func (s *Service) Update(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	update source.Update,
 ) (source.Summary, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
@@ -288,7 +288,7 @@ func (s *Service) Update(
 	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if update.ExpectedRevision == 0 {
@@ -366,7 +366,7 @@ func (s *Service) Update(
 func (s *Service) Retire(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
@@ -375,7 +375,7 @@ func (s *Service) Retire(
 	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if expectedRevision == 0 {
@@ -419,7 +419,7 @@ func (s *Service) Retire(
 func (s *Service) Discard(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	if ctx == nil {
@@ -437,7 +437,7 @@ func (s *Service) Discard(
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return err
 	}
 	if expectedRevision == 0 {
@@ -476,7 +476,7 @@ func (s *Service) Discard(
 func (s *Service) Purge(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) error {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
@@ -491,7 +491,7 @@ func (s *Service) Purge(
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return err
 	}
 	return s.repository.Purge(ctx, rootID, id, expectedRevision)
@@ -503,7 +503,7 @@ func (s *Service) Purge(
 func (s *Service) MarkContentChanged(
 	ctx context.Context,
 	rootID root.RootID,
-	id basespec.SourceID,
+	id source.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
@@ -521,7 +521,7 @@ func (s *Service) MarkContentChanged(
 	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateSourceID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if expectedRevision == 0 {
@@ -554,7 +554,7 @@ func (s *Service) MarkContentChanged(
 	return next.Summary(), nil
 }
 
-func (s *Service) Kinds() []basespec.SourceKind {
+func (s *Service) Kinds() []source.SourceKind {
 	return s.registry.Kinds()
 }
 

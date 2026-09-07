@@ -7,6 +7,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 )
@@ -54,7 +55,7 @@ func (b skillCollectionBehavior) BuildDiscoveryPlan(
 	}
 
 	sourcesByID := make(
-		map[basespec.SourceID]providerapi.Source,
+		map[source.SourceID]providerapi.Source,
 		len(sources),
 	)
 	for index, sourceValue := range sources {
@@ -239,7 +240,7 @@ func validateProviderBundleAttachmentTopology(
 ) error {
 	var (
 		managedAttachmentCount int
-		managedAttachmentID    basespec.SourceID
+		managedAttachmentID    source.SourceID
 		builtInAttachmentCount int
 	)
 

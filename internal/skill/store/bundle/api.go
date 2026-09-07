@@ -194,13 +194,13 @@ func (a *API) PurgeBundle(
 		if err != nil {
 			return err
 		}
-		if ownedSource.Kind != basespec.SourceKindManagedDirectory {
+		if ownedSource.Kind != source.SourceKindManagedDirectory {
 			return fmt.Errorf(
 				"%w: bundle-owned managed Source %q has kind %q, not %q",
 				basespec.ErrInvalid,
 				data.ManagedSourceID,
 				ownedSource.Kind,
-				basespec.SourceKindManagedDirectory,
+				source.SourceKindManagedDirectory,
 			)
 		}
 	}
@@ -1016,7 +1016,7 @@ func (a *API) createBundle(
 			source.Draft{
 				ID:          request.ManagedSourceID,
 				StorageKey:  request.ManagedSourceStorageKey,
-				Kind:        basespec.SourceKindManagedDirectory,
+				Kind:        source.SourceKindManagedDirectory,
 				DisplayName: request.DisplayName,
 				Enabled:     true,
 				Config:      json.RawMessage(jsonutil.EmptyObject),
@@ -1136,7 +1136,7 @@ func bundleCreationIntentMatches(
 		return false
 	}
 
-	expected := make(map[basespec.SourceID]AttachmentDraft)
+	expected := make(map[source.SourceID]AttachmentDraft)
 	for _, draft := range request.Attachments {
 		if _, duplicate := expected[draft.SourceID]; duplicate {
 			return false
@@ -1190,7 +1190,7 @@ func bundleCreationIntentMatches(
 				continue
 			}
 			found = sourceValue.RootID == request.RootID &&
-				sourceValue.Kind == basespec.SourceKindManagedDirectory &&
+				sourceValue.Kind == source.SourceKindManagedDirectory &&
 				sourceValue.DisplayName == request.DisplayName &&
 				sourceValue.Enabled
 			break
@@ -1618,7 +1618,7 @@ func (a *API) requireBundleMutation(
 
 func managedSkillCreateResult(
 	value artifact.Artifact,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	skillLocator basespec.Locator,
 	expectedDefinition cryptoutil.Digest,
 	expectedPackageSHA256 cryptoutil.Digest,
@@ -1647,7 +1647,7 @@ func validateBundleAttachmentTopology(
 ) error {
 	var (
 		managedAttachmentCount int
-		managedAttachmentID    basespec.SourceID
+		managedAttachmentID    source.SourceID
 		builtInAttachmentCount int
 	)
 	for _, attachment := range attachments {
@@ -1689,7 +1689,7 @@ func validateBundleAttachmentTopology(
 
 func requireBundleOwnedManagedSource(
 	bundle Bundle,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) error {
 	if bundle.Data.ManagedSourceID == "" ||
 		bundle.Data.ManagedSourceID != sourceID {
@@ -1708,7 +1708,7 @@ func (a *API) validateAttachmentDraft(
 	rootID root.RootID,
 	draft AttachmentDraft,
 ) error {
-	if err := basespec.ValidateSourceID(draft.SourceID); err != nil {
+	if err := draft.SourceID.Validate(); err != nil {
 		return err
 	}
 	if err := validateRole(draft.Role); err != nil {
@@ -1764,25 +1764,25 @@ func validateRole(role basespec.AttachmentRole) error {
 
 func validateRoleSourceKind(
 	role basespec.AttachmentRole,
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) error {
 	switch role {
 	case artifactbuiltin.ManagedAttachmentRole, artifactbuiltin.BuiltInAttachmentRole:
-		if kind != basespec.SourceKindManagedDirectory {
+		if kind != source.SourceKindManagedDirectory {
 			return fmt.Errorf(
 				"%w: skill bundle role %q requires source kind %q",
 				basespec.ErrInvalid,
 				role,
-				basespec.SourceKindManagedDirectory,
+				source.SourceKindManagedDirectory,
 			)
 		}
 	case RoleExternal, RoleLibrary:
-		if kind != basespec.SourceKindFilesystemDirectory {
+		if kind != source.SourceKindFilesystemDirectory {
 			return fmt.Errorf(
 				"%w: skill bundle role %q requires source kind %q",
 				basespec.ErrInvalid,
 				role,
-				basespec.SourceKindFilesystemDirectory,
+				source.SourceKindFilesystemDirectory,
 			)
 		}
 	}
@@ -1793,7 +1793,7 @@ func managedAttachmentForRole(
 	value Bundle,
 	role basespec.AttachmentRole,
 ) (collection.Attachment, source.Summary, error) {
-	sources := make(map[basespec.SourceID]source.Summary, len(value.Sources))
+	sources := make(map[source.SourceID]source.Summary, len(value.Sources))
 	for _, sourceValue := range value.Sources {
 		sources[sourceValue.ID] = sourceValue
 	}
@@ -1846,7 +1846,7 @@ func managedAttachmentForRole(
 
 func bundleAttachmentRole(
 	value Bundle,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 ) (basespec.AttachmentRole, error) {
 	for _, attachment := range value.Attachments {
 		if attachment.SourceID == sourceID {
@@ -2006,7 +2006,7 @@ func validateManagedSkillOperationIntent(
 	value artifact.Artifact,
 	bundle collection.CollectionRef,
 	artifactID basespec.ArtifactID,
-	sourceID basespec.SourceID,
+	sourceID source.SourceID,
 	skillLocator basespec.Locator,
 ) error {
 	if value.ID != artifactID ||

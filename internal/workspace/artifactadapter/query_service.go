@@ -350,7 +350,7 @@ func (q *QueryService) Catalog(
 		occurrencesByKey[key] = occurrence
 	}
 
-	sourcesByID := make(map[basespec.SourceID]source.Summary)
+	sourcesByID := make(map[source.SourceID]source.Summary)
 	for _, value := range workspaceValue.Sources {
 		sourcesByID[value.ID] = value
 	}

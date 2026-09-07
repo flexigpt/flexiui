@@ -2,6 +2,7 @@ package store
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	mcpStorePolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/policy"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
@@ -13,7 +14,7 @@ type CollectionData struct {
 	LogicalName             basespec.LogicalName    `json:"logicalName"`
 	LogicalVersion          basespec.LogicalVersion `json:"logicalVersion,omitempty"`
 	Labels                  map[string]string       `json:"labels,omitempty"`
-	ManagedSourceID         basespec.SourceID       `json:"managedSourceID,omitempty"`
+	ManagedSourceID         source.SourceID         `json:"managedSourceID,omitempty"`
 }
 
 type BundleExtension struct {

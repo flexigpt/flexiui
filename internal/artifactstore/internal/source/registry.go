@@ -10,20 +10,20 @@ import (
 )
 
 type Registry struct {
-	adapters map[basespec.SourceKind]Adapter
-	kinds    []basespec.SourceKind
+	adapters map[source.SourceKind]Adapter
+	kinds    []source.SourceKind
 }
 
 func NewRegistry(adapters ...Adapter) (*Registry, error) {
-	values := make(map[basespec.SourceKind]Adapter, len(adapters))
-	kinds := make([]basespec.SourceKind, 0, len(adapters))
+	values := make(map[source.SourceKind]Adapter, len(adapters))
+	kinds := make([]source.SourceKind, 0, len(adapters))
 
 	for _, adapter := range adapters {
 		if adapter == nil {
 			return nil, fmt.Errorf("%w: source adapter is nil", basespec.ErrInvalid)
 		}
 		kind := adapter.Kind()
-		if err := basespec.ValidateSourceKind(kind); err != nil {
+		if err := kind.Validate(); err != nil {
 			return nil, err
 		}
 		if _, exists := values[kind]; exists {
@@ -75,7 +75,7 @@ func (r *Registry) Open(
 }
 
 func (r *Registry) SupportsLocalPath(
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) bool {
 	adapter, exists := r.adapter(kind)
 	if !exists {
@@ -86,7 +86,7 @@ func (r *Registry) SupportsLocalPath(
 }
 
 func (r *Registry) SupportsManagedPackages(
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) bool {
 	adapter, exists := r.adapter(kind)
 	if !exists {
@@ -294,15 +294,15 @@ func (r *Registry) RemoveManagedRoot(
 	return nil
 }
 
-func (r *Registry) Kinds() []basespec.SourceKind {
+func (r *Registry) Kinds() []source.SourceKind {
 	if r == nil {
 		return nil
 	}
-	return append([]basespec.SourceKind(nil), r.kinds...)
+	return append([]source.SourceKind(nil), r.kinds...)
 }
 
 func (r *Registry) adapter(
-	kind basespec.SourceKind,
+	kind source.SourceKind,
 ) (Adapter, bool) {
 	if r == nil {
 		return nil, false

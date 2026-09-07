@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
@@ -89,7 +90,7 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 	}
 
 	sourcesByID := make(
-		map[basespec.SourceID]providerapi.Source,
+		map[source.SourceID]providerapi.Source,
 		len(sources),
 	)
 	for index, sourceValue := range sources {
@@ -118,7 +119,7 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 			attachment.SourceID,
 		)
 	}
-	if sourceValue.Kind != basespec.SourceKindManagedDirectory {
+	if sourceValue.Kind != source.SourceKindManagedDirectory {
 		return providerapi.Plan{}, fmt.Errorf(
 			"%w: MCP Bundle requires a managed Source",
 			basespec.ErrInvalid,

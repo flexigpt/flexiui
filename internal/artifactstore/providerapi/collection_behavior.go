@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 // Collection is a provider-safe view of a persisted Collection.
@@ -36,7 +37,7 @@ func (c Collection) Clone() Collection {
 type Attachment struct {
 	RootID       root.RootID             `json:"rootID"`
 	CollectionID basespec.CollectionID   `json:"collectionID"`
-	SourceID     basespec.SourceID       `json:"sourceID"`
+	SourceID     source.SourceID         `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
 	Enabled      bool                    `json:"enabled"`
 	Revision     uint64                  `json:"revision"`
@@ -55,10 +56,10 @@ func (a Attachment) Clone() Attachment {
 // discovery semantics from source identity and kind, while Artifact Store owns
 // source configuration, snapshot opening, and filesystem access.
 type Source struct {
-	ID          basespec.SourceID   `json:"id"`
+	ID          source.SourceID     `json:"id"`
 	RootID      root.RootID         `json:"rootID"`
 	StorageKey  basespec.StorageKey `json:"storageKey"`
-	Kind        basespec.SourceKind `json:"kind"`
+	Kind        source.SourceKind   `json:"kind"`
 	DisplayName string              `json:"displayName"`
 	Enabled     bool                `json:"enabled"`
 	Revision    uint64              `json:"revision"`
@@ -68,7 +69,7 @@ type Source struct {
 type Occurrence struct {
 	RootID             root.RootID                 `json:"rootID"`
 	CollectionID       basespec.CollectionID       `json:"collectionID"`
-	SourceID           basespec.SourceID           `json:"sourceID"`
+	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	Kind               basespec.ArtifactKind       `json:"kind"`
