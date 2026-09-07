@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -216,7 +217,7 @@ func scanOccurrence(row scanner) (catalog.Occurrence, error) {
 		cachedDefinition = &value
 	}
 	value := catalog.Occurrence{
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		Key: catalog.OccurrenceKey{
 			CollectionID:       basespec.CollectionID(collectionID),

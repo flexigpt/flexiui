@@ -7,6 +7,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	skillRuntime "github.com/flexigpt/flexigpt-app/internal/skill/runtime"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
@@ -100,7 +101,7 @@ func collectionRefForCatalogID(
 	}
 
 	ref := collection.CollectionRef{
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 	}
 	if err := ref.Validate(); err != nil {

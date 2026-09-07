@@ -14,6 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
@@ -65,7 +66,7 @@ func (e *Engine) DecoderFingerprint() (cryptoutil.Digest, error) {
 
 func (e *Engine) Discover(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	sourceID basespec.SourceID,
 	sourceKind basespec.SourceKind,
@@ -79,7 +80,7 @@ func (e *Engine) Discover(
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return Result{}, err
 	}
 	if err := basespec.ValidateCollectionID(collectionID); err != nil {
@@ -955,7 +956,7 @@ func isDirectChild(
 
 func applyInvalidForLocator(
 	values map[catalog.OccurrenceKey]catalog.Occurrence,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	sourceID basespec.SourceID,
 	locator basespec.Locator,
@@ -1079,10 +1080,10 @@ func locatorInScope(
 }
 
 func matchesDirectoryRoot(
-	root providerapi.DirectoryRoot,
+	r providerapi.DirectoryRoot,
 	locator basespec.Locator,
 ) bool {
-	base := string(root.Root)
+	base := string(r.Root)
 	value := string(locator)
 	relative := value
 	if base != "." {
@@ -1092,13 +1093,13 @@ func matchesDirectoryRoot(
 		}
 		relative = strings.TrimPrefix(value, prefix)
 	}
-	if !root.Recursive && strings.Contains(relative, "/") {
+	if !r.Recursive && strings.Contains(relative, "/") {
 		return false
 	}
-	if len(root.IncludePatterns) == 0 {
+	if len(r.IncludePatterns) == 0 {
 		return true
 	}
-	for _, pattern := range root.IncludePatterns {
+	for _, pattern := range r.IncludePatterns {
 		if matched, _ := path.Match(pattern, relative); matched {
 			return true
 		}

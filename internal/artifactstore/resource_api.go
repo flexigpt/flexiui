@@ -6,6 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 )
@@ -81,7 +82,7 @@ func (a *API) ReadCollectionEntry(
 
 func (a *API) ResolveSourceLocalPath(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	locator basespec.Locator,
 ) (string, error) {

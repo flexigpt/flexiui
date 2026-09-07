@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
 )
 
@@ -58,7 +59,7 @@ func ArtifactRefForRuntimeServerID(
 		)
 	}
 	ref := artifact.ArtifactRef{
-		RootID:     basespec.RootID(rootID),
+		RootID:     root.RootID(rootID),
 		ArtifactID: basespec.ArtifactID(artifactID),
 	}
 	if err := ref.Validate(); err != nil {
@@ -109,7 +110,7 @@ func CollectionRefForRuntimeCatalogID(
 		)
 	}
 	ref := collection.CollectionRef{
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 	}
 	if err := ref.Validate(); err != nil {

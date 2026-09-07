@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
@@ -20,7 +21,7 @@ const (
 // configuration. It is supplied while Artifact Store providers are registered,
 // before metadata is opened or a Workspace is refreshed.
 type ProviderConfig struct {
-	WorkspaceRootID         basespec.RootID
+	WorkspaceRootID         root.RootID
 	Supports                []spec.ArtifactSupport
 	DiscoveryProfiles       spec.DiscoveryProfiles
 	DiscoveryPolicyRevision string
@@ -49,7 +50,7 @@ func (c Config) ProviderConfig() ProviderConfig {
 }
 
 type workspaceProviderConfiguration struct {
-	workspaceRootID basespec.RootID
+	workspaceRootID root.RootID
 	supports        []spec.ArtifactSupport
 	decoderIDs      []basespec.DecoderID
 	profiles        spec.DiscoveryProfiles
@@ -105,7 +106,7 @@ func DefaultDecoders() []providerapi.Decoder {
 func normalizeProviderConfig(
 	input ProviderConfig,
 ) (workspaceProviderConfiguration, error) {
-	if err := basespec.ValidateRootID(input.WorkspaceRootID); err != nil {
+	if err := input.WorkspaceRootID.Validate(); err != nil {
 		return workspaceProviderConfiguration{}, err
 	}
 

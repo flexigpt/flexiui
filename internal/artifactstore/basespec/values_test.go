@@ -12,16 +12,10 @@ import (
 func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 	t.Parallel()
 
-	validID := "019d3150-6a12-7a6b-a34e-d9032342bc31"
-	if err := ValidateRootID(RootID(validID)); err != nil {
-		t.Fatalf("ValidateRootID(valid): %v", err)
-	}
-
 	tests := []struct {
 		name string
 		err  error
 	}{
-		{name: "upper-case UUID", err: ValidateRootID(RootID(strings.ToUpper(validID)))},
 		{name: "trimmed text", err: ValidateRequiredText("text", " value", 16)},
 		{name: "control text", err: ValidateRequiredText("text", "value\n", 16)},
 		{name: "invalid UTF-8", err: ValidateRequiredText("text", string([]byte{0xff}), 16)},

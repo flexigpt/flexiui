@@ -3,7 +3,7 @@ package rootimpl
 import (
 	"fmt"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
 // SetRootPolicy supports multiple protected topology Roots and multiple
@@ -12,27 +12,27 @@ import (
 // Protected Roots reject ordinary descendant mutations. Retained Roots reject
 // only Root retirement and purge.
 type SetRootPolicy struct {
-	protected map[basespec.RootID]struct{}
-	retained  map[basespec.RootID]struct{}
+	protected map[root.RootID]struct{}
+	retained  map[root.RootID]struct{}
 }
 
 func NewSetRootPolicy(
-	protected []basespec.RootID,
-	retained []basespec.RootID,
+	protected []root.RootID,
+	retained []root.RootID,
 ) (*SetRootPolicy, error) {
 	value := &SetRootPolicy{
-		protected: make(map[basespec.RootID]struct{}, len(protected)),
-		retained:  make(map[basespec.RootID]struct{}, len(retained)),
+		protected: make(map[root.RootID]struct{}, len(protected)),
+		retained:  make(map[root.RootID]struct{}, len(retained)),
 	}
 
 	for _, rootID := range protected {
-		if err := basespec.ValidateRootID(rootID); err != nil {
+		if err := rootID.Validate(); err != nil {
 			return nil, fmt.Errorf("protected root: %w", err)
 		}
 		value.protected[rootID] = struct{}{}
 	}
 	for _, rootID := range retained {
-		if err := basespec.ValidateRootID(rootID); err != nil {
+		if err := rootID.Validate(); err != nil {
 			return nil, fmt.Errorf("retained root: %w", err)
 		}
 		value.retained[rootID] = struct{}{}
@@ -41,7 +41,7 @@ func NewSetRootPolicy(
 }
 
 func (p *SetRootPolicy) IsProtectedRoot(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) bool {
 	if p == nil {
 		return false
@@ -51,7 +51,7 @@ func (p *SetRootPolicy) IsProtectedRoot(
 }
 
 func (p *SetRootPolicy) IsRootDeletionProtected(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) bool {
 	if p == nil {
 		return false

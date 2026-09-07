@@ -2,13 +2,14 @@ package workspace
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
 )
 
 type components struct {
-	workspaceRootID basespec.RootID
+	workspaceRootID root.RootID
 	service         *artifactadapter.Service
 	query           *artifactadapter.QueryService
 	supportedKinds  map[basespec.ArtifactKind]struct{}

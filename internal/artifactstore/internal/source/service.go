@@ -17,7 +17,7 @@ import (
 type rootReader interface {
 	Get(
 		ctx context.Context,
-		id basespec.RootID,
+		id root.RootID,
 	) (root.Root, error)
 }
 
@@ -53,7 +53,7 @@ func NewService(
 
 func (s *Service) Create(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft source.Draft,
 ) (source.Summary, error) {
 	value, _, err := s.CreateWithStatus(ctx, rootID, draft)
@@ -68,7 +68,7 @@ func (s *Service) Create(
 // discarding a Source that existed before the current request.
 func (s *Service) CreateWithStatus(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft source.Draft,
 ) (source.Summary, bool, error) {
 	if ctx == nil {
@@ -80,7 +80,7 @@ func (s *Service) CreateWithStatus(
 	if err := ctx.Err(); err != nil {
 		return source.Summary{}, false, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, false, err
 	}
 	rootValue, err := s.roots.Get(ctx, rootID)
@@ -242,10 +242,10 @@ func sourceCreationIntentMatches(
 
 func (s *Service) Get(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 ) (source.Summary, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -260,9 +260,9 @@ func (s *Service) Get(
 
 func (s *Service) List(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]source.Summary, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return nil, err
 	}
 	values, err := s.repository.List(ctx, rootID)
@@ -278,14 +278,14 @@ func (s *Service) List(
 
 func (s *Service) Update(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	update source.Update,
 ) (source.Summary, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -365,14 +365,14 @@ func (s *Service) Update(
 
 func (s *Service) Retire(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -418,7 +418,7 @@ func (s *Service) Retire(
 // Purge, it is intentionally limited to active Sources with no attachments.
 func (s *Service) Discard(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
@@ -434,7 +434,7 @@ func (s *Service) Discard(
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -475,7 +475,7 @@ func (s *Service) Discard(
 
 func (s *Service) Purge(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
@@ -488,7 +488,7 @@ func (s *Service) Purge(
 			basespec.ErrInvalid,
 		)
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -502,7 +502,7 @@ func (s *Service) Purge(
 // read from a confirmed snapshot when needed.
 func (s *Service) MarkContentChanged(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) (source.Summary, error) {
@@ -518,7 +518,7 @@ func (s *Service) MarkContentChanged(
 	if err := ctx.Err(); err != nil {
 		return source.Summary{}, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Summary{}, err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {

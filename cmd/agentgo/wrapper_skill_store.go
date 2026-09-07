@@ -6,9 +6,9 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -137,7 +137,7 @@ func (w *SkillStoreWrapper) GetSkillBundle(
 }
 
 func (w *SkillStoreWrapper) ListSkillBundles(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]skillBundle.Bundle, error) {
 	return middleware.WithRecoveryResp(func() ([]skillBundle.Bundle, error) {
 		return w.api.ListBundles(context.Background(), rootID)

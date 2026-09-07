@@ -18,7 +18,7 @@ import (
 type sourceReader interface {
 	Get(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		id basespec.SourceID,
 	) (source.Summary, error)
 }
@@ -52,11 +52,11 @@ func NewService(
 
 func (s *Service) Create(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft collection.Draft,
 	attachmentDrafts []collection.AttachmentDraft,
 ) (collection.Collection, []collection.Attachment, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return collection.Collection{}, nil, err
 	}
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
@@ -191,9 +191,9 @@ func (s *Service) GetRetired(
 
 func (s *Service) ListByRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]collection.Collection, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return nil, err
 	}
 	return s.repository.ListByRoot(ctx, rootID)

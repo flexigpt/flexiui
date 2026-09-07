@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
 
@@ -69,7 +70,7 @@ type OverlayRepository interface {
 
 	GetBundleOverlay(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		collectionID basespec.CollectionID,
 	) (BundleOverlay, bool, error)
 
@@ -82,7 +83,7 @@ type OverlayRepository interface {
 
 	PutBundleOverlay(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		collectionID basespec.CollectionID,
 		expectedRevision uint64,
 		value BundleOverlay,
@@ -96,7 +97,7 @@ type OverlayRepository interface {
 
 	DeleteBundleOverlay(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		collectionID basespec.CollectionID,
 		expectedRevision uint64,
 	) error

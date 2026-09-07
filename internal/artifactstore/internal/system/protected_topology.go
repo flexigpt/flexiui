@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
@@ -63,7 +64,7 @@ func (c *Components) EnsureProtectedTopology(
 
 func protectedSourceIntentMatches(
 	value source.Summary,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft source.Draft,
 ) bool {
 	return value.ID == draft.ID &&

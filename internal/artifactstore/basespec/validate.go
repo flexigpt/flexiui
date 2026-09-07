@@ -100,14 +100,6 @@ func ValidatePortableName(label, value string) error {
 	return nil
 }
 
-func ValidateRootID(value RootID) error {
-	err := uuidutil.ValidateUUIDv7(string(value))
-	if err != nil {
-		return fmt.Errorf("root ID: %w", err)
-	}
-	return nil
-}
-
 func ValidateSourceID(value SourceID) error {
 	err := uuidutil.ValidateUUIDv7(string(value))
 	if err != nil {

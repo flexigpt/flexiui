@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
 // Collection is a provider-safe view of a persisted Collection.
@@ -16,7 +17,7 @@ import (
 // feature-private runtime state.
 type Collection struct {
 	ID          basespec.CollectionID   `json:"id"`
-	RootID      basespec.RootID         `json:"rootID"`
+	RootID      root.RootID             `json:"rootID"`
 	Kind        basespec.CollectionKind `json:"kind"`
 	DisplayName string                  `json:"displayName"`
 	Description string                  `json:"description,omitempty"`
@@ -33,7 +34,7 @@ func (c Collection) Clone() Collection {
 
 // Attachment is a provider-safe view of a persisted Collection attachment.
 type Attachment struct {
-	RootID       basespec.RootID         `json:"rootID"`
+	RootID       root.RootID             `json:"rootID"`
 	CollectionID basespec.CollectionID   `json:"collectionID"`
 	SourceID     basespec.SourceID       `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
@@ -55,7 +56,7 @@ func (a Attachment) Clone() Attachment {
 // source configuration, snapshot opening, and filesystem access.
 type Source struct {
 	ID          basespec.SourceID   `json:"id"`
-	RootID      basespec.RootID     `json:"rootID"`
+	RootID      root.RootID         `json:"rootID"`
 	StorageKey  basespec.StorageKey `json:"storageKey"`
 	Kind        basespec.SourceKind `json:"kind"`
 	DisplayName string              `json:"displayName"`
@@ -65,7 +66,7 @@ type Source struct {
 
 // Occurrence is the provider-safe observation supplied to automatic adoption.
 type Occurrence struct {
-	RootID             basespec.RootID             `json:"rootID"`
+	RootID             root.RootID                 `json:"rootID"`
 	CollectionID       basespec.CollectionID       `json:"collectionID"`
 	SourceID           basespec.SourceID           `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`

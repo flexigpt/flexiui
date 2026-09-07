@@ -5,6 +5,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
@@ -12,7 +13,7 @@ import (
 )
 
 type Config struct {
-	WorkspaceRootID    basespec.RootID
+	WorkspaceRootID    root.RootID
 	Supports           []spec.ArtifactSupport
 	ContextComposition contextadapter.CompositionPolicy
 	SourceUsePolicy    artifactadapter.SourceUsePolicy

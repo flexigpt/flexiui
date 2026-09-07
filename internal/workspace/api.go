@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
@@ -1024,7 +1025,7 @@ func (a *API) requireWorkspaceArtifactKind(
 }
 
 func artifactRefsOf(
-	rootID basespec.RootID,
+	rootID root.RootID,
 	ids []basespec.ArtifactID,
 ) []artifact.ArtifactRef {
 	output := make([]artifact.ArtifactRef, 0, len(ids))

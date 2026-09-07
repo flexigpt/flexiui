@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
@@ -332,7 +333,7 @@ func (s *Service) ReadCollectionEntry(
 // UI to display an attached filesystem Source path.
 func (s *Service) ResolveSourceLocalPath(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	locator basespec.Locator,
 ) (string, error) {
@@ -342,7 +343,7 @@ func (s *Service) ResolveSourceLocalPath(
 	if s == nil || s.sources == nil {
 		return "", basespec.ErrClosed
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateSourceID(sourceID); err != nil {

@@ -61,7 +61,7 @@ func (r *SourceRepository) Create(
 
 func (r *SourceRepository) Get(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 ) (source.Source, error) {
 	return r.store.getSource(ctx, rootID, id)
@@ -69,7 +69,7 @@ func (r *SourceRepository) Get(
 
 func (r *SourceRepository) List(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]source.Source, error) {
 	return r.store.listSources(ctx, rootID)
 }
@@ -92,7 +92,7 @@ func (r *SourceRepository) Retire(
 
 func (r *SourceRepository) Discard(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
@@ -101,7 +101,7 @@ func (r *SourceRepository) Discard(
 
 func (r *SourceRepository) Purge(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
@@ -117,7 +117,7 @@ func (r *RootRepository) Create(
 
 func (r *RootRepository) Get(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 ) (root.Root, error) {
 	return r.store.getRoot(ctx, id)
 }
@@ -144,7 +144,7 @@ func (r *RootRepository) Retire(
 
 func (r *RootRepository) Purge(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 	expectedRevision uint64,
 ) error {
 	return r.store.purgeRoot(ctx, id, expectedRevision)
@@ -174,7 +174,7 @@ func (r *CollectionRepository) GetRetired(
 
 func (r *CollectionRepository) ListByRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]collection.Collection, error) {
 	return r.store.listCollectionsByRoot(ctx, rootID)
 }

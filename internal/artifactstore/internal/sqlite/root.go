@@ -41,7 +41,7 @@ func (s *Store) createRoot(
 
 func (s *Store) getRoot(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 ) (root.Root, error) {
 	value, err := scanRoot(s.db.QueryRowContext(
 		ctx,
@@ -173,7 +173,7 @@ func (s *Store) retireRoot(
 
 func (s *Store) purgeRoot(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 	expectedRevision uint64,
 ) error {
 	if expectedRevision == 0 {
@@ -216,7 +216,7 @@ func (s *Store) purgeRoot(
 
 func (s *Store) requireActiveRoot(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 ) error {
 	var marker int
 	err := s.db.QueryRowContext(
@@ -234,7 +234,7 @@ func (s *Store) requireActiveRoot(
 func getActiveRootTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	id basespec.RootID,
+	id root.RootID,
 ) (root.Root, error) {
 	value, err := scanRoot(tx.QueryRowContext(
 		ctx,
@@ -256,7 +256,7 @@ func getActiveRootTx(
 func rootHasActiveChildrenTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	id basespec.RootID,
+	id root.RootID,
 ) (bool, error) {
 	var exists int
 	err := tx.QueryRowContext(
@@ -299,7 +299,7 @@ func scanRoot(row scanner) (root.Root, error) {
 		return root.Root{}, err
 	}
 	value := root.Root{
-		ID:          basespec.RootID(id),
+		ID:          root.RootID(id),
 		StorageKey:  basespec.StorageKey(storageKey),
 		DisplayName: displayName,
 		Description: description,

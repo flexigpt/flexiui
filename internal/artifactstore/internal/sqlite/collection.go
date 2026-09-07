@@ -10,6 +10,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
 const collectionColumns = `
@@ -178,9 +179,9 @@ func (s *Store) getRetiredCollection(
 
 func (s *Store) listCollectionsByRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]collection.Collection, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return nil, err
 	}
 	if err := s.requireActiveRoot(ctx, rootID); err != nil {
@@ -937,7 +938,7 @@ func getActiveCollectionTx(
 func requireAttachableSourceTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	attachmentEnabled bool,
 ) error {
@@ -1108,7 +1109,7 @@ func scanCollection(row scanner) (collection.Collection, error) {
 
 	value := collection.Collection{
 		ID:          basespec.CollectionID(id),
-		RootID:      basespec.RootID(rootID),
+		RootID:      root.RootID(rootID),
 		Kind:        basespec.CollectionKind(kind),
 		DisplayName: displayName,
 		Description: description,
@@ -1152,7 +1153,7 @@ func scanCollectionAttachment(row scanner) (collection.Attachment, error) {
 	}
 
 	value := collection.Attachment{
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		SourceID:     basespec.SourceID(sourceID),
 		Role:         basespec.AttachmentRole(role),

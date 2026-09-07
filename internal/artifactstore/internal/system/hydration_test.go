@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
@@ -16,14 +17,14 @@ func TestPrepareTopologyHydrationsAllowsFreshProtectedRoot(
 ) {
 	t.Parallel()
 
-	rootID := basespec.RootID(
+	rootID := root.RootID(
 		"0192c4c0-0000-7000-8000-000000000001",
 	)
 	sourceID := basespec.SourceID(
 		"0192c4c0-0001-7000-8000-000000000001",
 	)
 	policy, err := rootimpl.NewSetRootPolicy(
-		[]basespec.RootID{rootID},
+		[]root.RootID{rootID},
 		nil,
 	)
 	if err != nil {

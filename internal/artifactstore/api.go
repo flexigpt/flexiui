@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
@@ -201,7 +202,7 @@ func (a *API) CreateArtifactSource(
 
 func (a *API) CreateSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft source.Draft,
 ) (source.Summary, error) {
 	if err := a.check(ctx); err != nil {
@@ -213,7 +214,7 @@ func (a *API) CreateSource(
 
 func (a *API) CreateSourceWithStatus(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft source.Draft,
 ) (source.Summary, bool, error) {
 	if err := a.check(ctx); err != nil {
@@ -225,7 +226,7 @@ func (a *API) CreateSourceWithStatus(
 
 func (a *API) DiscardSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedRevision uint64,
 ) error {
@@ -242,7 +243,7 @@ func (a *API) DiscardSource(
 
 func (a *API) GetSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 ) (source.Summary, error) {
 	if err := a.check(ctx); err != nil {

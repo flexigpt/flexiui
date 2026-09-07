@@ -8,11 +8,12 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
 type Snapshot struct {
-	RootID              basespec.RootID              `json:"rootID"`
+	RootID              root.RootID                  `json:"rootID"`
 	CollectionID        basespec.CollectionID        `json:"collectionID"`
 	Revision            uint64                       `json:"revision"`
 	CollectionRevision  uint64                       `json:"collectionRevision"`
@@ -27,7 +28,7 @@ type Snapshot struct {
 }
 
 func (s Snapshot) Validate() error {
-	if err := basespec.ValidateRootID(s.RootID); err != nil {
+	if err := s.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(s.CollectionID); err != nil {

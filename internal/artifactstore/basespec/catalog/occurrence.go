@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -27,7 +28,7 @@ type OccurrenceKey struct {
 }
 
 type Occurrence struct {
-	RootID              basespec.RootID         `json:"rootID"`
+	RootID              root.RootID             `json:"rootID"`
 	CollectionID        basespec.CollectionID   `json:"collectionID"`
 	Key                 OccurrenceKey           `json:"key"`
 	Kind                basespec.ArtifactKind   `json:"kind,omitempty"`
@@ -48,7 +49,7 @@ type Occurrence struct {
 }
 
 func (o Occurrence) Validate() error {
-	if err := basespec.ValidateRootID(o.RootID); err != nil {
+	if err := o.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(o.CollectionID); err != nil {

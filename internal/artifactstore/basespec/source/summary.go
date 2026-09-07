@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
 type Summary struct {
 	ID             basespec.SourceID   `json:"id"`
-	RootID         basespec.RootID     `json:"rootID"`
+	RootID         root.RootID         `json:"rootID"`
 	RootStorageKey basespec.StorageKey `json:"rootStorageKey"`
 	StorageKey     basespec.StorageKey `json:"storageKey"`
 	Kind           basespec.SourceKind `json:"kind"`
@@ -22,7 +23,7 @@ type Summary struct {
 }
 
 func (s Summary) Validate() error {
-	if err := basespec.ValidateRootID(s.RootID); err != nil {
+	if err := s.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateStorageKey(s.RootStorageKey); err != nil {

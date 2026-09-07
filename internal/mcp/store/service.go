@@ -14,6 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
@@ -27,7 +28,7 @@ import (
 type Dependencies struct {
 	Store artifactConsumerAPI.ConsumerAPI
 
-	UserRootID     basespec.RootID
+	UserRootID     root.RootID
 	Overlays       mcpOverlay.OverlayRepository
 	SecretCleaner  mcpStoreServer.SecretCleaner
 	BaselinePolicy mcpPolicy.MCPPolicy
@@ -46,7 +47,7 @@ func New(dependencies Dependencies) (*API, error) {
 		)
 	}
 	if dependencies.UserRootID != "" {
-		if err := basespec.ValidateRootID(dependencies.UserRootID); err != nil {
+		if err := dependencies.UserRootID.Validate(); err != nil {
 			return nil, err
 		}
 	}
@@ -71,7 +72,7 @@ type Registration struct {
 }
 
 type CreateRequest struct {
-	RootID           basespec.RootID
+	RootID           root.RootID
 	CollectionID     basespec.CollectionID
 	SourceID         basespec.SourceID
 	SourceStorageKey basespec.StorageKey
@@ -89,7 +90,7 @@ func (a *API) Create(
 	if a == nil {
 		return Bundle{}, basespec.ErrClosed
 	}
-	if err := basespec.ValidateRootID(request.RootID); err != nil {
+	if err := request.RootID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if a.dependencies.UserRootID != "" &&
@@ -235,7 +236,7 @@ func (a *API) Create(
 
 func (a *API) List(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]Bundle, error) {
 	values, err := a.dependencies.Store.ListCollections(ctx, rootID)
 	if err != nil {
@@ -515,7 +516,7 @@ func (a *API) serverInstallationDataForCleanup(
 // validateCreateRegistrations establishes all request-derived valid state
 // before source or Collection mutation begins.
 func validateCreateRegistrations(
-	rootID basespec.RootID,
+	rootID root.RootID,
 	document BundleDocument,
 	registrations []Registration,
 ) error {

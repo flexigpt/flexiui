@@ -294,7 +294,7 @@ func Open(
 			Policy:      config.RootMutationPolicy,
 			GetSourceState: func(
 				ctx context.Context,
-				rootID basespec.RootID,
+				rootID root.RootID,
 				sourceID basespec.SourceID,
 			) (managedartifactimpl.SourceState, error) {
 				result, err := components.getManagedSourceState(
@@ -312,7 +312,7 @@ func Open(
 			},
 			PublishPackage: func(
 				ctx context.Context,
-				rootID basespec.RootID,
+				rootID root.RootID,
 				sourceID basespec.SourceID,
 				expectedRevision uint64,
 				publication source.ManagedPackagePublication,
@@ -334,7 +334,7 @@ func Open(
 			},
 			PublishProtectedPackage: func(
 				ctx context.Context,
-				rootID basespec.RootID,
+				rootID root.RootID,
 				sourceID basespec.SourceID,
 				expectedRevision uint64,
 				publication source.ManagedPackagePublication,
@@ -392,7 +392,7 @@ func (c *Components) Close() error {
 // metadata field.
 func (c *Components) getManagedSourceState(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 ) (ManagedPackageResult, error) {
 	if c == nil ||
@@ -443,7 +443,7 @@ func (c *Components) getManagedSourceState(
 // conflicts, the caller receives the conflict and must reload before retrying.
 func (c *Components) publishManagedPackageForMutableRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
@@ -464,7 +464,7 @@ func (c *Components) publishManagedPackageForMutableRoot(
 // the application RootPolicy.
 func (c *Components) publishProtectedManagedPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
@@ -493,7 +493,7 @@ func (c *Components) publishProtectedManagedPackage(
 // revision after successful source-side removal.
 func (c *Components) removeManagedPackageForMutableRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
@@ -514,7 +514,7 @@ func (c *Components) removeManagedPackageForMutableRoot(
 // path. It is reserved for an explicit installer or update workflow.
 func (c *Components) removeProtectedManagedPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
@@ -543,7 +543,7 @@ func (c *Components) removeProtectedManagedPackage(
 
 func (c *Components) publishManagedPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
@@ -627,7 +627,7 @@ func (c *Components) publishManagedPackage(
 
 func (c *Components) removeManagedPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
@@ -775,7 +775,7 @@ func managedPackageExists(
 }
 
 func (c *Components) isProtectedRoot(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) bool {
 	return c != nil &&
 		c.rootMutationPolicy != nil &&
@@ -784,7 +784,7 @@ func (c *Components) isProtectedRoot(
 
 func (c *Components) managedSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 ) (source.Source, error) {
@@ -846,7 +846,7 @@ func sourceSnapshotGeneration(
 
 func (c *Components) removeManagedArtifactPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedRevision uint64,
 	address source.ManagedPackageAddress,
@@ -871,7 +871,7 @@ func (c *Components) removeManagedArtifactPackage(
 
 func (c *Components) removeProtectedManagedArtifactPackage(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedRevision uint64,
 	address source.ManagedPackageAddress,

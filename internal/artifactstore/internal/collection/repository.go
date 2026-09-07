@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
 type Reader interface {
@@ -16,7 +17,7 @@ type Reader interface {
 
 	ListByRoot(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 	) ([]collection.Collection, error)
 
 	GetAttachment(

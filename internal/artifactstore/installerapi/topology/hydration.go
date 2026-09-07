@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -14,7 +15,7 @@ import (
 // succeeds and commits a new record.
 type Hydration struct {
 	InstallerName string            `json:"installerName"`
-	RootID        basespec.RootID   `json:"rootID"`
+	RootID        root.RootID       `json:"rootID"`
 	SourceID      basespec.SourceID `json:"sourceID"`
 	Fingerprint   cryptoutil.Digest `json:"fingerprint"`
 }
@@ -23,7 +24,7 @@ func (h Hydration) Validate() error {
 	if err := ValidateHydrationInstallerName(h.InstallerName); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(h.RootID); err != nil {
+	if err := h.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceID(h.SourceID); err != nil {

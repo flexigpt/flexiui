@@ -6,12 +6,13 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
 type providerPlanningDocumentReader struct {
-	rootID    basespec.RootID
+	rootID    root.RootID
 	attached  map[basespec.SourceID]struct{}
 	runtime   sourceimpl.Runtime
 	documents providerapi.ExpectedCanonicalizer

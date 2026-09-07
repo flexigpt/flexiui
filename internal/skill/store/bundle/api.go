@@ -18,6 +18,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
@@ -57,7 +58,7 @@ func (a *API) CreateBundle(
 
 func (a *API) ListBundles(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]Bundle, error) {
 	if err := a.Ready(); err != nil {
 		return nil, err
@@ -916,7 +917,7 @@ func (a *API) createBundle(
 	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateRootID(request.RootID); err != nil {
+	if err := request.RootID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := a.requireBundleMutation(
@@ -1596,10 +1597,10 @@ func (a *API) createManagedSkill(
 
 func (a *API) requireBundleMutation(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	allowProtected bool,
 ) error {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if !a.dependencies.Store.IsProtectedRoot(rootID) {
@@ -1704,7 +1705,7 @@ func requireBundleOwnedManagedSource(
 
 func (a *API) validateAttachmentDraft(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft AttachmentDraft,
 ) error {
 	if err := basespec.ValidateSourceID(draft.SourceID); err != nil {
@@ -1728,7 +1729,7 @@ func (a *API) validateAttachmentDraft(
 
 func (a *API) validateAttachment(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	value collection.Attachment,
 ) error {
 	if err := validateRole(value.Role); err != nil {
@@ -2046,7 +2047,7 @@ func managedSkillPackageDigest(
 
 func (a *API) managedSkillByID(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	artifactID basespec.ArtifactID,
 ) (*artifact.Artifact, error) {
 	value, err := a.dependencies.Store.GetArtifact(ctx, artifact.ArtifactRef{

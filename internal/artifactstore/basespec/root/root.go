@@ -5,10 +5,21 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
 )
 
+type RootID string
+
+func (v RootID) Validate() error {
+	err := uuidutil.ValidateUUIDv7(string(v))
+	if err != nil {
+		return fmt.Errorf("root ID: %w", err)
+	}
+	return nil
+}
+
 type Root struct {
-	ID          basespec.RootID     `json:"id"`
+	ID          RootID              `json:"id"`
 	StorageKey  basespec.StorageKey `json:"storageKey"`
 	DisplayName string              `json:"displayName"`
 	Description string              `json:"description,omitempty"`
@@ -19,7 +30,7 @@ type Root struct {
 }
 
 func (r Root) Validate() error {
-	if err := basespec.ValidateRootID(r.ID); err != nil {
+	if err := r.ID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateStorageKey(r.StorageKey); err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/attachmentdata"
@@ -18,12 +19,12 @@ import (
 
 type Service struct {
 	store           artifactConsumerAPI.ConsumerAPI
-	workspaceRootID basespec.RootID
+	workspaceRootID root.RootID
 }
 
 func NewService(
 	store artifactConsumerAPI.ConsumerAPI,
-	workspaceRootID basespec.RootID,
+	workspaceRootID root.RootID,
 ) (*Service, error) {
 	if store == nil {
 		return nil, fmt.Errorf(
@@ -31,7 +32,7 @@ func NewService(
 			spec.ErrInvalidWorkspace,
 		)
 	}
-	if err := basespec.ValidateRootID(workspaceRootID); err != nil {
+	if err := workspaceRootID.Validate(); err != nil {
 		return nil, err
 	}
 	return &Service{
@@ -185,7 +186,7 @@ func (s *Service) ValidateFilesystemCreate(
 
 func (s *Service) List(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]spec.Workspace, error) {
 	if err := s.requireWorkspaceRoot(rootID); err != nil {
 		return nil, err
@@ -697,7 +698,7 @@ func (s *Service) Get(
 }
 
 func (s *Service) validateWorkspaceCreate(
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	displayName string,
 	description string,
@@ -733,9 +734,9 @@ func (s *Service) validateWorkspaceCreate(
 }
 
 func (s *Service) requireWorkspaceRoot(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if rootID != s.workspaceRootID {
@@ -750,7 +751,7 @@ func (s *Service) requireWorkspaceRoot(
 
 func (s *Service) requirePrimarySource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 ) error {
 	sourceValue, err := s.store.GetSource(ctx, rootID, sourceID)

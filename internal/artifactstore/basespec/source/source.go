@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 type Source struct {
 	ID             basespec.SourceID   `json:"id"`
-	RootID         basespec.RootID     `json:"rootID"`
+	RootID         root.RootID         `json:"rootID"`
 	RootStorageKey basespec.StorageKey `json:"rootStorageKey"`
 	StorageKey     basespec.StorageKey `json:"storageKey"`
 	Kind           basespec.SourceKind `json:"kind"`

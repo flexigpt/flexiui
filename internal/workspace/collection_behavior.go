@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -28,7 +29,7 @@ const (
 )
 
 type workspaceCollectionBehavior struct {
-	workspaceRootID basespec.RootID
+	workspaceRootID root.RootID
 	revision        string
 	supports        map[basespec.ArtifactKind]spec.ArtifactSupport
 	decoderIDs      []basespec.DecoderID
@@ -585,7 +586,7 @@ func workspacePlanningTopologyFor(
 func validateWorkspaceProviderCollection(
 	value providerapi.Collection,
 ) error {
-	if err := basespec.ValidateRootID(value.RootID); err != nil {
+	if err := value.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(value.ID); err != nil {

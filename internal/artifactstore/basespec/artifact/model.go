@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -67,26 +68,26 @@ func (s State) Validate(
 }
 
 type ArtifactRef struct {
-	RootID     basespec.RootID     `json:"rootID"`
+	RootID     root.RootID         `json:"rootID"`
 	ArtifactID basespec.ArtifactID `json:"artifactID"`
 }
 
 func (r ArtifactRef) Validate() error {
-	if err := basespec.ValidateRootID(r.RootID); err != nil {
+	if err := r.RootID.Validate(); err != nil {
 		return err
 	}
 	return basespec.ValidateArtifactID(r.ArtifactID)
 }
 
 type ArtifactAddress struct {
-	RootID       basespec.RootID       `json:"rootID"`
+	RootID       root.RootID           `json:"rootID"`
 	CollectionID basespec.CollectionID `json:"collectionID"`
 	ArtifactID   basespec.ArtifactID   `json:"artifactID"`
 	Kind         basespec.ArtifactKind `json:"kind"`
 }
 
 func (a ArtifactAddress) Validate() error {
-	if err := basespec.ValidateRootID(a.RootID); err != nil {
+	if err := a.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(a.CollectionID); err != nil {
@@ -107,7 +108,7 @@ type SourceBinding struct {
 
 type Artifact struct {
 	ID                 basespec.ArtifactID   `json:"id"`
-	RootID             basespec.RootID       `json:"rootID"`
+	RootID             root.RootID           `json:"rootID"`
 	CollectionID       basespec.CollectionID `json:"collectionID"`
 	Binding            SourceBinding         `json:"binding"`
 	Kind               basespec.ArtifactKind `json:"kind"`
@@ -151,7 +152,7 @@ func (a Artifact) Validate() error {
 	if err := basespec.ValidateArtifactID(a.ID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(a.RootID); err != nil {
+	if err := a.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(a.CollectionID); err != nil {
@@ -230,7 +231,7 @@ func (a Artifact) Clone() Artifact {
 }
 
 type Suppression struct {
-	RootID       basespec.RootID       `json:"rootID"`
+	RootID       root.RootID           `json:"rootID"`
 	CollectionID basespec.CollectionID `json:"collectionID"`
 	Binding      SourceBinding         `json:"binding"`
 	Revision     uint64                `json:"revision"`
@@ -239,7 +240,7 @@ type Suppression struct {
 }
 
 func (s Suppression) Validate() error {
-	if err := basespec.ValidateRootID(s.RootID); err != nil {
+	if err := s.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(s.CollectionID); err != nil {

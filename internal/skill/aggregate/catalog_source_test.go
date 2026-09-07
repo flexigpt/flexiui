@@ -3,8 +3,8 @@ package aggregate
 import (
 	"testing"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	skillRuntime "github.com/flexigpt/flexigpt-app/internal/skill/runtime"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
@@ -97,7 +97,7 @@ func TestCollectionCatalogIDRejectsInvalidCollectionRef(t *testing.T) {
 	tests := []collection.CollectionRef{
 		{},
 		{
-			RootID:       basespec.RootID("not-a-root"),
+			RootID:       root.RootID("not-a-root"),
 			CollectionID: "0198f097-0d5b-7000-8000-000000000010",
 		},
 	}

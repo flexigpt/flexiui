@@ -23,13 +23,13 @@ type SourceState struct {
 
 type GetSourceStateFunc func(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 ) (SourceState, error)
 
 type PublishPackageFunc func(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	publication source.ManagedPackagePublication,
@@ -37,7 +37,7 @@ type PublishPackageFunc func(
 
 type RemovePackageFunc func(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	expectedSourceRevision uint64,
 	address source.ManagedPackageAddress,
@@ -540,7 +540,7 @@ func (s *Service) validateRemoveRequest(
 
 func (s *Service) requireMutable(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	allowProtected bool,
 ) error {
 	if ctx == nil {
@@ -552,7 +552,7 @@ func (s *Service) requireMutable(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if allowProtected {
@@ -618,7 +618,7 @@ func (s *Service) requireCollectionSource(
 
 func validateManagedSourceState(
 	state SourceState,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	sourceID basespec.SourceID,
 	requireEnabled bool,
 ) error {

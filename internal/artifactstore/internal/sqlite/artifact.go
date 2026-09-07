@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -791,7 +792,7 @@ func insertSuppressionTx(
 func requireNoSuppressionTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	binding artifact.SourceBinding,
 ) error {
@@ -830,7 +831,7 @@ func requireNoSuppressionTx(
 func requireNoArtifactForBindingTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	binding artifact.SourceBinding,
 ) error {
@@ -1212,7 +1213,7 @@ func scanArtifact(row scanner) (artifact.Artifact, error) {
 	}
 	value := artifact.Artifact{
 		ID:           basespec.ArtifactID(id),
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
 			SourceID:           basespec.SourceID(sourceID),
@@ -1264,7 +1265,7 @@ func scanSuppression(row scanner) (artifact.Suppression, error) {
 	}
 
 	value := artifact.Suppression{
-		RootID:       basespec.RootID(rootID),
+		RootID:       root.RootID(rootID),
 		CollectionID: basespec.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
 			SourceID:           basespec.SourceID(sourceID),

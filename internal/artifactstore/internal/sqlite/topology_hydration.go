@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -49,7 +50,7 @@ func (s *Store) GetTopologyHydration(
 
 	value := topology.Hydration{
 		InstallerName: installerName,
-		RootID:        basespec.RootID(rootID),
+		RootID:        root.RootID(rootID),
 		SourceID:      basespec.SourceID(sourceID),
 		Fingerprint:   cryptoutil.Digest(fingerprint),
 	}
@@ -109,7 +110,7 @@ func (s *Store) PutTopologyHydration(
 // established by system.Components.ResetTopologyHydration.
 func (s *Store) PurgeTopologyRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
 	if s == nil || s.db == nil {
 		return basespec.ErrClosed
@@ -123,7 +124,7 @@ func (s *Store) PurgeTopologyRoot(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 

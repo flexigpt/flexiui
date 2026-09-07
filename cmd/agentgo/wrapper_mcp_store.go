@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
@@ -55,7 +56,7 @@ func (w *MCPStoreWrapper) GetMCPBundle(
 }
 
 func (w *MCPStoreWrapper) ListMCPBundles(
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]mcpStore.Bundle, error) {
 	return withMCPStore(w, func(api *mcpStore.API) ([]mcpStore.Bundle, error) {
 		return api.List(context.Background(), rootID)

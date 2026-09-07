@@ -16,6 +16,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
@@ -465,7 +466,7 @@ func (s *mcpSettingsAdapter) deleteOverlaySecretsLocked(
 		return output
 	}
 	srv := artifact.ArtifactRef{
-		RootID:     basespec.RootID(parts[1]),
+		RootID:     root.RootID(parts[1]),
 		ArtifactID: basespec.ArtifactID(parts[3]),
 	}
 	if err := srv.Validate(); err != nil {

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/conversation/spec"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
 	"github.com/flexigpt/mapstore-go"
@@ -532,7 +532,7 @@ func validateConversationArtifactRefs(
 func validateConversationSelectionRefs(
 	field string,
 	refs []selection.ConversationResourceSelectionRef,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
 	seen := make(map[string]struct{}, len(refs))
 	for index, ref := range refs {

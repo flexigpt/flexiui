@@ -11,6 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	refreshimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -278,7 +279,7 @@ func (p *Publisher) Publish(
 func requirePublishedSourceGenerationsTx(
 	ctx context.Context,
 	tx *sql.Tx,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	generations map[basespec.SourceID]string,
 ) error {

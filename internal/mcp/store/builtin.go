@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
@@ -16,7 +17,7 @@ import (
 )
 
 type EnsureBuiltInRequest struct {
-	RootID         basespec.RootID
+	RootID         root.RootID
 	CollectionID   basespec.CollectionID
 	SourceID       basespec.SourceID
 	PackageAddress source.ManagedPackageAddress
@@ -39,7 +40,7 @@ func (a *API) EnsureBuiltIn(
 	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateRootID(request.RootID); err != nil {
+	if err := request.RootID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {

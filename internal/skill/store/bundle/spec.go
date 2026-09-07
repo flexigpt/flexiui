@@ -6,6 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -25,7 +26,7 @@ type AttachmentDraft struct {
 	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
 }
 type CreateBundleRequest struct {
-	RootID                  basespec.RootID
+	RootID                  root.RootID
 	CollectionID            basespec.CollectionID
 	ManagedSourceID         basespec.SourceID
 	ManagedSourceStorageKey basespec.StorageKey
@@ -85,7 +86,7 @@ type PinSkillRequest struct {
 }
 
 type BuiltInBundleTopology struct {
-	RootID                basespec.RootID                        `json:"-"`
+	RootID                root.RootID                            `json:"-"`
 	CollectionID          basespec.CollectionID                  `json:"-"`
 	SourceID              basespec.SourceID                      `json:"-"`
 	LogicalName           basespec.LogicalName                   `json:"-"`

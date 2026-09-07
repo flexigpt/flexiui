@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
@@ -20,8 +20,8 @@ func Open(
 	config Config,
 ) (*API, error) {
 	rootPolicy, err := rootimpl.NewSetRootPolicy(
-		append([]basespec.RootID(nil), config.ProtectedRoots...),
-		append([]basespec.RootID(nil), config.RetainedRoots...),
+		append([]root.RootID(nil), config.ProtectedRoots...),
+		append([]root.RootID(nil), config.RetainedRoots...),
 	)
 	if err != nil {
 		return nil, err

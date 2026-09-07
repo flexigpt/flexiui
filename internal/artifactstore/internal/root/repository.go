@@ -3,7 +3,6 @@ package rootimpl
 import (
 	"context"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 )
 
@@ -15,7 +14,7 @@ type Repository interface {
 
 	Get(
 		ctx context.Context,
-		id basespec.RootID,
+		id root.RootID,
 	) (root.Root, error)
 
 	List(ctx context.Context) ([]root.Root, error)
@@ -34,7 +33,7 @@ type Repository interface {
 
 	Purge(
 		ctx context.Context,
-		id basespec.RootID,
+		id root.RootID,
 		expectedRevision uint64,
 	) error
 }

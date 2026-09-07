@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
@@ -60,7 +61,7 @@ func (r *SettingsOverlayRepository) GetServerOverlay(
 
 func (r *SettingsOverlayRepository) GetBundleOverlay(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 ) (BundleOverlay, bool, error) {
 	key, err := bundleOverlayStorageKey(rootID, collectionID)
@@ -117,7 +118,7 @@ func (r *SettingsOverlayRepository) PutServerOverlay(
 
 func (r *SettingsOverlayRepository) PutBundleOverlay(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	expectedRevision uint64,
 	value BundleOverlay,
@@ -172,7 +173,7 @@ func (r *SettingsOverlayRepository) DeleteServerOverlay(
 
 func (r *SettingsOverlayRepository) DeleteBundleOverlay(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 	expectedRevision uint64,
 ) error {
@@ -198,9 +199,9 @@ func (r *SettingsOverlayRepository) DeleteBundleOverlay(
 // rebuilt with a new static registration set.
 func (r *SettingsOverlayRepository) PurgeRoot(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 
@@ -264,10 +265,10 @@ func serverOverlayStorageKey(
 }
 
 func bundleOverlayStorageKey(
-	rootID basespec.RootID,
+	rootID root.RootID,
 	collectionID basespec.CollectionID,
 ) (string, error) {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return "", err
 	}
 	if err := basespec.ValidateCollectionID(collectionID); err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 )
 
@@ -34,7 +35,7 @@ type ResourceResolver interface {
 
 	ResolveSourceLocalPath(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		sourceID basespec.SourceID,
 		locator basespec.Locator,
 	) (string, error)

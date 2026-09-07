@@ -20,8 +20,8 @@ type Config struct {
 
 	ArtifactProviders []providerapi.Provider
 
-	ProtectedRoots []basespec.RootID
-	RetainedRoots  []basespec.RootID
+	ProtectedRoots []root.RootID
+	RetainedRoots  []root.RootID
 }
 
 type CreateArtifactRootRequest struct {
@@ -33,7 +33,7 @@ type CreateArtifactRootResponse struct {
 }
 
 type GetArtifactRootRequest struct {
-	RootID basespec.RootID `path:"rootID" required:"true"`
+	RootID root.RootID `path:"rootID" required:"true"`
 }
 
 type GetArtifactRootResponse struct {
@@ -51,7 +51,7 @@ type ListArtifactRootsResponse struct {
 }
 
 type UpdateArtifactRootRequest struct {
-	RootID basespec.RootID `path:"rootID" required:"true"`
+	RootID root.RootID `path:"rootID" required:"true"`
 	Body   *root.RootUpdate
 }
 
@@ -60,8 +60,8 @@ type UpdateArtifactRootResponse struct {
 }
 
 type RetireArtifactRootRequest struct {
-	RootID           basespec.RootID `path:"rootID" required:"true"`
-	ExpectedRevision uint64          `              required:"true" json:"expectedRevision"`
+	RootID           root.RootID `path:"rootID" required:"true"`
+	ExpectedRevision uint64      `              required:"true" json:"expectedRevision"`
 }
 
 type RetireArtifactRootResponse struct {
@@ -69,12 +69,12 @@ type RetireArtifactRootResponse struct {
 }
 
 type PurgeArtifactRootRequest struct {
-	RootID           basespec.RootID `path:"rootID" required:"true"`
-	ExpectedRevision uint64          `              required:"true" json:"expectedRevision"`
+	RootID           root.RootID `path:"rootID" required:"true"`
+	ExpectedRevision uint64      `              required:"true" json:"expectedRevision"`
 }
 
 type PurgeArtifactRootResponse struct {
-	RootID basespec.RootID `json:"rootID"`
+	RootID root.RootID `json:"rootID"`
 }
 
 // ArtifactSourceDraft is write-only. Source configuration can contain local
@@ -89,7 +89,7 @@ type ArtifactSourceDraft struct {
 }
 
 type CreateArtifactSourceRequest struct {
-	RootID basespec.RootID `path:"rootID" required:"true"`
+	RootID root.RootID `path:"rootID" required:"true"`
 	Body   *ArtifactSourceDraft
 }
 
@@ -98,7 +98,7 @@ type CreateArtifactSourceResponse struct {
 }
 
 type GetArtifactSourceRequest struct {
-	RootID   basespec.RootID   `path:"rootID"   required:"true"`
+	RootID   root.RootID       `path:"rootID"   required:"true"`
 	SourceID basespec.SourceID `path:"sourceID" required:"true"`
 }
 
@@ -107,7 +107,7 @@ type GetArtifactSourceResponse struct {
 }
 
 type ListArtifactSourcesRequest struct {
-	RootID basespec.RootID `path:"rootID" required:"true"`
+	RootID root.RootID `path:"rootID" required:"true"`
 }
 
 type ListArtifactSourcesResponseBody struct {
@@ -126,7 +126,7 @@ type UpdateArtifactSourceRequestBody struct {
 }
 
 type UpdateArtifactSourceRequest struct {
-	RootID   basespec.RootID   `path:"rootID"   required:"true"`
+	RootID   root.RootID       `path:"rootID"   required:"true"`
 	SourceID basespec.SourceID `path:"sourceID" required:"true"`
 	Body     *UpdateArtifactSourceRequestBody
 }
@@ -136,7 +136,7 @@ type UpdateArtifactSourceResponse struct {
 }
 
 type RetireArtifactSourceRequest struct {
-	RootID           basespec.RootID   `path:"rootID"   required:"true"`
+	RootID           root.RootID       `path:"rootID"   required:"true"`
 	SourceID         basespec.SourceID `path:"sourceID" required:"true"`
 	ExpectedRevision uint64            `                required:"true" json:"expectedRevision"`
 }
@@ -146,13 +146,13 @@ type RetireArtifactSourceResponse struct {
 }
 
 type PurgeArtifactSourceRequest struct {
-	RootID           basespec.RootID   `path:"rootID"   required:"true"`
+	RootID           root.RootID       `path:"rootID"   required:"true"`
 	SourceID         basespec.SourceID `path:"sourceID" required:"true"`
 	ExpectedRevision uint64            `                required:"true" json:"expectedRevision"`
 }
 
 type PurgeArtifactSourceResponse struct {
-	RootID   basespec.RootID   `json:"rootID"`
+	RootID   root.RootID       `json:"rootID"`
 	SourceID basespec.SourceID `json:"sourceID"`
 }
 

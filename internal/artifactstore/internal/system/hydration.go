@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 )
@@ -36,7 +37,7 @@ func (c *Components) PrepareTopologyHydrations(
 
 	currentByInstaller := make(map[string]bool, len(desiredValues))
 	seenInstallers := make(map[string]struct{}, len(desiredValues))
-	resetInstallerByRoot := make(map[basespec.RootID]string)
+	resetInstallerByRoot := make(map[root.RootID]string)
 
 	for _, desired := range desiredValues {
 		if err := desired.Validate(); err != nil {
@@ -85,7 +86,7 @@ func (c *Components) PrepareTopologyHydrations(
 		}
 	}
 
-	orderedRoots := make([]basespec.RootID, 0, len(resetInstallerByRoot))
+	orderedRoots := make([]root.RootID, 0, len(resetInstallerByRoot))
 	for rootID := range resetInstallerByRoot {
 		orderedRoots = append(orderedRoots, rootID)
 	}
@@ -192,7 +193,7 @@ func equalTopologyHydration(
 func (c *Components) ResetTopologyHydration(
 	ctx context.Context,
 	installerName string,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
 	if c == nil ||
 		c.metadata == nil ||
@@ -215,7 +216,7 @@ func (c *Components) ResetTopologyHydration(
 	if err := topology.ValidateHydrationInstallerName(installerName); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 

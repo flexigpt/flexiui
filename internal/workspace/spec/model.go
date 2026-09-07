@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -96,7 +97,7 @@ type ResourceGroup struct {
 
 type EmptyWorkspaceRequest struct {
 	CollectionID basespec.CollectionID `json:"collectionID"`
-	RootID       basespec.RootID       `json:"rootID"`
+	RootID       root.RootID           `json:"rootID"`
 	DisplayName  string                `json:"displayName"`
 	Description  string                `json:"description,omitempty"`
 	Discovery    DiscoveryPreferences  `json:"discovery"`
@@ -104,7 +105,7 @@ type EmptyWorkspaceRequest struct {
 
 type FilesystemWorkspaceRequest struct {
 	CollectionID    basespec.CollectionID `json:"collectionID"`
-	RootID          basespec.RootID       `json:"rootID"`
+	RootID          root.RootID           `json:"rootID"`
 	DisplayName     string                `json:"displayName"`
 	Description     string                `json:"description,omitempty"`
 	PrimarySourceID basespec.SourceID     `json:"primarySourceID"`

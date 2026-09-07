@@ -36,7 +36,7 @@ type Ensurer interface {
 }
 
 func (d Declaration) Validate() error {
-	if err := basespec.ValidateRootID(d.Root.ID); err != nil {
+	if err := d.Root.ID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateStorageKey(d.Root.StorageKey); err != nil {

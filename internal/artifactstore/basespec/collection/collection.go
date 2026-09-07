@@ -6,16 +6,17 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 type CollectionRef struct {
-	RootID       basespec.RootID       `json:"rootID"`
+	RootID       root.RootID           `json:"rootID"`
 	CollectionID basespec.CollectionID `json:"collectionID"`
 }
 
 func (r CollectionRef) Validate() error {
-	if err := basespec.ValidateRootID(r.RootID); err != nil {
+	if err := r.RootID.Validate(); err != nil {
 		return err
 	}
 	return basespec.ValidateCollectionID(r.CollectionID)
@@ -23,7 +24,7 @@ func (r CollectionRef) Validate() error {
 
 type Collection struct {
 	ID          basespec.CollectionID   `json:"id"`
-	RootID      basespec.RootID         `json:"rootID"`
+	RootID      root.RootID             `json:"rootID"`
 	Kind        basespec.CollectionKind `json:"kind"`
 	DisplayName string                  `json:"displayName"`
 	Description string                  `json:"description,omitempty"`
@@ -47,7 +48,7 @@ func (c Collection) Validate() error {
 	if err := basespec.ValidateCollectionID(c.ID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateRootID(c.RootID); err != nil {
+	if err := c.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionKind(c.Kind); err != nil {

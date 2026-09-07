@@ -51,7 +51,7 @@ func (s *Service) EnsureSystem(
 	ctx context.Context,
 	draft root.RootDraft,
 ) (root.Root, error) {
-	if err := basespec.ValidateRootID(draft.ID); err != nil {
+	if err := draft.ID.Validate(); err != nil {
 		return root.Root{}, err
 	}
 	if s.policy == nil || !s.policy.IsProtectedRoot(draft.ID) {
@@ -69,9 +69,9 @@ func (s *Service) EnsureSystem(
 
 func (s *Service) Get(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 ) (root.Root, error) {
-	if err := basespec.ValidateRootID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return root.Root{}, err
 	}
 	return s.repository.Get(ctx, id)
@@ -83,7 +83,7 @@ func (s *Service) List(ctx context.Context) ([]root.Root, error) {
 
 func (s *Service) Update(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 	update root.RootUpdate,
 ) (root.Root, error) {
 	if err := RequireMutableRoot(ctx, s.policy, id); err != nil {
@@ -127,10 +127,10 @@ func (s *Service) Update(
 
 func (s *Service) Retire(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 	expectedRevision uint64,
 ) (root.Root, error) {
-	if err := basespec.ValidateRootID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return root.Root{}, err
 	}
 	if err := requireRootDeletion(ctx, s.policy, id); err != nil {
@@ -169,10 +169,10 @@ func (s *Service) Retire(
 
 func (s *Service) Purge(
 	ctx context.Context,
-	id basespec.RootID,
+	id root.RootID,
 	expectedRevision uint64,
 ) error {
-	if err := basespec.ValidateRootID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return err
 	}
 	if err := requireRootDeletion(ctx, s.policy, id); err != nil {
@@ -191,7 +191,7 @@ func (s *Service) create(
 	ctx context.Context,
 	draft root.RootDraft,
 ) (root.Root, error) {
-	if err := basespec.ValidateRootID(draft.ID); err != nil {
+	if err := draft.ID.Validate(); err != nil {
 		return root.Root{}, err
 	}
 	now := clockutil.NowUTC(s.clock)
@@ -238,7 +238,7 @@ func (s *Service) create(
 func requireRootDeletion(
 	ctx context.Context,
 	policy root.RootPolicy,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
 	if deletionPolicy, supported := policy.(root.RootDeletionPolicy); supported &&
 		deletionPolicy.IsRootDeletionProtected(rootID) {
@@ -254,7 +254,7 @@ func requireRootDeletion(
 func RequireMutableRoot(
 	ctx context.Context,
 	policy root.RootPolicy,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) error {
 	if policy == nil || !policy.IsProtectedRoot(rootID) {
 		return nil

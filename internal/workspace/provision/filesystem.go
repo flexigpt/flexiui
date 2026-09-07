@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
@@ -49,7 +50,7 @@ func NewService(
 }
 
 type Request struct {
-	RootID           basespec.RootID
+	RootID           root.RootID
 	CollectionID     basespec.CollectionID
 	SourceID         basespec.SourceID
 	SourceStorageKey basespec.StorageKey

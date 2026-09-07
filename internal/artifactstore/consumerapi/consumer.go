@@ -8,6 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
@@ -26,7 +27,7 @@ type ConsumerAPI interface {
 	ResourceResolver
 
 	IsProtectedRoot(
-		rootID basespec.RootID,
+		rootID root.RootID,
 	) bool
 
 	RequirePrivilegedInstaller(
@@ -41,32 +42,32 @@ type ConsumerAPI interface {
 
 	CreateSource(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		draft source.Draft,
 	) (source.Summary, error)
 
 	CreateSourceWithStatus(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		draft source.Draft,
 	) (source.Summary, bool, error)
 
 	DiscardSource(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		sourceID basespec.SourceID,
 		expectedRevision uint64,
 	) error
 
 	GetSource(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		sourceID basespec.SourceID,
 	) (source.Summary, error)
 
 	CreateCollection(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		draft collection.Draft,
 		attachments []collection.AttachmentDraft,
 	) (collection.Collection, []collection.Attachment, error)
@@ -83,7 +84,7 @@ type ConsumerAPI interface {
 
 	ListCollections(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 	) ([]collection.Collection, error)
 
 	UpdateCollection(

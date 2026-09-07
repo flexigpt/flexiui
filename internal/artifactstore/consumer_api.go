@@ -9,6 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
@@ -16,7 +17,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 )
 
-func (a *API) IsProtectedRoot(rootID basespec.RootID) bool {
+func (a *API) IsProtectedRoot(rootID root.RootID) bool {
 	return a != nil &&
 		a.components != nil &&
 		a.components.RootMutationPolicy() != nil &&
@@ -32,7 +33,7 @@ func (a *API) RequirePrivilegedInstaller(ctx context.Context) error {
 
 func (a *API) CreateCollection(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	draft collection.Draft,
 	attachments []collection.AttachmentDraft,
 ) (collection.Collection, []collection.Attachment, error) {
@@ -69,7 +70,7 @@ func (a *API) GetRetiredCollection(
 
 func (a *API) ListCollections(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]collection.Collection, error) {
 	if err := a.requireStore(ctx); err != nil {
 		return nil, err

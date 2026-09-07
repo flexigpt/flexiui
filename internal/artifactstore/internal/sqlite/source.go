@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
@@ -66,7 +67,7 @@ func (s *Store) createSource(
 
 func (s *Store) getSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 ) (source.Source, error) {
 	if err := s.requireActiveRoot(ctx, rootID); err != nil {
@@ -94,7 +95,7 @@ func (s *Store) getSource(
 
 func (s *Store) listSources(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 ) ([]source.Source, error) {
 	if err := s.requireActiveRoot(ctx, rootID); err != nil {
 		return nil, err
@@ -256,11 +257,11 @@ func (s *Store) retireSource(
 
 func (s *Store) discardSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -314,11 +315,11 @@ func (s *Store) discardSource(
 
 func (s *Store) purgeSource(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 	expectedRevision uint64,
 ) error {
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {
@@ -391,7 +392,7 @@ func scanSource(row scanner) (source.Source, error) {
 	}
 	value := source.Source{
 		ID:             basespec.SourceID(id),
-		RootID:         basespec.RootID(rootID),
+		RootID:         root.RootID(rootID),
 		RootStorageKey: basespec.StorageKey(rootStorageKey),
 		StorageKey:     basespec.StorageKey(storageKey),
 		Kind:           basespec.SourceKind(kind),

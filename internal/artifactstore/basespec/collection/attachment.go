@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 type Attachment struct {
-	RootID       basespec.RootID         `json:"rootID"`
+	RootID       root.RootID             `json:"rootID"`
 	CollectionID basespec.CollectionID   `json:"collectionID"`
 	SourceID     basespec.SourceID       `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
@@ -23,7 +24,7 @@ type Attachment struct {
 }
 
 func (a Attachment) Validate() error {
-	if err := basespec.ValidateRootID(a.RootID); err != nil {
+	if err := a.RootID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateCollectionID(a.CollectionID); err != nil {

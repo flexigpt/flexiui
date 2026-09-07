@@ -6,13 +6,14 @@ import (
 	"io"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 type Reader interface {
 	Get(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		id basespec.SourceID,
 	) (source.Source, error)
 }
@@ -27,7 +28,7 @@ type Repository interface {
 
 	List(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 	) ([]source.Source, error)
 
 	Update(
@@ -44,14 +45,14 @@ type Repository interface {
 
 	Discard(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		id basespec.SourceID,
 		expectedRevision uint64,
 	) error
 
 	Purge(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		id basespec.SourceID,
 		expectedRevision uint64,
 	) error

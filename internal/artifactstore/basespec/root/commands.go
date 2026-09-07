@@ -1,10 +1,12 @@
 package root
 
-import "github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+import (
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+)
 
 // RootDraft is the caller-owned input for Root creation.
 type RootDraft struct {
-	ID          basespec.RootID     `json:"id"                    required:"true"`
+	ID          RootID              `json:"id"                    required:"true"`
 	StorageKey  basespec.StorageKey `json:"storageKey"            required:"true"`
 	DisplayName string              `json:"displayName"           required:"true"`
 	Description string              `json:"description,omitempty"`

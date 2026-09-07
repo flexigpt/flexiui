@@ -70,7 +70,7 @@ const (
 )
 
 const (
-	BuiltinRootID          basespec.RootID     = "0192c4c0-0000-7000-8000-000000000001"
+	BuiltinRootID          root.RootID         = "0192c4c0-0000-7000-8000-000000000001"
 	BuiltinRootStorageKey  basespec.StorageKey = "builtins"
 	BuiltinRootDisplayName                     = "Application Built-ins"
 	BuiltinRootDescription                     = "Protected application-provided portable artifact packages."
@@ -79,12 +79,12 @@ const (
 	BuiltinSourceStorageKey  basespec.StorageKey = "catalog"
 	BuiltinSourceDisplayName                     = "Application Built-in Packages"
 
-	WorkspaceRootID          basespec.RootID     = "0198f097-0d5b-7000-8000-000000000001"
+	WorkspaceRootID          root.RootID         = "0198f097-0d5b-7000-8000-000000000001"
 	WorkspaceRootStorageKey  basespec.StorageKey = "workspaces"
 	WorkspaceRootDisplayName                     = "FlexiGPT Workspaces"
 	WorkspaceRootDescription                     = "Local namespace for user Workspace collections."
 
-	MCPUserRootID          basespec.RootID     = "0198f097-0d5b-7000-8000-000000000002"
+	MCPUserRootID          root.RootID         = "0198f097-0d5b-7000-8000-000000000002"
 	MCPUserRootStorageKey  basespec.StorageKey = "mcp"
 	MCPUserRootDisplayName                     = "FlexiGPT MCP Bundles"
 	MCPUserRootDescription                     = "Local namespace for user-managed MCP Bundles."
@@ -249,12 +249,12 @@ func RetainedRootDrafts() []root.RootDraft {
 	}
 }
 
-func ProtectedRootIDs() []basespec.RootID {
-	return []basespec.RootID{BuiltinRootID}
+func ProtectedRootIDs() []root.RootID {
+	return []root.RootID{BuiltinRootID}
 }
 
-func RetainedRootIDs() []basespec.RootID {
-	return []basespec.RootID{
+func RetainedRootIDs() []root.RootID {
+	return []root.RootID{
 		WorkspaceRootID,
 		MCPUserRootID,
 	}
@@ -282,14 +282,14 @@ func ValidateApplicationTopology() error {
 		)
 	}
 
-	seenRootIDs := map[basespec.RootID]struct{}{
+	seenRootIDs := map[root.RootID]struct{}{
 		declaration.Root.ID: {},
 	}
 	seenStorageKeys := map[basespec.StorageKey]struct{}{
 		declaration.Root.StorageKey: {},
 	}
 	for _, draft := range RetainedRootDrafts() {
-		if err := basespec.ValidateRootID(draft.ID); err != nil {
+		if err := draft.ID.Validate(); err != nil {
 			return err
 		}
 		if err := basespec.ValidateStorageKey(draft.StorageKey); err != nil {
@@ -313,7 +313,7 @@ func ValidateApplicationTopology() error {
 		seenStorageKeys[draft.StorageKey] = struct{}{}
 	}
 
-	if declaration.Root.ID == basespec.RootID(declaration.Sources[0].ID) {
+	if declaration.Root.ID == root.RootID(declaration.Sources[0].ID) {
 		return fmt.Errorf(
 			"%w: built-in root and source IDs must differ",
 			basespec.ErrConflict,

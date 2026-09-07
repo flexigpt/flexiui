@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -19,7 +20,7 @@ import (
 type Runtime interface {
 	Get(
 		ctx context.Context,
-		rootID basespec.RootID,
+		rootID root.RootID,
 		id basespec.SourceID,
 	) (source.Source, error)
 
@@ -311,7 +312,7 @@ func VerifySnapshotContentDigest(
 
 func (r *runtime) Get(
 	ctx context.Context,
-	rootID basespec.RootID,
+	rootID root.RootID,
 	id basespec.SourceID,
 ) (source.Source, error) {
 	if r == nil || r.reader == nil {
@@ -326,7 +327,7 @@ func (r *runtime) Get(
 	if err := ctx.Err(); err != nil {
 		return source.Source{}, err
 	}
-	if err := basespec.ValidateRootID(rootID); err != nil {
+	if err := rootID.Validate(); err != nil {
 		return source.Source{}, err
 	}
 	if err := basespec.ValidateSourceID(id); err != nil {

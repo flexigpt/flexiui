@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
@@ -15,7 +16,7 @@ import (
 type verificationSessionContextKey struct{}
 
 type verificationSessionKey struct {
-	RootID         basespec.RootID
+	RootID         root.RootID
 	SourceID       basespec.SourceID
 	SourceRevision uint64
 	SourceKind     basespec.SourceKind
