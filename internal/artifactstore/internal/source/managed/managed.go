@@ -748,7 +748,7 @@ func managedPackagePath(
 }
 
 func validatePackageDirectory(directory basespec.Locator) error {
-	if err := basespec.ValidatePortableLocator(directory, false); err != nil {
+	if err := directory.ValidatePortable(false); err != nil {
 		return err
 	}
 
@@ -853,10 +853,7 @@ func equivalentPackage(
 		}
 		total += info.Size()
 		relative = path.Clean(filepath.ToSlash(relative))
-		if err := basespec.ValidatePortableLocator(
-			basespec.Locator(relative),
-			false,
-		); err != nil {
+		if err := basespec.Locator(relative).ValidatePortable(false); err != nil {
 			return err
 		}
 		expectedContent, found := remaining[relative]
@@ -924,10 +921,7 @@ func (*packagePartitionProvider) GetPartitionDir(
 			basespec.ErrInvalid,
 		)
 	}
-	if err := basespec.ValidatePortableLocator(
-		attributes.Locator,
-		false,
-	); err != nil {
+	if err := attributes.Locator.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	if key.FileName != path.Base(string(attributes.Locator)) {
@@ -1024,7 +1018,7 @@ func writeManagedPackageFiles(
 func managedPackageFileKey(
 	locator basespec.Locator,
 ) (mapstore.FileKey, error) {
-	if err := basespec.ValidatePortableLocator(locator, false); err != nil {
+	if err := locator.ValidatePortable(false); err != nil {
 		return mapstore.FileKey{}, err
 	}
 	return mapstore.FileKey{

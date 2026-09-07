@@ -160,7 +160,7 @@ func (a *API) InstallBuiltInCollection(
 		if err := skill.ArtifactID.Validate(); err != nil {
 			return nil, fmt.Errorf("skills[%d]: %w", index, err)
 		}
-		if err := basespec.ValidatePortableLocator(skill.Member, false); err != nil {
+		if err := skill.Member.ValidatePortable(false); err != nil {
 			return nil, fmt.Errorf("skills[%d]: %w", index, err)
 		}
 		if basespec.Locator(path.Base(string(skill.Member))) != artifactbuiltin.AgentSkillDefinitionFileName ||

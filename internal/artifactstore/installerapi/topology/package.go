@@ -49,7 +49,7 @@ func ReadPackageFiles(
 		)
 	}
 	if packageRoot != "." {
-		if err := basespec.ValidatePortableLocator(packageRoot, false); err != nil {
+		if err := packageRoot.ValidatePortable(false); err != nil {
 			return nil, err
 		}
 	}
@@ -191,7 +191,7 @@ func packageRelativeLocator(
 	}
 
 	value := basespec.Locator(relative)
-	if err := basespec.ValidatePortableLocator(value, false); err != nil {
+	if err := value.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	return value, nil

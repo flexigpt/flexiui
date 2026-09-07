@@ -945,13 +945,10 @@ func resolveWorkspaceRelativeLocator(
 	relative basespec.Locator,
 	allowRelativeRoot bool,
 ) (basespec.Locator, error) {
-	if err := basespec.ValidatePortableLocator(base, true); err != nil {
+	if err := base.ValidatePortable(true); err != nil {
 		return "", fmt.Errorf("portable base locator: %w", err)
 	}
-	if err := basespec.ValidatePortableLocator(
-		relative,
-		allowRelativeRoot,
-	); err != nil {
+	if err := relative.ValidatePortable(allowRelativeRoot); err != nil {
 		return "", fmt.Errorf("portable relative locator: %w", err)
 	}
 
@@ -967,10 +964,7 @@ func resolveWorkspaceRelativeLocator(
 		)
 	}
 
-	if err := basespec.ValidatePortableLocator(
-		resolved,
-		allowRelativeRoot,
-	); err != nil {
+	if err := resolved.ValidatePortable(allowRelativeRoot); err != nil {
 		return "", fmt.Errorf("resolved portable locator: %w", err)
 	}
 	return resolved, nil

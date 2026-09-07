@@ -346,7 +346,7 @@ func validateWorkspaceDiscoveryV1(value WorkspaceDiscoveryV1) error {
 	locators := make(map[basespec.Locator]struct{}, len(value.AdditionalLocators))
 	for _, rawLocator := range value.AdditionalLocators {
 		locator := basespec.Locator(rawLocator)
-		if err := basespec.ValidatePortableLocator(locator, false); err != nil {
+		if err := locator.ValidatePortable(false); err != nil {
 			return err
 		}
 		if _, duplicate := locators[locator]; duplicate {
@@ -362,7 +362,7 @@ func validateWorkspaceDiscoveryV1(value WorkspaceDiscoveryV1) error {
 	roots := make(map[basespec.Locator]struct{}, len(value.AdditionalRoots))
 	for index, root := range value.AdditionalRoots {
 		locator := basespec.Locator(root.Root)
-		if err := basespec.ValidatePortableLocator(locator, true); err != nil {
+		if err := locator.ValidatePortable(true); err != nil {
 			return fmt.Errorf("workspace additional roots[%d]: %w", index, err)
 		}
 		if _, duplicate := roots[locator]; duplicate {
@@ -400,10 +400,7 @@ func validateWorkspaceCollectionV1Member(value ContentRef) error {
 			basespec.ErrInvalid,
 		)
 	case value.Locator != "":
-		if err := basespec.ValidatePortableLocator(
-			basespec.Locator(value.Locator),
-			false,
-		); err != nil {
+		if err := basespec.Locator(value.Locator).ValidatePortable(false); err != nil {
 			return err
 		}
 	case value.URI != "":

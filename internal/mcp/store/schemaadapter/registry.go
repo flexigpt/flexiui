@@ -53,10 +53,7 @@ func (r Registry) Validate() error {
 		if err := registered.CollectionID.Validate(); err != nil {
 			return fmt.Errorf("bundles[%d]: %w", index, err)
 		}
-		if err := basespec.ValidatePortableLocator(
-			registered.EmbeddedPackageRoot,
-			false,
-		); err != nil {
+		if err := registered.EmbeddedPackageRoot.ValidatePortable(false); err != nil {
 			return fmt.Errorf("bundles[%d]: %w", index, err)
 		}
 		if err := mcpStore.ValidateDocumentLocator(

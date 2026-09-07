@@ -35,7 +35,7 @@ func ManagedPackageLocatorForSkill(
 func ManagedPackageAddressFromSkillLocator(
 	locator basespec.Locator,
 ) (source.ManagedPackageAddress, error) {
-	if err := basespec.ValidatePortableLocator(locator, false); err != nil {
+	if err := locator.ValidatePortable(false); err != nil {
 		return source.ManagedPackageAddress{}, err
 	}
 	if path.Base(string(locator)) != string(artifactbuiltin.AgentSkillDefinitionFileName) {

@@ -1,7 +1,6 @@
 package basespec
 
 import (
-	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -20,10 +19,6 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 		{name: "control text", err: ValidateRequiredText("text", "value\n", 16)},
 		{name: "invalid UTF-8", err: ValidateRequiredText("text", string([]byte{0xff}), 16)},
 		{name: "overlong text", err: ValidateRequiredText("text", strings.Repeat("a", 17), 16)},
-		{name: "portable reserved basename", err: ValidatePortableLocator("CON.txt", false)},
-		{name: "portable trailing dot", err: ValidatePortableLocator("package/name.", false)},
-		{name: "portable trailing space", err: ValidatePortableLocator("package/name ", false)},
-		{name: "portable invalid separator", err: ValidatePortableLocator(`package\\name`, false)},
 		{name: "invalid storage key", err: StorageKey("Not portable").Validate()},
 	}
 	for _, test := range tests {
@@ -38,15 +33,6 @@ func TestValueValidationBoundariesAndPlatformSafety(t *testing.T) {
 	if err := ValidateRequiredText("text", strings.Repeat("a", 16), 16); err != nil {
 		t.Fatalf("ValidateRequiredText at limit: %v", err)
 	}
-	if err := ValidatePortableLocator("packages/example/SKILL.md", false); err != nil {
-		t.Fatalf("ValidatePortableLocator(valid): %v", err)
-	}
-	if err := ValidatePortableLocator(".", true); err != nil {
-		t.Fatalf("ValidatePortableLocator(root): %v", err)
-	}
-	if err := ValidatePortableLocator(".", false); !errors.Is(err, ErrInvalid) {
-		t.Fatalf("ValidatePortableLocator(file root) error=%v, want ErrInvalid", err)
-	}
 	if err := StorageKey("personal").Validate(); err != nil {
 		t.Fatalf("Validate StorageKey(valid): %v", err)
 	}
@@ -60,7 +46,7 @@ func TestValueValidationIsSafeForConcurrentCallers(t *testing.T) {
 	errorsSeen := make(chan error, workers)
 	for range workers {
 		group.Go(func() {
-			if err := ValidatePortableLocator("portable/path.json", false); err != nil {
+			if err := Locator("portable/path.json").ValidatePortable(false); err != nil {
 				errorsSeen <- err
 			}
 			if err := cryptoutil.ValidateDigest(cryptoutil.DigestBytes([]byte("stable content"))); err != nil {

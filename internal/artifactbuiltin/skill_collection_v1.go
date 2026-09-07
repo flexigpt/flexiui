@@ -353,7 +353,7 @@ func validateSkillCollectionV1Member(value ContentRef) error {
 
 	case value.Locator != "":
 		locator := basespec.Locator(value.Locator)
-		if err := basespec.ValidatePortableLocator(locator, false); err != nil {
+		if err := locator.ValidatePortable(false); err != nil {
 			return err
 		}
 		if path.Base(value.Locator) != "SKILL.md" ||

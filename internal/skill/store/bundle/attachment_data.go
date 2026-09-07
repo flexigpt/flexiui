@@ -147,7 +147,7 @@ func (d AttachmentData) Validate() error {
 		)
 	}
 	for member, digest := range d.ExpectedMemberDigests {
-		if err := basespec.ValidatePortableLocator(member, false); err != nil {
+		if err := member.ValidatePortable(false); err != nil {
 			return err
 		}
 		if err := cryptoutil.ValidateDigest(digest); err != nil {

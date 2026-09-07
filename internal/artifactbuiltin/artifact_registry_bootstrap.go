@@ -355,7 +355,7 @@ func normalizePackageScopes(
 	seen := make(map[basespec.Locator]struct{}, len(values))
 	output := make([]basespec.Locator, 0, len(values))
 	for _, value := range values {
-		if err := basespec.ValidatePortableLocator(value, false); err != nil {
+		if err := value.ValidatePortable(false); err != nil {
 			return nil, err
 		}
 		if _, duplicate := seen[value]; duplicate {

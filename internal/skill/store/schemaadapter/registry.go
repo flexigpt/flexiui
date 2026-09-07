@@ -165,7 +165,7 @@ func (r Registry) Validate() error {
 		if err := collection.ID.Validate(); err != nil {
 			return fmt.Errorf("collections[%d]: %w", collectionIndex, err)
 		}
-		if err := basespec.ValidatePortableLocator(collection.EmbeddedCollectionLocator, false); err != nil {
+		if err := collection.EmbeddedCollectionLocator.ValidatePortable(false); err != nil {
 			return fmt.Errorf("collections[%d]: %w", collectionIndex, err)
 		}
 		if path.Base(string(collection.EmbeddedCollectionLocator)) !=
@@ -212,7 +212,7 @@ func (r Registry) Validate() error {
 					err,
 				)
 			}
-			if err := basespec.ValidatePortableLocator(value.Member, false); err != nil {
+			if err := value.Member.ValidatePortable(false); err != nil {
 				return fmt.Errorf(
 					"collections[%d].artifacts[%d]: %w",
 					collectionIndex,
@@ -298,7 +298,7 @@ func hydrateCollection(
 	}
 
 	scope := basespec.Locator(path.Dir(string(registration.EmbeddedCollectionLocator)))
-	if err := basespec.ValidatePortableLocator(scope, false); err != nil {
+	if err := scope.ValidatePortable(false); err != nil {
 		return HydratedCollection{}, err
 	}
 
@@ -478,7 +478,7 @@ func scopedLocator(
 	member basespec.Locator,
 ) (basespec.Locator, error) {
 	value := basespec.Locator(path.Join(string(scope), string(member)))
-	if err := basespec.ValidatePortableLocator(value, false); err != nil {
+	if err := value.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	return value, nil

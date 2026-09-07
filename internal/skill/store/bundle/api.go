@@ -1405,7 +1405,7 @@ func (a *API) createManagedSkill(
 	if err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
-	if err := basespec.ValidatePortableLocator(skillLocator, false); err != nil {
+	if err := skillLocator.ValidatePortable(false); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
 	if _, err := source.NormalizeManagedPackagePublication(

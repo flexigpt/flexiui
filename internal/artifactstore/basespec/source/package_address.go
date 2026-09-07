@@ -50,7 +50,7 @@ func NewManagedPackageAddress(
 func ParseManagedPackageAddressDirectory(
 	directory basespec.Locator,
 ) (ManagedPackageAddress, error) {
-	if err := basespec.ValidatePortableLocator(directory, false); err != nil {
+	if err := directory.ValidatePortable(false); err != nil {
 		return ManagedPackageAddress{}, err
 	}
 
@@ -92,7 +92,7 @@ func (a ManagedPackageAddress) Directory() (basespec.Locator, error) {
 		string(a.Name),
 		string(a.Version),
 	))
-	if err := basespec.ValidatePortableLocator(value, false); err != nil {
+	if err := value.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	return value, nil
@@ -103,7 +103,7 @@ func (a ManagedPackageAddress) Directory() (basespec.Locator, error) {
 func (a ManagedPackageAddress) FileLocator(
 	relative basespec.Locator,
 ) (basespec.Locator, error) {
-	if err := basespec.ValidatePortableLocator(relative, false); err != nil {
+	if err := relative.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	directory, err := a.Directory()
@@ -114,7 +114,7 @@ func (a ManagedPackageAddress) FileLocator(
 		string(directory),
 		string(relative),
 	))
-	if err := basespec.ValidatePortableLocator(value, false); err != nil {
+	if err := value.ValidatePortable(false); err != nil {
 		return "", err
 	}
 	return value, nil

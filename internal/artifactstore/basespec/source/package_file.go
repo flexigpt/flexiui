@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 )
@@ -42,7 +43,7 @@ func NormalizeManagedPackageFiles(
 
 	var total int64
 	for index, file := range input {
-		if err := basespec.ValidatePortableLocator(file.Locator, false); err != nil {
+		if err := file.Locator.ValidatePortable(false); err != nil {
 			return nil, fmt.Errorf(
 				"managed package files[%d]: %w",
 				index,
@@ -58,7 +59,7 @@ func NormalizeManagedPackageFiles(
 		}
 		seen[file.Locator] = struct{}{}
 
-		identity, err := basespec.PortableLocatorIdentity(
+		identity, err := portableLocatorIdentity(
 			file.Locator,
 			false,
 		)
@@ -83,7 +84,7 @@ func NormalizeManagedPackageFiles(
 		}
 
 		for parent := path.Dir(string(file.Locator)); parent != "."; parent = path.Dir(parent) {
-			parentIdentity, err := basespec.PortableLocatorIdentity(
+			parentIdentity, err := portableLocatorIdentity(
 				basespec.Locator(parent),
 				false,
 			)
@@ -120,4 +121,17 @@ func NormalizeManagedPackageFiles(
 		return output[left].Locator < output[right].Locator
 	})
 	return output, nil
+}
+
+func portableLocatorIdentity(
+	value basespec.Locator,
+	allowRoot bool,
+) (string, error) {
+	if err := value.ValidatePortable(allowRoot); err != nil {
+		return "", err
+	}
+	if value == "." {
+		return ".", nil
+	}
+	return strings.ToLower(string(value)), nil
 }

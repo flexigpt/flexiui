@@ -33,7 +33,7 @@ func DocumentLocatorForPackage(
 }
 
 func ValidateDocumentLocator(value basespec.Locator) error {
-	if err := basespec.ValidatePortableLocator(value, false); err != nil {
+	if err := value.ValidatePortable(false); err != nil {
 		return err
 	}
 	if path.Base(string(value)) != string(artifactbuiltin.MCPBundleDocumentFileName) ||
