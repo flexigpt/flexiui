@@ -1109,9 +1109,9 @@ func scanCollection(row scanner) (collection.Collection, error) {
 	}
 
 	value := collection.Collection{
-		ID:          basespec.CollectionID(id),
+		ID:          collection.CollectionID(id),
 		RootID:      root.RootID(rootID),
-		Kind:        basespec.CollectionKind(kind),
+		Kind:        collection.CollectionKind(kind),
 		DisplayName: displayName,
 		Description: description,
 		Enabled:     enabled != 0,
@@ -1155,7 +1155,7 @@ func scanCollectionAttachment(row scanner) (collection.Attachment, error) {
 
 	value := collection.Attachment{
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 		SourceID:     source.SourceID(sourceID),
 		Role:         basespec.AttachmentRole(role),
 		Enabled:      enabled != 0,

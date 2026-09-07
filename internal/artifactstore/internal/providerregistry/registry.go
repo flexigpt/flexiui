@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
@@ -17,8 +18,8 @@ type Registry struct {
 	schemas   []providerapi.SchemaCodec
 	decoders  []providerapi.Decoder
 
-	byCollectionKind    map[basespec.CollectionKind]providerapi.Descriptor
-	collectionBehaviors map[basespec.CollectionKind]providerapi.CollectionBehavior
+	byCollectionKind    map[collection.CollectionKind]providerapi.Descriptor
+	collectionBehaviors map[collection.CollectionKind]providerapi.CollectionBehavior
 }
 
 func New(
@@ -29,10 +30,10 @@ func New(
 		schemas:   make([]providerapi.SchemaCodec, 0),
 		decoders:  make([]providerapi.Decoder, 0),
 		byCollectionKind: make(
-			map[basespec.CollectionKind]providerapi.Descriptor,
+			map[collection.CollectionKind]providerapi.Descriptor,
 		),
 		collectionBehaviors: make(
-			map[basespec.CollectionKind]providerapi.CollectionBehavior,
+			map[collection.CollectionKind]providerapi.CollectionBehavior,
 		),
 	}
 
@@ -152,7 +153,7 @@ func (r *Registry) Decoders() []providerapi.Decoder {
 }
 
 func (r *Registry) ProviderForCollectionKind(
-	kind basespec.CollectionKind,
+	kind collection.CollectionKind,
 ) (providerapi.Descriptor, bool) {
 	if r == nil {
 		return providerapi.Descriptor{}, false
@@ -166,7 +167,7 @@ func (r *Registry) ProviderForCollectionKind(
 }
 
 func (r *Registry) CollectionBehavior(
-	kind basespec.CollectionKind,
+	kind collection.CollectionKind,
 ) (providerapi.CollectionBehavior, bool) {
 	if r == nil {
 		return nil, false

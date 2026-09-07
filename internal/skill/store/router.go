@@ -37,7 +37,7 @@ type ArtifactSkillLoader interface {
 type ArtifactRouter struct {
 	store   artifactConsumerAPI.ConsumerAPI
 	mu      sync.RWMutex
-	loaders map[basespec.CollectionKind]ArtifactSkillLoader
+	loaders map[collection.CollectionKind]ArtifactSkillLoader
 }
 
 func NewArtifactRouter(
@@ -51,15 +51,15 @@ func NewArtifactRouter(
 	}
 	return &ArtifactRouter{
 		store:   store,
-		loaders: map[basespec.CollectionKind]ArtifactSkillLoader{},
+		loaders: map[collection.CollectionKind]ArtifactSkillLoader{},
 	}, nil
 }
 
 func (r *ArtifactRouter) Register(
-	kind basespec.CollectionKind,
+	kind collection.CollectionKind,
 	loader ArtifactSkillLoader,
 ) error {
-	if err := basespec.ValidateCollectionKind(kind); err != nil {
+	if err := kind.Validate(); err != nil {
 		return err
 	}
 	if loader == nil {
@@ -238,7 +238,7 @@ func (s ResolvedArtifactSkill) Validate() error {
 }
 
 func (r *ArtifactRouter) loader(
-	kind basespec.CollectionKind,
+	kind collection.CollectionKind,
 ) (ArtifactSkillLoader, error) {
 	r.mu.RLock()
 	loader, exists := r.loaders[kind]

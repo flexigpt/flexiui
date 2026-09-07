@@ -20,7 +20,7 @@ import (
 )
 
 type BuiltInCollectionSkill struct {
-	ArtifactID basespec.ArtifactID
+	ArtifactID artifact.ArtifactID
 	Member     basespec.Locator
 	Enabled    bool
 }
@@ -152,12 +152,12 @@ func (a *API) InstallBuiltInCollection(
 		)
 	}
 
-	seenArtifactIDs := make(map[basespec.ArtifactID]struct{}, len(request.Skills))
+	seenArtifactIDs := make(map[artifact.ArtifactID]struct{}, len(request.Skills))
 	seenMembers := make(map[basespec.Locator]struct{}, len(request.Skills))
 	prepared := make([]preparedBuiltInSkill, 0, len(request.Skills))
 
 	for index, skill := range request.Skills {
-		if err := basespec.ValidateArtifactID(skill.ArtifactID); err != nil {
+		if err := skill.ArtifactID.Validate(); err != nil {
 			return nil, fmt.Errorf("skills[%d]: %w", index, err)
 		}
 		if err := basespec.ValidatePortableLocator(skill.Member, false); err != nil {
@@ -361,7 +361,7 @@ func (a *API) ensurePinnedManagedSkill(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 	expectedCollectionRevision uint64,
-	artifactID basespec.ArtifactID,
+	artifactID artifact.ArtifactID,
 	sourceID source.SourceID,
 	skillLocator basespec.Locator,
 	name string,

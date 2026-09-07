@@ -456,7 +456,7 @@ func (p providerAdoptionPolicy) Derive(
 	if err != nil {
 		return artifactimpl.Draft{}, false, nil, err
 	}
-	if err := basespec.ValidateArtifactID(id); err != nil {
+	if err := id.Validate(); err != nil {
 		return artifactimpl.Draft{}, false, nil, err
 	}
 

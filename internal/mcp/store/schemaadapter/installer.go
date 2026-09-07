@@ -409,7 +409,7 @@ func (i *Installer) verifyCurrentBundle(
 	records := append(servers, policies...)
 
 	expectedByID := make(
-		map[basespec.ArtifactID]ArtifactRegistration,
+		map[artifact.ArtifactID]ArtifactRegistration,
 		len(expected.registration.Artifacts),
 	)
 	for _, registration := range expected.registration.Artifacts {
@@ -425,7 +425,7 @@ func (i *Installer) verifyCurrentBundle(
 		)
 	}
 
-	seen := make(map[basespec.ArtifactID]struct{}, len(records))
+	seen := make(map[artifact.ArtifactID]struct{}, len(records))
 	for _, record := range records {
 		registration, found := expectedByID[record.ID]
 		if !found {
@@ -682,13 +682,13 @@ func (i *Installer) hydrationFingerprint(
 	prepared []preparedBundle,
 ) (cryptoutil.Digest, error) {
 	type artifactFingerprint struct {
-		ID          basespec.ArtifactID         `json:"id"`
+		ID          artifact.ArtifactID         `json:"id"`
 		Subresource basespec.SubresourceLocator `json:"subresource"`
-		Kind        basespec.ArtifactKind       `json:"kind"`
+		Kind        artifact.ArtifactKind       `json:"kind"`
 		Enabled     bool                        `json:"enabled"`
 	}
 	type bundleFingerprint struct {
-		CollectionID    basespec.CollectionID        `json:"collectionID"`
+		CollectionID    collection.CollectionID      `json:"collectionID"`
 		PackageAddress  source.ManagedPackageAddress `json:"packageAddress"`
 		DocumentLocator basespec.Locator             `json:"embeddedDocumentLocator"`
 		DocumentDigest  cryptoutil.Digest            `json:"documentDigest"`
@@ -740,9 +740,9 @@ func (i *Installer) hydrationFingerprint(
 
 func bundleDefinitions(
 	document mcpStore.BundleDocument,
-) (map[basespec.SubresourceLocator]basespec.ArtifactKind, error) {
+) (map[basespec.SubresourceLocator]artifact.ArtifactKind, error) {
 	output := make(
-		map[basespec.SubresourceLocator]basespec.ArtifactKind,
+		map[basespec.SubresourceLocator]artifact.ArtifactKind,
 		len(document.MCPServers)+len(document.BundleExtension.Policies),
 	)
 	for name := range document.MCPServers {
@@ -761,7 +761,7 @@ func bundleDefinitions(
 func registeredHasKind(
 	registered BundleRegistration,
 	subresource basespec.SubresourceLocator,
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 ) bool {
 	for _, value := range registered.Artifacts {
 		if value.Subresource == subresource && value.Kind == kind {

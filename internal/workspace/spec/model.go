@@ -90,26 +90,26 @@ type Resource struct {
 }
 
 type ResourceGroup struct {
-	Kind       basespec.ArtifactKind `json:"-"`
+	Kind       artifact.ArtifactKind `json:"-"`
 	Resources  []Resource            `json:"-"`
 	Unrecorded []catalog.Occurrence  `json:"-"`
 }
 
 type EmptyWorkspaceRequest struct {
-	CollectionID basespec.CollectionID `json:"collectionID"`
-	RootID       root.RootID           `json:"rootID"`
-	DisplayName  string                `json:"displayName"`
-	Description  string                `json:"description,omitempty"`
-	Discovery    DiscoveryPreferences  `json:"discovery"`
+	CollectionID collection.CollectionID `json:"collectionID"`
+	RootID       root.RootID             `json:"rootID"`
+	DisplayName  string                  `json:"displayName"`
+	Description  string                  `json:"description,omitempty"`
+	Discovery    DiscoveryPreferences    `json:"discovery"`
 }
 
 type FilesystemWorkspaceRequest struct {
-	CollectionID    basespec.CollectionID `json:"collectionID"`
-	RootID          root.RootID           `json:"rootID"`
-	DisplayName     string                `json:"displayName"`
-	Description     string                `json:"description,omitempty"`
-	PrimarySourceID source.SourceID       `json:"primarySourceID"`
-	Discovery       DiscoveryPreferences  `json:"discovery"`
+	CollectionID    collection.CollectionID `json:"collectionID"`
+	RootID          root.RootID             `json:"rootID"`
+	DisplayName     string                  `json:"displayName"`
+	Description     string                  `json:"description,omitempty"`
+	PrimarySourceID source.SourceID         `json:"primarySourceID"`
+	Discovery       DiscoveryPreferences    `json:"discovery"`
 }
 
 type UpdateRequest struct {
@@ -182,14 +182,14 @@ type LoadPlan struct {
 type DefinitionValidator func(definition.Definition) error
 
 type ArtifactSupport struct {
-	Kind      basespec.ArtifactKind
+	Kind      artifact.ArtifactKind
 	SchemaID  basespec.SchemaID
 	DecoderID basespec.DecoderID
 	Validator DefinitionValidator
 }
 
 func (s ArtifactSupport) Validate() error {
-	if err := basespec.ValidateArtifactKind(s.Kind); err != nil {
+	if err := s.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateSchemaID(s.SchemaID); err != nil {

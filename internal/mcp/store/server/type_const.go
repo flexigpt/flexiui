@@ -110,7 +110,7 @@ type ServerExtension struct {
 }
 
 type ServerDocument struct {
-	Kind          basespec.ArtifactKind `json:"kind"`
+	Kind          artifact.ArtifactKind `json:"kind"`
 	SchemaID      basespec.SchemaID     `json:"schemaID"`
 	SchemaVersion string                `json:"schemaVersion"`
 	Digest        cryptoutil.Digest     `json:"digest,omitempty"`

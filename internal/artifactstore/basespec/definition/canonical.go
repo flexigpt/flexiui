@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
@@ -36,7 +37,7 @@ func Canonicalize(input Definition) (Definition, error) {
 	}
 
 	payload := struct {
-		Kind           basespec.ArtifactKind   `json:"kind"`
+		Kind           artifact.ArtifactKind   `json:"kind"`
 		SchemaID       basespec.SchemaID       `json:"schemaID"`
 		SchemaVersion  string                  `json:"schemaVersion"`
 		LogicalName    basespec.LogicalName    `json:"logicalName"`

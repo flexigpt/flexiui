@@ -2,6 +2,7 @@ package policy
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 )
@@ -14,7 +15,7 @@ import (
 // affecting canonical Definition digests.
 
 type PolicyDocument struct {
-	Kind          basespec.ArtifactKind `json:"kind"`
+	Kind          artifact.ArtifactKind `json:"kind"`
 	SchemaID      basespec.SchemaID     `json:"schemaID"`
 	SchemaVersion string                `json:"schemaVersion"`
 	Digest        cryptoutil.Digest     `json:"digest,omitempty"`

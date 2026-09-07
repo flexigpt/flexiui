@@ -7,21 +7,23 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
 )
 
 type ArtifactRegistration struct {
-	ID          basespec.ArtifactID         `json:"id"`
+	ID          artifact.ArtifactID         `json:"id"`
 	Subresource basespec.SubresourceLocator `json:"subresource"`
-	Kind        basespec.ArtifactKind       `json:"kind"`
+	Kind        artifact.ArtifactKind       `json:"kind"`
 	Enabled     bool                        `json:"enabled"`
 }
 
 type BundleRegistration struct {
-	CollectionID            basespec.CollectionID  `json:"collectionID"`
-	EmbeddedPackageRoot     basespec.Locator       `json:"embeddedPackageRoot"`
-	EmbeddedDocumentLocator basespec.Locator       `json:"embeddedDocumentLocator"`
-	Artifacts               []ArtifactRegistration `json:"artifacts"`
+	CollectionID            collection.CollectionID `json:"collectionID"`
+	EmbeddedPackageRoot     basespec.Locator        `json:"embeddedPackageRoot"`
+	EmbeddedDocumentLocator basespec.Locator        `json:"embeddedDocumentLocator"`
+	Artifacts               []ArtifactRegistration  `json:"artifacts"`
 }
 
 type Registry struct {
@@ -44,11 +46,11 @@ func (r Registry) Validate() error {
 		)
 	}
 
-	collections := make(map[basespec.CollectionID]struct{}, len(r.Bundles))
-	artifacts := make(map[basespec.ArtifactID]struct{})
+	collections := make(map[collection.CollectionID]struct{}, len(r.Bundles))
+	artifacts := make(map[artifact.ArtifactID]struct{})
 
 	for index, registered := range r.Bundles {
-		if err := basespec.ValidateCollectionID(registered.CollectionID); err != nil {
+		if err := registered.CollectionID.Validate(); err != nil {
 			return fmt.Errorf("bundles[%d]: %w", index, err)
 		}
 		if err := basespec.ValidatePortableLocator(
@@ -91,7 +93,7 @@ func (r Registry) Validate() error {
 			len(registered.Artifacts),
 		)
 		for artifactIndex, value := range registered.Artifacts {
-			if err := basespec.ValidateArtifactID(value.ID); err != nil {
+			if err := value.ID.Validate(); err != nil {
 				return fmt.Errorf(
 					"bundles[%d].artifacts[%d]: %w",
 					index,

@@ -8,31 +8,49 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
+	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
 )
 
+type (
+	CollectionID   string
+	CollectionKind string
+)
+
+func (v CollectionID) Validate() error {
+	err := uuidutil.ValidateUUIDv7(string(v))
+	if err != nil {
+		return fmt.Errorf("collection ID: %w", err)
+	}
+	return nil
+}
+
+func (v CollectionKind) Validate() error {
+	return basespec.ValidateIdentifier("collection kind", string(v), basespec.MaxKindBytes)
+}
+
 type CollectionRef struct {
-	RootID       root.RootID           `json:"rootID"`
-	CollectionID basespec.CollectionID `json:"collectionID"`
+	RootID       root.RootID  `json:"rootID"`
+	CollectionID CollectionID `json:"collectionID"`
 }
 
 func (r CollectionRef) Validate() error {
 	if err := r.RootID.Validate(); err != nil {
 		return err
 	}
-	return basespec.ValidateCollectionID(r.CollectionID)
+	return r.CollectionID.Validate()
 }
 
 type Collection struct {
-	ID          basespec.CollectionID   `json:"id"`
-	RootID      root.RootID             `json:"rootID"`
-	Kind        basespec.CollectionKind `json:"kind"`
-	DisplayName string                  `json:"displayName"`
-	Description string                  `json:"description,omitempty"`
-	Enabled     bool                    `json:"enabled"`
-	Revision    uint64                  `json:"revision"`
-	CreatedAt   time.Time               `json:"createdAt"`
-	ModifiedAt  time.Time               `json:"modifiedAt"`
-	RetiredAt   *time.Time              `json:"retiredAt,omitempty"`
+	ID          CollectionID   `json:"id"`
+	RootID      root.RootID    `json:"rootID"`
+	Kind        CollectionKind `json:"kind"`
+	DisplayName string         `json:"displayName"`
+	Description string         `json:"description,omitempty"`
+	Enabled     bool           `json:"enabled"`
+	Revision    uint64         `json:"revision"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	ModifiedAt  time.Time      `json:"modifiedAt"`
+	RetiredAt   *time.Time     `json:"retiredAt,omitempty"`
 
 	Data json.RawMessage `json:"-"`
 }
@@ -45,13 +63,13 @@ func (c Collection) Ref() CollectionRef {
 }
 
 func (c Collection) Validate() error {
-	if err := basespec.ValidateCollectionID(c.ID); err != nil {
+	if err := c.ID.Validate(); err != nil {
 		return err
 	}
 	if err := c.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionKind(c.Kind); err != nil {
+	if err := c.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(

@@ -7,7 +7,6 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
@@ -20,13 +19,13 @@ import (
 
 type occurrenceKindKey struct {
 	Occurrence catalog.OccurrenceKey
-	Kind       basespec.ArtifactKind
+	Kind       artifact.ArtifactKind
 }
 
 type QueryService struct {
 	workspaces *Service
 	store      artifactConsumerAPI.ConsumerAPI
-	validators map[basespec.ArtifactKind]spec.DefinitionValidator
+	validators map[artifact.ArtifactKind]spec.DefinitionValidator
 }
 
 func NewQueryService(
@@ -48,7 +47,7 @@ func NewQueryService(
 		)
 	}
 	validators := make(
-		map[basespec.ArtifactKind]spec.DefinitionValidator,
+		map[artifact.ArtifactKind]spec.DefinitionValidator,
 		len(supports),
 	)
 	for _, support := range supports {
@@ -122,7 +121,7 @@ func (q *QueryService) ComposeLoadPlan(
 	if err != nil {
 		return spec.LoadPlan{}, err
 	}
-	requested := make(map[basespec.ArtifactID]struct{}, len(artifactRefs))
+	requested := make(map[artifact.ArtifactID]struct{}, len(artifactRefs))
 	for _, ref := range artifactRefs {
 		if err := ref.Validate(); err != nil {
 			return spec.LoadPlan{}, err
@@ -151,19 +150,19 @@ func (q *QueryService) ComposeLoadPlan(
 			view.FreshnessDiagnostics...,
 		),
 	}
-	resources := make(map[basespec.ArtifactID]spec.Resource, len(view.Resources))
+	resources := make(map[artifact.ArtifactID]spec.Resource, len(view.Resources))
 	for _, value := range view.Resources {
 		resources[value.Artifact.ID] = value
 	}
 	unresolved := make(
-		map[basespec.ArtifactID]artifact.Artifact,
+		map[artifact.ArtifactID]artifact.Artifact,
 		len(view.UnresolvedArtifacts),
 	)
 	for _, value := range view.UnresolvedArtifacts {
 		unresolved[value.ID] = value
 	}
 
-	ordered := make([]basespec.ArtifactID, 0, len(requested))
+	ordered := make([]artifact.ArtifactID, 0, len(requested))
 	for artifactID := range requested {
 		ordered = append(ordered, artifactID)
 	}
@@ -609,7 +608,7 @@ func groupCatalogResources(
 	resources []spec.Resource,
 	unrecorded []catalog.Occurrence,
 ) []spec.ResourceGroup {
-	values := make(map[basespec.ArtifactKind]*spec.ResourceGroup)
+	values := make(map[artifact.ArtifactKind]*spec.ResourceGroup)
 	for _, resourceValue := range resources {
 		kind := resourceValue.Artifact.Kind
 		group := values[kind]
@@ -643,7 +642,7 @@ func groupCatalogResources(
 
 func occurrenceKindIdentity(
 	key catalog.OccurrenceKey,
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 ) occurrenceKindKey {
 	return occurrenceKindKey{Occurrence: key, Kind: kind}
 }

@@ -3,7 +3,6 @@ package artifact
 import (
 	"encoding/json"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
@@ -12,7 +11,7 @@ import (
 // AdoptRequest identifies one currently catalogued valid occurrence that a
 // caller explicitly wants to represent as an observed Artifact.
 type AdoptRequest struct {
-	ArtifactID              basespec.ArtifactID
+	ArtifactID              artifact.ArtifactID
 	Collection              collection.CollectionRef
 	Occurrence              catalog.OccurrenceKey
 	ExpectedCatalogRevision uint64
@@ -24,7 +23,7 @@ type AdoptRequest struct {
 // PinRequest creates an Artifact binding that remains represented even when
 // its source occurrence is missing or temporarily invalid.
 type PinRequest struct {
-	ArtifactID                 basespec.ArtifactID
+	ArtifactID                 artifact.ArtifactID
 	Collection                 collection.CollectionRef
 	ExpectedCollectionRevision uint64
 	Binding                    artifact.SourceBinding

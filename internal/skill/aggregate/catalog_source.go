@@ -102,7 +102,7 @@ func collectionRefForCatalogID(
 
 	ref := collection.CollectionRef{
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 	}
 	if err := ref.Validate(); err != nil {
 		return collection.CollectionRef{}, err

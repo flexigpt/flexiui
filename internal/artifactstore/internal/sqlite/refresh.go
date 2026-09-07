@@ -10,6 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -281,7 +282,7 @@ func requirePublishedSourceGenerationsTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	generations map[source.SourceID]string,
 ) error {
 	rows, err := tx.QueryContext(

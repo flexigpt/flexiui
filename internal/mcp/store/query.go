@@ -347,7 +347,7 @@ func (a *API) GetBundleInstallation(
 func (a *API) listArtifactsByKind(
 	ctx context.Context,
 	ref collection.CollectionRef,
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 ) ([]artifact.Artifact, error) {
 	if _, err := a.Get(ctx, ref); err != nil {
 		return nil, err

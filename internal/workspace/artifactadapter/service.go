@@ -699,7 +699,7 @@ func (s *Service) Get(
 
 func (s *Service) validateWorkspaceCreate(
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	displayName string,
 	description string,
 	discovery spec.DiscoveryPreferences,
@@ -713,7 +713,7 @@ func (s *Service) validateWorkspaceCreate(
 	if err := s.requireWorkspaceRoot(rootID); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(collectionID); err != nil {
+	if err := collectionID.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(

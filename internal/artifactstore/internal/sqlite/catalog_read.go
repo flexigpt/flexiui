@@ -8,6 +8,7 @@ import (
 	"maps"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
@@ -219,14 +220,14 @@ func scanOccurrence(row scanner) (catalog.Occurrence, error) {
 	}
 	value := catalog.Occurrence{
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 		Key: catalog.OccurrenceKey{
-			CollectionID:       basespec.CollectionID(collectionID),
+			CollectionID:       collection.CollectionID(collectionID),
 			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
 		},
-		Kind:                basespec.ArtifactKind(kind),
+		Kind:                artifact.ArtifactKind(kind),
 		LogicalName:         basespec.LogicalName(logicalName),
 		LogicalVersion:      basespec.LogicalVersion(logicalVersion),
 		DefinitionDigest:    parseDigest(definitionDigest),

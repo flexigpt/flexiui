@@ -105,7 +105,7 @@ func (s *Service) Adopt(
 	); err != nil {
 		return artifact.Artifact{}, err
 	}
-	if err := basespec.ValidateArtifactID(request.ArtifactID); err != nil {
+	if err := request.ArtifactID.Validate(); err != nil {
 		return artifact.Artifact{}, err
 	}
 	if err := request.Collection.Validate(); err != nil {
@@ -216,7 +216,7 @@ func (s *Service) Pin(
 	); err != nil {
 		return artifact.Artifact{}, err
 	}
-	if err := basespec.ValidateArtifactID(request.ArtifactID); err != nil {
+	if err := request.ArtifactID.Validate(); err != nil {
 		return artifact.Artifact{}, err
 	}
 	collectionValue, err := s.activeCollection(ctx, request.Collection)

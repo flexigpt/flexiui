@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -15,9 +16,9 @@ import (
 // only source-derived Artifact fields and cannot modify caller-owned local
 // Artifact state such as name, enabled state, or local data.
 type SourceStateUpdate struct {
-	ArtifactID         basespec.ArtifactID
+	ArtifactID         artifact.ArtifactID
 	RootID             root.RootID
-	CollectionID       basespec.CollectionID
+	CollectionID       collection.CollectionID
 	ResolvedDefinition *cryptoutil.Digest
 	State              artifact.State
 	Diagnostics        []diagnostic.Diagnostic
@@ -27,13 +28,13 @@ type SourceStateUpdate struct {
 }
 
 func (u SourceStateUpdate) Validate() error {
-	if err := basespec.ValidateArtifactID(u.ArtifactID); err != nil {
+	if err := u.ArtifactID.Validate(); err != nil {
 		return err
 	}
 	if err := u.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(u.CollectionID); err != nil {
+	if err := u.CollectionID.Validate(); err != nil {
 		return err
 	}
 	if err := u.State.Validate(u.ResolvedDefinition); err != nil {

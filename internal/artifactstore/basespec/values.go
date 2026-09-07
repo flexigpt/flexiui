@@ -66,14 +66,8 @@ var portableReservedBaseNames = map[string]struct{}{
 }
 
 type (
-	ArtifactID   string
-	ArtifactKind string
-
 	StorageKey  string
 	PackageKind string
-
-	CollectionID   string
-	CollectionKind string
 
 	SchemaID string
 

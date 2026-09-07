@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
@@ -122,7 +123,7 @@ func normalizeProviderConfig(
 	}
 
 	seenKinds := make(
-		map[basespec.ArtifactKind]struct{},
+		map[artifact.ArtifactKind]struct{},
 		len(supports),
 	)
 	seenDecoders := make(

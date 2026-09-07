@@ -4,17 +4,18 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 )
 
 type Selector struct {
-	Kind              basespec.ArtifactKind `json:"kind"`
+	Kind              artifact.ArtifactKind `json:"kind"`
 	LogicalName       basespec.LogicalName  `json:"logicalName,omitempty"`
 	VersionConstraint string                `json:"versionConstraint,omitempty"`
 	Labels            map[string]string     `json:"labels,omitempty"`
 }
 
 func (s Selector) Validate() error {
-	if err := basespec.ValidateArtifactKind(s.Kind); err != nil {
+	if err := s.Kind.Validate(); err != nil {
 		return fmt.Errorf("selector: %w", err)
 	}
 	if s.LogicalName != "" {

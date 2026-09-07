@@ -13,15 +13,16 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 const (
-	WorkspaceCollectionV1Kind          basespec.CollectionKind = "workspace.collection"
-	WorkspaceCollectionV1SchemaID      basespec.SchemaID       = "workspace.collection.v1"
-	WorkspaceCollectionV1SchemaVersion                         = "v1"
+	WorkspaceCollectionV1Kind          collection.CollectionKind = "workspace.collection"
+	WorkspaceCollectionV1SchemaID      basespec.SchemaID         = "workspace.collection.v1"
+	WorkspaceCollectionV1SchemaVersion                           = "v1"
 
 	maxWorkspaceCollectionV1Members      = 100_000
 	maxWorkspaceCollectionV1MediaTypeLen = 256

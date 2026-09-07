@@ -467,7 +467,7 @@ func (s *mcpSettingsAdapter) deleteOverlaySecretsLocked(
 	}
 	srv := artifact.ArtifactRef{
 		RootID:     root.RootID(parts[1]),
-		ArtifactID: basespec.ArtifactID(parts[3]),
+		ArtifactID: artifact.ArtifactID(parts[3]),
 	}
 	if err := srv.Validate(); err != nil {
 		return errors.Join(output, err)

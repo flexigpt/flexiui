@@ -30,7 +30,7 @@ type SkillArgument struct {
 
 type SkillSummary struct {
 	SchemaVersion string              `json:"schemaVersion"`
-	ID            basespec.ArtifactID `json:"id"`
+	ID            artifact.ArtifactID `json:"id"`
 	Slug          string              `json:"slug"`
 	Name          string              `json:"name"`
 	DisplayName   string              `json:"displayName"`

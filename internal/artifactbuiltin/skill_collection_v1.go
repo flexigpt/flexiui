@@ -14,17 +14,18 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 )
 
 const (
-	SkillCollectionV1Kind          basespec.CollectionKind = "skill.bundle"
-	SkillCollectionV1SchemaID      basespec.SchemaID       = "skill.bundle.v1"
-	SkillCollectionV1SchemaVersion                         = "v1"
-	SkillCollectionV1MemberFormat                          = "agent.skill-entrypoint/v1"
-	SkillCollectionV1MemberRole                            = "agent.skill"
+	SkillCollectionV1Kind          collection.CollectionKind = "skill.bundle"
+	SkillCollectionV1SchemaID      basespec.SchemaID         = "skill.bundle.v1"
+	SkillCollectionV1SchemaVersion                           = "v1"
+	SkillCollectionV1MemberFormat                            = "agent.skill-entrypoint/v1"
+	SkillCollectionV1MemberRole                              = "agent.skill"
 )
 
 const (

@@ -8,6 +8,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
@@ -18,7 +19,7 @@ import (
 
 type EnsureBuiltInRequest struct {
 	RootID         root.RootID
-	CollectionID   basespec.CollectionID
+	CollectionID   collection.CollectionID
 	SourceID       source.SourceID
 	PackageAddress source.ManagedPackageAddress
 
@@ -43,7 +44,7 @@ func (a *API) EnsureBuiltIn(
 	if err := request.RootID.Validate(); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
+	if err := request.CollectionID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := request.SourceID.Validate(); err != nil {
@@ -203,6 +204,6 @@ func ensureBuiltInTopologyMatches(
 	return nil
 }
 
-func isMCPKind(kind basespec.ArtifactKind) bool {
+func isMCPKind(kind artifact.ArtifactKind) bool {
 	return kind == artifactbuiltin.ServerKind || kind == artifactbuiltin.PolicyKind
 }

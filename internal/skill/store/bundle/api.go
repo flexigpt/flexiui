@@ -461,7 +461,7 @@ func (a *API) AdoptSkill(
 		)
 	}
 
-	if err := basespec.ValidateArtifactID(request.ArtifactID); err != nil {
+	if err := request.ArtifactID.Validate(); err != nil {
 		return artifact.Artifact{}, err
 	}
 	return a.dependencies.Store.AdoptArtifact(ctx, artifactConsumerAPIartifact.AdoptRequest{
@@ -914,7 +914,7 @@ func (a *API) createBundle(
 	if err := a.Ready(); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
+	if err := request.CollectionID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := request.RootID.Validate(); err != nil {
@@ -1292,7 +1292,7 @@ func (a *API) createManagedSkill(
 	); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
-	if err := basespec.ValidateArtifactID(request.ArtifactID); err != nil {
+	if err := request.ArtifactID.Validate(); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
 	if err := basespec.ValidateLogicalName(basespec.LogicalName(request.SkillName)); err != nil {
@@ -2005,7 +2005,7 @@ func validateManagedSkillArtifactData(
 func validateManagedSkillOperationIntent(
 	value artifact.Artifact,
 	bundle collection.CollectionRef,
-	artifactID basespec.ArtifactID,
+	artifactID artifact.ArtifactID,
 	sourceID source.SourceID,
 	skillLocator basespec.Locator,
 ) error {
@@ -2048,7 +2048,7 @@ func managedSkillPackageDigest(
 func (a *API) managedSkillByID(
 	ctx context.Context,
 	rootID root.RootID,
-	artifactID basespec.ArtifactID,
+	artifactID artifact.ArtifactID,
 ) (*artifact.Artifact, error) {
 	value, err := a.dependencies.Store.GetArtifact(ctx, artifact.ArtifactRef{
 		RootID:     rootID,
@@ -2066,7 +2066,7 @@ func (a *API) managedSkillByID(
 }
 
 func pendingManagedSkillCreateError(
-	artifactID basespec.ArtifactID,
+	artifactID artifact.ArtifactID,
 	cause error,
 ) error {
 	return fmt.Errorf(

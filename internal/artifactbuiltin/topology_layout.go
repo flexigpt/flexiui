@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
@@ -89,12 +91,12 @@ const (
 	MCPUserRootDisplayName                     = "FlexiGPT MCP Bundles"
 	MCPUserRootDescription                     = "Local namespace for user-managed MCP Bundles."
 
-	DefaultMCPBundleCollectionID basespec.CollectionID = "0198f097-0d5b-7000-8000-000000000020"
-	DefaultMCPBundleSourceID     source.SourceID       = "0198f097-0d5b-7000-8000-000000000021"
-	DefaultMCPBundleSourceKey    basespec.StorageKey   = "base"
-	DefaultMCPBundleLogicalName                        = "base"
-	DefaultMCPBundleDisplayName                        = "Base MCP Servers"
-	DefaultMCPBundleDescription                        = "Editable starter bundle for user-managed MCP server definitions."
+	DefaultMCPBundleCollectionID collection.CollectionID = "0198f097-0d5b-7000-8000-000000000020"
+	DefaultMCPBundleSourceID     source.SourceID         = "0198f097-0d5b-7000-8000-000000000021"
+	DefaultMCPBundleSourceKey    basespec.StorageKey     = "base"
+	DefaultMCPBundleLogicalName                          = "base"
+	DefaultMCPBundleDisplayName                          = "Base MCP Servers"
+	DefaultMCPBundleDescription                          = "Editable starter bundle for user-managed MCP server definitions."
 )
 
 type (
@@ -107,7 +109,7 @@ const (
 	ManagedAttachmentRole basespec.AttachmentRole = "managed"
 	BuiltInAttachmentRole basespec.AttachmentRole = "builtin"
 
-	AgentSkillArtifactKind   basespec.ArtifactKind = "agent.skill"
+	AgentSkillArtifactKind   artifact.ArtifactKind = "agent.skill"
 	AgentSkillSchemaID       basespec.SchemaID     = "agent.skill.v1"
 	AgentSkillDecoderID      basespec.DecoderID    = "agent.skill-markdown"
 	AgentSkillSchemaVersion                        = "v1"
@@ -119,7 +121,7 @@ const (
 
 	AgentSkillHydrationFingerprintSchemaVersion = "agent.skill.builtin-hydration/v1"
 
-	WorkspaceContextArtifactKind  basespec.ArtifactKind = "workspace.context"
+	WorkspaceContextArtifactKind  artifact.ArtifactKind = "workspace.context"
 	WorkspaceContextSchemaID      basespec.SchemaID     = "workspace.context.v1"
 	WorkspaceContextDecoderID     basespec.DecoderID    = "workspace.context-markdown"
 	WorkspaceContextSchemaVersion                       = "v1"

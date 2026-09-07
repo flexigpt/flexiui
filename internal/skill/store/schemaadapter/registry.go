@@ -13,6 +13,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -20,16 +22,16 @@ import (
 )
 
 type Artifact struct {
-	ID      basespec.ArtifactID `json:"id"`
+	ID      artifact.ArtifactID `json:"id"`
 	Member  basespec.Locator    `json:"member"`
 	Enabled bool                `json:"enabled"`
 }
 
 type Collection struct {
-	ID                        basespec.CollectionID `json:"id"`
-	EmbeddedCollectionLocator basespec.Locator      `json:"embeddedCollectionLocator"`
-	Enabled                   bool                  `json:"enabled"`
-	Artifacts                 []Artifact            `json:"artifacts"`
+	ID                        collection.CollectionID `json:"id"`
+	EmbeddedCollectionLocator basespec.Locator        `json:"embeddedCollectionLocator"`
+	Enabled                   bool                    `json:"enabled"`
+	Artifacts                 []Artifact              `json:"artifacts"`
 }
 
 // Registry is the non-portable registration manifest for embedded Agent
@@ -155,12 +157,12 @@ func (r Registry) Validate() error {
 		)
 	}
 
-	collectionIDs := make(map[basespec.CollectionID]struct{}, len(r.Collections))
-	artifactIDs := make(map[basespec.ArtifactID]struct{})
+	collectionIDs := make(map[collection.CollectionID]struct{}, len(r.Collections))
+	artifactIDs := make(map[artifact.ArtifactID]struct{})
 	allIDs := make(map[string]struct{}, len(r.Collections))
 
 	for collectionIndex, collection := range r.Collections {
-		if err := basespec.ValidateCollectionID(collection.ID); err != nil {
+		if err := collection.ID.Validate(); err != nil {
 			return fmt.Errorf("collections[%d]: %w", collectionIndex, err)
 		}
 		if err := basespec.ValidatePortableLocator(collection.EmbeddedCollectionLocator, false); err != nil {
@@ -202,7 +204,7 @@ func (r Registry) Validate() error {
 
 		members := make(map[basespec.Locator]struct{}, len(collection.Artifacts))
 		for artifactIndex, value := range collection.Artifacts {
-			if err := basespec.ValidateArtifactID(value.ID); err != nil {
+			if err := value.ID.Validate(); err != nil {
 				return fmt.Errorf(
 					"collections[%d].artifacts[%d]: %w",
 					collectionIndex,

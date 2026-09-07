@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
@@ -62,7 +63,7 @@ func (r *SettingsOverlayRepository) GetServerOverlay(
 func (r *SettingsOverlayRepository) GetBundleOverlay(
 	ctx context.Context,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 ) (BundleOverlay, bool, error) {
 	key, err := bundleOverlayStorageKey(rootID, collectionID)
 	if err != nil {
@@ -119,7 +120,7 @@ func (r *SettingsOverlayRepository) PutServerOverlay(
 func (r *SettingsOverlayRepository) PutBundleOverlay(
 	ctx context.Context,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	expectedRevision uint64,
 	value BundleOverlay,
 ) error {
@@ -174,7 +175,7 @@ func (r *SettingsOverlayRepository) DeleteServerOverlay(
 func (r *SettingsOverlayRepository) DeleteBundleOverlay(
 	ctx context.Context,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	expectedRevision uint64,
 ) error {
 	key, err := bundleOverlayStorageKey(rootID, collectionID)
@@ -266,12 +267,12 @@ func serverOverlayStorageKey(
 
 func bundleOverlayStorageKey(
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 ) (string, error) {
 	if err := rootID.Validate(); err != nil {
 		return "", err
 	}
-	if err := basespec.ValidateCollectionID(collectionID); err != nil {
+	if err := collectionID.Validate(); err != nil {
 		return "", err
 	}
 	return settingsOverlayPrefix +

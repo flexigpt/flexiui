@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
@@ -15,7 +16,7 @@ import (
 
 type Snapshot struct {
 	RootID              root.RootID                `json:"rootID"`
-	CollectionID        basespec.CollectionID      `json:"collectionID"`
+	CollectionID        collection.CollectionID    `json:"collectionID"`
 	Revision            uint64                     `json:"revision"`
 	CollectionRevision  uint64                     `json:"collectionRevision"`
 	AttachmentRevisions map[source.SourceID]uint64 `json:"attachmentRevisions"`
@@ -32,7 +33,7 @@ func (s Snapshot) Validate() error {
 	if err := s.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(s.CollectionID); err != nil {
+	if err := s.CollectionID.Validate(); err != nil {
 		return err
 	}
 	if s.Revision == 0 || s.CollectionRevision == 0 {

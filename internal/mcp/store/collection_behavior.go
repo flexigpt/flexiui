@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
@@ -16,7 +17,7 @@ func NewCollectionBehavior() providerapi.CollectionBehavior {
 	return mcpCollectionBehavior{}
 }
 
-func (mcpCollectionBehavior) CollectionKind() basespec.CollectionKind {
+func (mcpCollectionBehavior) CollectionKind() collection.CollectionKind {
 	return artifactbuiltin.BundleKind
 }
 

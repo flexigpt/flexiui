@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
@@ -87,7 +86,7 @@ type Repository interface {
 }
 
 type Draft struct {
-	ID      basespec.ArtifactID
+	ID      artifact.ArtifactID
 	Name    string
 	Enabled bool
 	Data    json.RawMessage

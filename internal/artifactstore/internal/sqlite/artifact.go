@@ -794,7 +794,7 @@ func requireNoSuppressionTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	binding artifact.SourceBinding,
 ) error {
 	var exists int
@@ -833,7 +833,7 @@ func requireNoArtifactForBindingTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	binding artifact.SourceBinding,
 ) error {
 	var exists int
@@ -1213,16 +1213,16 @@ func scanArtifact(row scanner) (artifact.Artifact, error) {
 		return artifact.Artifact{}, err
 	}
 	value := artifact.Artifact{
-		ID:           basespec.ArtifactID(id),
+		ID:           artifact.ArtifactID(id),
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
 			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
-			ExpectedKind:       basespec.ArtifactKind(kind),
+			ExpectedKind:       artifact.ArtifactKind(kind),
 		},
-		Kind:               basespec.ArtifactKind(kind),
+		Kind:               artifact.ArtifactKind(kind),
 		Name:               name,
 		Enabled:            enabled != 0,
 		Adoption:           artifact.AdoptionMode(adoption),
@@ -1267,12 +1267,12 @@ func scanSuppression(row scanner) (artifact.Suppression, error) {
 
 	value := artifact.Suppression{
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 		Binding: artifact.SourceBinding{
 			SourceID:           source.SourceID(sourceID),
 			Locator:            basespec.Locator(locator),
 			SubresourceLocator: basespec.SubresourceLocator(subresource),
-			ExpectedKind:       basespec.ArtifactKind(kind),
+			ExpectedKind:       artifact.ArtifactKind(kind),
 		},
 		Revision:   revision,
 		CreatedAt:  parseTime(createdAt),

@@ -18,7 +18,7 @@ import (
 )
 
 type bindingIdentity struct {
-	CollectionID basespec.CollectionID
+	CollectionID collection.CollectionID
 	Binding      artifact.SourceBinding
 }
 
@@ -138,7 +138,7 @@ func (r *Reconciler) Reconcile(
 		len(existing),
 	)
 	seenArtifactIDs := make(
-		map[basespec.ArtifactID]struct{},
+		map[artifact.ArtifactID]struct{},
 		len(existing),
 	)
 	for index, value := range existing {
@@ -319,7 +319,7 @@ func (r *Reconciler) Reconcile(
 			return Reconciliation{}, err
 		}
 
-		if err := basespec.ValidateArtifactID(draft.ID); err != nil {
+		if err := draft.ID.Validate(); err != nil {
 			return Reconciliation{}, err
 		}
 		if _, exists := seenArtifactIDs[draft.ID]; exists {

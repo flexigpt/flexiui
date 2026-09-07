@@ -12,6 +12,8 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -32,7 +34,7 @@ const (
 type workspaceCollectionBehavior struct {
 	workspaceRootID root.RootID
 	revision        string
-	supports        map[basespec.ArtifactKind]spec.ArtifactSupport
+	supports        map[artifact.ArtifactKind]spec.ArtifactSupport
 	decoderIDs      []basespec.DecoderID
 	profiles        spec.DiscoveryProfiles
 }
@@ -60,7 +62,7 @@ func newWorkspaceCollectionBehavior(
 	}
 
 	supports := make(
-		map[basespec.ArtifactKind]spec.ArtifactSupport,
+		map[artifact.ArtifactKind]spec.ArtifactSupport,
 		len(normalized.supports),
 	)
 	for _, support := range normalized.supports {
@@ -76,7 +78,7 @@ func newWorkspaceCollectionBehavior(
 	}, nil
 }
 
-func (*workspaceCollectionBehavior) CollectionKind() basespec.CollectionKind {
+func (*workspaceCollectionBehavior) CollectionKind() collection.CollectionKind {
 	return artifactbuiltin.WorkspaceCollectionV1Kind
 }
 
@@ -590,10 +592,10 @@ func validateWorkspaceProviderCollection(
 	if err := value.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(value.ID); err != nil {
+	if err := value.ID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionKind(value.Kind); err != nil {
+	if err := value.Kind.Validate(); err != nil {
 		return err
 	}
 	if err := basespec.ValidateRequiredText(

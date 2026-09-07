@@ -12,6 +12,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
@@ -67,7 +68,7 @@ func (e *Engine) DecoderFingerprint() (cryptoutil.Digest, error) {
 func (e *Engine) Discover(
 	ctx context.Context,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	sourceID source.SourceID,
 	sourceKind source.SourceKind,
 	snapshot sourceimpl.Snapshot,
@@ -83,7 +84,7 @@ func (e *Engine) Discover(
 	if err := rootID.Validate(); err != nil {
 		return Result{}, err
 	}
-	if err := basespec.ValidateCollectionID(collectionID); err != nil {
+	if err := collectionID.Validate(); err != nil {
 		return Result{}, err
 	}
 	if err := sourceID.Validate(); err != nil {
@@ -957,7 +958,7 @@ func isDirectChild(
 func applyInvalidForLocator(
 	values map[catalog.OccurrenceKey]catalog.Occurrence,
 	rootID root.RootID,
-	collectionID basespec.CollectionID,
+	collectionID collection.CollectionID,
 	sourceID source.SourceID,
 	locator basespec.Locator,
 	sourceDigest *cryptoutil.Digest,

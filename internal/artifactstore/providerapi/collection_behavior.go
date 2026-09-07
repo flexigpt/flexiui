@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
@@ -17,14 +19,14 @@ import (
 // It deliberately excludes repositories, SQLite handles, source config, and
 // feature-private runtime state.
 type Collection struct {
-	ID          basespec.CollectionID   `json:"id"`
-	RootID      root.RootID             `json:"rootID"`
-	Kind        basespec.CollectionKind `json:"kind"`
-	DisplayName string                  `json:"displayName"`
-	Description string                  `json:"description,omitempty"`
-	Enabled     bool                    `json:"enabled"`
-	Revision    uint64                  `json:"revision"`
-	Data        json.RawMessage         `json:"data"`
+	ID          collection.CollectionID   `json:"id"`
+	RootID      root.RootID               `json:"rootID"`
+	Kind        collection.CollectionKind `json:"kind"`
+	DisplayName string                    `json:"displayName"`
+	Description string                    `json:"description,omitempty"`
+	Enabled     bool                      `json:"enabled"`
+	Revision    uint64                    `json:"revision"`
+	Data        json.RawMessage           `json:"data"`
 }
 
 func (c Collection) Clone() Collection {
@@ -36,7 +38,7 @@ func (c Collection) Clone() Collection {
 // Attachment is a provider-safe view of a persisted Collection attachment.
 type Attachment struct {
 	RootID       root.RootID             `json:"rootID"`
-	CollectionID basespec.CollectionID   `json:"collectionID"`
+	CollectionID collection.CollectionID `json:"collectionID"`
 	SourceID     source.SourceID         `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
 	Enabled      bool                    `json:"enabled"`
@@ -68,11 +70,11 @@ type Source struct {
 // Occurrence is the provider-safe observation supplied to automatic adoption.
 type Occurrence struct {
 	RootID             root.RootID                 `json:"rootID"`
-	CollectionID       basespec.CollectionID       `json:"collectionID"`
+	CollectionID       collection.CollectionID     `json:"collectionID"`
 	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
-	Kind               basespec.ArtifactKind       `json:"kind"`
+	Kind               artifact.ArtifactKind       `json:"kind"`
 }
 
 // AdoptionInput contains one valid source occurrence that Artifact Store is
@@ -131,7 +133,7 @@ func (d AdoptionDecision) Validate() error {
 // It receives immutable generic views and returns declarations. It must not
 // perform direct Artifact Store mutations or depend on system.Components.
 type CollectionBehavior interface {
-	CollectionKind() basespec.CollectionKind
+	CollectionKind() collection.CollectionKind
 
 	// Revision must change whenever provider behavior can alter discovery
 	// scope, decoder selection, automatic-adoption eligibility, or default
@@ -184,9 +186,7 @@ func ValidateCollectionBehavior(
 			basespec.ErrInvalid,
 		)
 	}
-	if err := basespec.ValidateCollectionKind(
-		behavior.CollectionKind(),
-	); err != nil {
+	if err := behavior.CollectionKind().Validate(); err != nil {
 		return err
 	}
 	_, plainPlanner := behavior.(CollectionPlanner)

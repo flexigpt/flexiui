@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 
 	_ "embed"
@@ -23,9 +25,9 @@ const (
 	MCPHostName    = "FlexiGPT"
 	MCPHostVersion = "dev"
 
-	BundleKind basespec.CollectionKind = "mcp.bundle"
-	ServerKind basespec.ArtifactKind   = "mcp.server"
-	PolicyKind basespec.ArtifactKind   = "mcp.policy"
+	BundleKind collection.CollectionKind = "mcp.bundle"
+	ServerKind artifact.ArtifactKind     = "mcp.server"
+	PolicyKind artifact.ArtifactKind     = "mcp.policy"
 
 	BundleSchemaID basespec.SchemaID = "mcp.bundle.v1"
 	ServerSchemaID basespec.SchemaID = "mcp.server.v1"

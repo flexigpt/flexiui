@@ -390,9 +390,9 @@ func registrationMap(
 		map[basespec.SubresourceLocator]Registration,
 		len(values),
 	)
-	artifactIDs := make(map[basespec.ArtifactID]basespec.SubresourceLocator, len(values))
+	artifactIDs := make(map[artifact.ArtifactID]basespec.SubresourceLocator, len(values))
 	for _, value := range values {
-		if err := basespec.ValidateArtifactID(value.ArtifactID); err != nil {
+		if err := value.ArtifactID.Validate(); err != nil {
 			return nil, err
 		}
 		if err := basespec.ValidateSubresourceLocator(value.Subresource); err != nil {

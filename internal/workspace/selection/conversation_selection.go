@@ -167,7 +167,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 		usage.DisplayName = selection.DisplayName
 	}
 
-	contextUsageByID := make(map[basespec.ArtifactID]int, len(selection.ContextRefs))
+	contextUsageByID := make(map[artifact.ArtifactID]int, len(selection.ContextRefs))
 	contextArtifactRefs := make([]artifact.ArtifactRef, 0, len(selection.ContextRefs))
 
 	for _, ref := range selection.ContextRefs {
@@ -268,7 +268,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 		}
 	}
 
-	skillUsageByID := make(map[basespec.ArtifactID]int, len(selection.SkillRefs))
+	skillUsageByID := make(map[artifact.ArtifactID]int, len(selection.SkillRefs))
 	skillArtifactRefs := make([]artifact.ArtifactRef, 0, len(selection.SkillRefs))
 
 	for _, selected := range selection.SkillRefs {

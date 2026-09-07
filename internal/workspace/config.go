@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
@@ -60,7 +60,7 @@ func (c Config) normalizedSupports() ([]spec.ArtifactSupport, error) {
 	}
 
 	output := make([]spec.ArtifactSupport, 0, len(c.Supports))
-	seenKinds := make(map[basespec.ArtifactKind]struct{}, len(c.Supports))
+	seenKinds := make(map[artifact.ArtifactKind]struct{}, len(c.Supports))
 
 	for _, support := range c.Supports {
 		if err := support.Validate(); err != nil {

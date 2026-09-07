@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
@@ -22,7 +24,7 @@ const (
 )
 
 type OccurrenceKey struct {
-	CollectionID       basespec.CollectionID       `json:"collectionID"`
+	CollectionID       collection.CollectionID     `json:"collectionID"`
 	SourceID           source.SourceID             `json:"sourceID"`
 	Locator            basespec.Locator            `json:"locator"`
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
@@ -30,9 +32,9 @@ type OccurrenceKey struct {
 
 type Occurrence struct {
 	RootID              root.RootID             `json:"rootID"`
-	CollectionID        basespec.CollectionID   `json:"collectionID"`
+	CollectionID        collection.CollectionID `json:"collectionID"`
 	Key                 OccurrenceKey           `json:"key"`
-	Kind                basespec.ArtifactKind   `json:"kind,omitempty"`
+	Kind                artifact.ArtifactKind   `json:"kind,omitempty"`
 	LogicalName         basespec.LogicalName    `json:"logicalName,omitempty"`
 	LogicalVersion      basespec.LogicalVersion `json:"logicalVersion,omitempty"`
 	DefinitionDigest    *cryptoutil.Digest      `json:"definitionDigest,omitempty"`
@@ -53,7 +55,7 @@ func (o Occurrence) Validate() error {
 	if err := o.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(o.CollectionID); err != nil {
+	if err := o.CollectionID.Validate(); err != nil {
 		return err
 	}
 	if o.Key.CollectionID != o.CollectionID {
@@ -63,7 +65,7 @@ func (o Occurrence) Validate() error {
 		return err
 	}
 	if o.Kind != "" {
-		if err := basespec.ValidateArtifactKind(o.Kind); err != nil {
+		if err := o.Kind.Validate(); err != nil {
 			return err
 		}
 	}
@@ -112,7 +114,7 @@ func (o Occurrence) Validate() error {
 
 	switch o.State {
 	case OccurrenceValid:
-		if err := basespec.ValidateArtifactKind(o.Kind); err != nil {
+		if err := o.Kind.Validate(); err != nil {
 			return err
 		}
 		if err := basespec.ValidateLogicalName(o.LogicalName); err != nil {
@@ -170,7 +172,7 @@ func (o Occurrence) Clone() Occurrence {
 }
 
 func (k OccurrenceKey) Validate() error {
-	if err := basespec.ValidateCollectionID(k.CollectionID); err != nil {
+	if err := k.CollectionID.Validate(); err != nil {
 		return err
 	}
 	if err := k.SourceID.Validate(); err != nil {

@@ -13,7 +13,7 @@ import (
 
 type Attachment struct {
 	RootID       root.RootID             `json:"rootID"`
-	CollectionID basespec.CollectionID   `json:"collectionID"`
+	CollectionID CollectionID            `json:"collectionID"`
 	SourceID     source.SourceID         `json:"sourceID"`
 	Role         basespec.AttachmentRole `json:"role"`
 	Enabled      bool                    `json:"enabled"`
@@ -28,7 +28,7 @@ func (a Attachment) Validate() error {
 	if err := a.RootID.Validate(); err != nil {
 		return err
 	}
-	if err := basespec.ValidateCollectionID(a.CollectionID); err != nil {
+	if err := a.CollectionID.Validate(); err != nil {
 		return err
 	}
 	if err := a.SourceID.Validate(); err != nil {

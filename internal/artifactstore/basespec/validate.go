@@ -7,8 +7,6 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
 )
 
 var portableNamePattern = regexp.MustCompile(
@@ -98,30 +96,6 @@ func ValidatePortableName(label, value string) error {
 		)
 	}
 	return nil
-}
-
-func ValidateCollectionID(value CollectionID) error {
-	err := uuidutil.ValidateUUIDv7(string(value))
-	if err != nil {
-		return fmt.Errorf("collection ID: %w", err)
-	}
-	return nil
-}
-
-func ValidateArtifactID(value ArtifactID) error {
-	err := uuidutil.ValidateUUIDv7(string(value))
-	if err != nil {
-		return fmt.Errorf("artifact ID: %w", err)
-	}
-	return nil
-}
-
-func ValidateCollectionKind(value CollectionKind) error {
-	return ValidateIdentifier("collection kind", string(value), MaxKindBytes)
-}
-
-func ValidateArtifactKind(value ArtifactKind) error {
-	return ValidateIdentifier("artifact kind", string(value), MaxKindBytes)
 }
 
 func ValidatePackageKind(value PackageKind) error {

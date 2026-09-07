@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
@@ -29,7 +31,7 @@ type Key struct {
 }
 
 func CollectionKey(
-	kind basespec.CollectionKind,
+	kind collection.CollectionKind,
 	schemaID basespec.SchemaID,
 	schemaVersion string,
 ) Key {
@@ -42,7 +44,7 @@ func CollectionKey(
 }
 
 func ArtifactKey(
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 	schemaID basespec.SchemaID,
 	schemaVersion string,
 ) Key {
@@ -57,16 +59,12 @@ func ArtifactKey(
 func (k Key) Validate() error {
 	switch k.Entity {
 	case EntityCollection:
-		if err := basespec.ValidateCollectionKind(
-			basespec.CollectionKind(k.Kind),
-		); err != nil {
+		if err := collection.CollectionKind(k.Kind).Validate(); err != nil {
 			return err
 		}
 
 	case EntityArtifact:
-		if err := basespec.ValidateArtifactKind(
-			basespec.ArtifactKind(k.Kind),
-		); err != nil {
+		if err := artifact.ArtifactKind(k.Kind).Validate(); err != nil {
 			return err
 		}
 

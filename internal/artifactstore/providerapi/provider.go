@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 )
 
@@ -58,7 +59,7 @@ func (d Descriptor) Validate() error {
 	}
 
 	seenCollectionBehaviors := make(
-		map[basespec.CollectionKind]struct{},
+		map[collection.CollectionKind]struct{},
 		len(d.CollectionBehaviors),
 	)
 	for index, behavior := range d.CollectionBehaviors {

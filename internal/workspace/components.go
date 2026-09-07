@@ -1,7 +1,7 @@
 package workspace
 
 import (
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
@@ -12,7 +12,7 @@ type components struct {
 	workspaceRootID root.RootID
 	service         *artifactadapter.Service
 	query           *artifactadapter.QueryService
-	supportedKinds  map[basespec.ArtifactKind]struct{}
+	supportedKinds  map[artifact.ArtifactKind]struct{}
 
 	contextAdapter *contextadapter.Adapter
 	skillAdapter   *workspaceadapter.Adapter
@@ -64,7 +64,7 @@ func newComponents(
 	}
 
 	supportedKinds := make(
-		map[basespec.ArtifactKind]struct{},
+		map[artifact.ArtifactKind]struct{},
 		len(supports),
 	)
 	for _, support := range supports {

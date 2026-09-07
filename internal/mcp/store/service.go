@@ -64,16 +64,16 @@ type Bundle struct {
 }
 
 type Registration struct {
-	ArtifactID  basespec.ArtifactID
+	ArtifactID  artifact.ArtifactID
 	Subresource basespec.SubresourceLocator
-	Kind        basespec.ArtifactKind
+	Kind        artifact.ArtifactKind
 	Enabled     bool
 	Data        json.RawMessage
 }
 
 type CreateRequest struct {
 	RootID           root.RootID
-	CollectionID     basespec.CollectionID
+	CollectionID     collection.CollectionID
 	SourceID         source.SourceID
 	SourceStorageKey basespec.StorageKey
 
@@ -108,7 +108,7 @@ func (a *API) Create(
 	); err != nil {
 		return Bundle{}, err
 	}
-	if err := basespec.ValidateCollectionID(request.CollectionID); err != nil {
+	if err := request.CollectionID.Validate(); err != nil {
 		return Bundle{}, err
 	}
 	if err := request.SourceID.Validate(); err != nil {

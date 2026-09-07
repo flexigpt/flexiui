@@ -173,7 +173,7 @@ func (i *Installer) EnsureBuiltInArtifacts(
 	if err != nil {
 		return err
 	}
-	byCollectionID := make(map[basespec.CollectionID]bundle.Bundle, len(bundles))
+	byCollectionID := make(map[collection.CollectionID]bundle.Bundle, len(bundles))
 	for _, bundle := range bundles {
 		byCollectionID[bundle.Collection.ID] = bundle
 	}
@@ -400,7 +400,7 @@ func (i *Installer) verifyBuiltInCollectionArtifacts(
 	}
 
 	expectedByID := make(
-		map[basespec.ArtifactID]HydratedArtifact,
+		map[artifact.ArtifactID]HydratedArtifact,
 		len(declared.Artifacts),
 	)
 	for _, expected := range declared.Artifacts {
@@ -416,7 +416,7 @@ func (i *Installer) verifyBuiltInCollectionArtifacts(
 		)
 	}
 
-	seen := make(map[basespec.ArtifactID]struct{}, len(records))
+	seen := make(map[artifact.ArtifactID]struct{}, len(records))
 	for _, record := range records {
 		expected, found := expectedByID[record.ID]
 		if !found {
@@ -482,7 +482,7 @@ func (i *Installer) rejectDynamicBuiltInBundles(
 	}
 
 	declared := make(
-		map[basespec.LogicalName]basespec.CollectionID,
+		map[basespec.LogicalName]collection.CollectionID,
 		len(i.hydrated.Collections),
 	)
 	for _, value := range i.hydrated.Collections {
@@ -522,7 +522,7 @@ func (i *Installer) rejectDynamicBuiltInArtifacts(
 	}
 
 	declared := make(
-		map[basespec.ArtifactID]struct{},
+		map[artifact.ArtifactID]struct{},
 		len(declaredCollection.Artifacts),
 	)
 	for _, skill := range declaredCollection.Artifacts {

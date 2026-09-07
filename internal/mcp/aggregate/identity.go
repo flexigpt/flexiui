@@ -60,7 +60,7 @@ func ArtifactRefForRuntimeServerID(
 	}
 	ref := artifact.ArtifactRef{
 		RootID:     root.RootID(rootID),
-		ArtifactID: basespec.ArtifactID(artifactID),
+		ArtifactID: artifact.ArtifactID(artifactID),
 	}
 	if err := ref.Validate(); err != nil {
 		return artifact.ArtifactRef{}, err
@@ -111,7 +111,7 @@ func CollectionRefForRuntimeCatalogID(
 	}
 	ref := collection.CollectionRef{
 		RootID:       root.RootID(rootID),
-		CollectionID: basespec.CollectionID(collectionID),
+		CollectionID: collection.CollectionID(collectionID),
 	}
 	if err := ref.Validate(); err != nil {
 		return collection.CollectionRef{}, err

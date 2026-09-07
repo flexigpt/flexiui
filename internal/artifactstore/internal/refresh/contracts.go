@@ -187,7 +187,7 @@ func (p Publication) Validate() error {
 		}
 	}
 
-	seenArtifacts := make(map[basespec.ArtifactID]struct{})
+	seenArtifacts := make(map[artifact.ArtifactID]struct{})
 	validateArtifact := func(value artifact.Artifact) error {
 		if err := value.Validate(); err != nil {
 			return err

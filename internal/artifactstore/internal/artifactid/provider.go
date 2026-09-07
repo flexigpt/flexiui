@@ -3,7 +3,7 @@ package artifactid
 import (
 	"context"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
 )
 
@@ -13,26 +13,26 @@ import (
 // caller-ID-based, while reconciliation-created observed Artifacts receive IDs
 // only from Artifact Store.
 type Provider interface {
-	NewArtifactID(ctx context.Context) (basespec.ArtifactID, error)
+	NewArtifactID(ctx context.Context) (artifact.ArtifactID, error)
 }
 
 type ProviderFunc func(
 	context.Context,
-) (basespec.ArtifactID, error)
+) (artifact.ArtifactID, error)
 
 func (f ProviderFunc) NewArtifactID(
 	ctx context.Context,
-) (basespec.ArtifactID, error) {
+) (artifact.ArtifactID, error) {
 	return f(ctx)
 }
 
 func NewUUIDProvider() Provider {
 	return ProviderFunc(
-		func(ctx context.Context) (basespec.ArtifactID, error) {
+		func(ctx context.Context) (artifact.ArtifactID, error) {
 			if err := ctx.Err(); err != nil {
 				return "", err
 			}
-			return basespec.ArtifactID(uuidutil.NewUUIDv7()), nil
+			return artifact.ArtifactID(uuidutil.NewUUIDv7()), nil
 		},
 	)
 }

@@ -129,7 +129,7 @@ func (p *Adapter) Compose(
 		CatalogRevision: loadPlan.CatalogRevision,
 		Diagnostics:     diagnostic.Clone(loadPlan.Diagnostics),
 	}
-	handled := make(map[basespec.ArtifactID]struct{}, len(loadPlan.Items))
+	handled := make(map[artifact.ArtifactID]struct{}, len(loadPlan.Items))
 	for _, item := range loadPlan.Items {
 		handled[item.Artifact.ID] = struct{}{}
 		if err := ValidateContextDefinition(item.Definition); err != nil {
@@ -273,7 +273,7 @@ func (p *Adapter) Load(
 		return ContextInspection{}, err
 	}
 	requested := make(
-		map[basespec.ArtifactID]struct{},
+		map[artifact.ArtifactID]struct{},
 		len(artifactRefs),
 	)
 	for _, ref := range artifactRefs {

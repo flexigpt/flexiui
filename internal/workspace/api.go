@@ -1007,9 +1007,9 @@ func (a *API) workspaceOccurrence(
 }
 
 func (a *API) requireWorkspaceArtifactKind(
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 ) error {
-	if err := basespec.ValidateArtifactKind(kind); err != nil {
+	if err := kind.Validate(); err != nil {
 		return err
 	}
 	if a.workspace == nil {
@@ -1027,7 +1027,7 @@ func (a *API) requireWorkspaceArtifactKind(
 
 func artifactRefsOf(
 	rootID root.RootID,
-	ids []basespec.ArtifactID,
+	ids []artifact.ArtifactID,
 ) []artifact.ArtifactRef {
 	output := make([]artifact.ArtifactRef, 0, len(ids))
 	for _, id := range ids {
@@ -1568,7 +1568,7 @@ func occurrenceViewKey(
 	sourceID source.SourceID,
 	locator basespec.Locator,
 	subresource basespec.SubresourceLocator,
-	kind basespec.ArtifactKind,
+	kind artifact.ArtifactKind,
 ) string {
 	return string(sourceID) + "\x00" +
 		string(locator) + "\x00" +

@@ -27,7 +27,7 @@ type AttachmentDraft struct {
 }
 type CreateBundleRequest struct {
 	RootID                  root.RootID
-	CollectionID            basespec.CollectionID
+	CollectionID            collection.CollectionID
 	ManagedSourceID         source.SourceID
 	ManagedSourceStorageKey basespec.StorageKey
 	DisplayName             string
@@ -50,7 +50,7 @@ type UpdateBundleRequest struct {
 type CreateManagedSkillRequest struct {
 	Bundle                     collection.CollectionRef
 	ExpectedCollectionRevision uint64
-	ArtifactID                 basespec.ArtifactID
+	ArtifactID                 artifact.ArtifactID
 	SkillName                  string
 	SKILLMD                    []byte
 	ExpectedArtifactRevision   uint64
@@ -70,7 +70,7 @@ type CreateManagedSkillResponse struct {
 type AdoptSkillRequest struct {
 	Bundle                  collection.CollectionRef
 	Occurrence              catalog.OccurrenceKey
-	ArtifactID              basespec.ArtifactID
+	ArtifactID              artifact.ArtifactID
 	ExpectedCatalogRevision uint64
 	Name                    string
 	Enabled                 bool
@@ -79,7 +79,7 @@ type AdoptSkillRequest struct {
 type PinSkillRequest struct {
 	Bundle                     collection.CollectionRef
 	ExpectedCollectionRevision uint64
-	ArtifactID                 basespec.ArtifactID
+	ArtifactID                 artifact.ArtifactID
 	Binding                    artifact.SourceBinding
 	Name                       string
 	Enabled                    bool
@@ -87,7 +87,7 @@ type PinSkillRequest struct {
 
 type BuiltInBundleTopology struct {
 	RootID                root.RootID                            `json:"-"`
-	CollectionID          basespec.CollectionID                  `json:"-"`
+	CollectionID          collection.CollectionID                `json:"-"`
 	SourceID              source.SourceID                        `json:"-"`
 	LogicalName           basespec.LogicalName                   `json:"-"`
 	LogicalVersion        basespec.LogicalVersion                `json:"-"`

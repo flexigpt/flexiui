@@ -120,7 +120,7 @@ func (a *API) prepareDocumentReplace(
 	if err != nil {
 		return documentReplacePlan{}, err
 	}
-	existingByID := make(map[basespec.ArtifactID]artifact.Artifact, len(existingBySubresource))
+	existingByID := make(map[artifact.ArtifactID]artifact.Artifact, len(existingBySubresource))
 	for _, record := range existingBySubresource {
 		existingByID[record.ID] = record
 	}

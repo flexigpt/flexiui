@@ -62,10 +62,10 @@ func (s *Service) Create(
 	if err := rootimpl.RequireMutableRoot(ctx, s.policy, rootID); err != nil {
 		return collection.Collection{}, nil, err
 	}
-	if err := basespec.ValidateCollectionID(draft.ID); err != nil {
+	if err := draft.ID.Validate(); err != nil {
 		return collection.Collection{}, nil, err
 	}
-	if err := basespec.ValidateCollectionKind(draft.Kind); err != nil {
+	if err := draft.Kind.Validate(); err != nil {
 		return collection.Collection{}, nil, err
 	}
 	data, err := canonicalData(draft.Data)
