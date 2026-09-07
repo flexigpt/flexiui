@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
 
 // OpenConfig contains the application-composition inputs required to open one

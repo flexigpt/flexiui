@@ -1,0 +1,73 @@
+package source
+
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
+)
+
+type Source struct {
+	ID             basespec.SourceID   `json:"id"`
+	RootID         basespec.RootID     `json:"rootID"`
+	RootStorageKey basespec.StorageKey `json:"rootStorageKey"`
+	StorageKey     basespec.StorageKey `json:"storageKey"`
+	Kind           basespec.SourceKind `json:"kind"`
+	DisplayName    string              `json:"displayName"`
+	Enabled        bool                `json:"enabled"`
+	Config         json.RawMessage     `json:"-"`
+
+	Revision   uint64     `json:"revision"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	ModifiedAt time.Time  `json:"modifiedAt"`
+	RetiredAt  *time.Time `json:"retiredAt,omitempty"`
+}
+
+func (s Source) Clone() Source {
+	output := s
+	output.Config = append(json.RawMessage(nil), s.Config...)
+	output.RetiredAt = cloneTime(s.RetiredAt)
+	return output
+}
+
+func (s Source) Validate() error {
+	if err := s.Summary().Validate(); err != nil {
+		return err
+	}
+	if err := basespec.ValidateSourceKind(s.Kind); err != nil {
+		return err
+	}
+	if err := basespec.ValidateRequiredText(
+		"source display name",
+		s.DisplayName,
+		basespec.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if _, err := jsonutil.CanonicalizeObject(
+		s.Config,
+		basespec.MaxConfigBytes,
+	); err != nil {
+		return fmt.Errorf("%w: source config: %w", basespec.ErrInvalid, err)
+	}
+
+	return nil
+}
+
+func (s Source) Summary() Summary {
+	return Summary{
+		ID:             s.ID,
+		RootID:         s.RootID,
+		RootStorageKey: s.RootStorageKey,
+		StorageKey:     s.StorageKey,
+		Kind:           s.Kind,
+		DisplayName:    s.DisplayName,
+		Enabled:        s.Enabled,
+		Revision:       s.Revision,
+		CreatedAt:      s.CreatedAt,
+		ModifiedAt:     s.ModifiedAt,
+		RetiredAt:      cloneTime(s.RetiredAt),
+	}
+}

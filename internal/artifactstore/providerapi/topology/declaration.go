@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	artifactConsumerAPIroot "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
 
 // Declaration is application-supplied protected topology metadata.

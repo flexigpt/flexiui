@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/source"
 )
 
 // API provides the transport-independent Artifact Store API.
