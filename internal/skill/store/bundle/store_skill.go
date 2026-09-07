@@ -277,7 +277,7 @@ func definitionForArtifact(
 		)
 	}
 
-	value, err := catalog.DefinitionForOccurrence(snapshot, catalog.OccurrenceKey{
+	value, err := snapshot.DefinitionForOccurrence(catalog.OccurrenceKey{
 		CollectionID:       record.CollectionID,
 		SourceID:           record.Binding.SourceID,
 		Locator:            record.Binding.Locator,

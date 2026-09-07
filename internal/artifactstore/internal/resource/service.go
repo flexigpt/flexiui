@@ -132,8 +132,7 @@ func (s *Service) ResolveArtifact(
 		)
 	}
 
-	definitionValue, err := catalog.DefinitionForOccurrence(
-		snapshot,
+	definitionValue, err := snapshot.DefinitionForOccurrence(
 		occurrence.Key,
 	)
 	if err != nil {

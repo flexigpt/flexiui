@@ -161,3 +161,50 @@ func (s Snapshot) Clone() Snapshot {
 	}
 	return output
 }
+
+// DefinitionForOccurrence returns the SQLite-cached canonical definition for
+// one current catalog occurrence. It does not perform CAS lookup.
+func (s Snapshot) DefinitionForOccurrence(
+	key OccurrenceKey,
+) (providerapi.Definition, error) {
+	for _, occurrence := range s.Occurrences {
+		if occurrence.Key != key {
+			continue
+		}
+		if occurrence.State != OccurrenceValid ||
+			occurrence.Definition == nil {
+			return providerapi.Definition{}, fmt.Errorf(
+				"%w: occurrence %q has no available definition",
+				basespec.ErrDefinitionNotFound,
+				key.Locator,
+			)
+		}
+		return occurrence.Definition.Clone(), nil
+	}
+	return providerapi.Definition{}, fmt.Errorf(
+		"%w: occurrence %q",
+		basespec.ErrDefinitionNotFound,
+		key.Locator,
+	)
+}
+
+// EqualSnapshot compares the semantic contents of two catalog snapshots.
+// Occurrences are compared by occurrence key because their persisted ordering
+// is not part of catalog identity.
+func EqualSnapshot(left, right Snapshot) bool {
+	if left.RootID != right.RootID ||
+		left.CollectionID != right.CollectionID ||
+		left.Revision != right.Revision ||
+		left.CollectionRevision != right.CollectionRevision ||
+		left.PlanFingerprint != right.PlanFingerprint ||
+		left.DecoderFingerprint != right.DecoderFingerprint ||
+		!left.PublishedAt.Equal(right.PublishedAt) ||
+		!maps.Equal(left.AttachmentRevisions, right.AttachmentRevisions) ||
+		!maps.Equal(left.SourceRevisions, right.SourceRevisions) ||
+		!maps.Equal(left.SourceGenerations, right.SourceGenerations) ||
+		!providerapi.EqualDiagnostics(left.Diagnostics, right.Diagnostics) {
+		return false
+	}
+
+	return EqualOccurrences(left.Occurrences, right.Occurrences)
+}
