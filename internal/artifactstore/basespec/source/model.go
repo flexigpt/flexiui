@@ -17,14 +17,14 @@ type Draft struct {
 }
 
 type Update struct {
-	ExpectedRevision uint64
-	DisplayName      string
-	Enabled          bool
+	ExpectedRevision uint64 `json:"expectedRevision" required:"true"`
+	DisplayName      string `json:"displayName"      required:"true"`
+	Enabled          bool   `json:"enabled"`
 
 	// Config is write-only replacement configuration. A nil value preserves
 	// the current normalized configuration so public callers can update Source
 	// metadata without reading or resending private Source configuration.
-	Config json.RawMessage
+	Config json.RawMessage `json:"config,omitempty"`
 }
 
 func cloneTime(value *time.Time) *time.Time {

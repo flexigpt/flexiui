@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -25,7 +25,7 @@ type SkillStoreWrapper struct {
 
 func InitSkillStoreWrapper(
 	wrapper *SkillStoreWrapper,
-	store *artifactstore.API,
+	store artifactConsumerAPI.ConsumerAPI,
 	workspaceSkills *workspaceadapter.Adapter,
 ) error {
 	if wrapper == nil || store == nil || workspaceSkills == nil {

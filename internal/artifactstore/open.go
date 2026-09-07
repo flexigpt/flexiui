@@ -1,56 +1,17 @@
 package artifactstore
 
 import (
-	"context"
 	"errors"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
-	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
-// Open creates one complete Artifact Store.
+// NewAPI creates the consumer implementation over composed Store components.
 //
-// The returned API owns the Store lifecycle and must be closed by its
-// application composition owner.
-func Open(
-	ctx context.Context,
-	config Config,
-) (*API, error) {
-	rootPolicy, err := rootimpl.NewSetRootPolicy(
-		append([]root.RootID(nil), config.ProtectedRoots...),
-		append([]root.RootID(nil), config.RetainedRoots...),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	components, err := system.Open(
-		ctx,
-		system.Config{
-			BaseDirectory: config.BaseDirectory,
-			ArtifactProviders: append(
-				[]providerapi.Provider(nil),
-				config.ArtifactProviders...,
-			),
-			RootMutationPolicy: rootPolicy,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	api, err := newAPI(components)
-	if err != nil {
-		_ = components.Close()
-		return nil, err
-	}
-	return api, nil
-}
-
-func newAPI(components *system.Components) (*API, error) {
+// Application composition calls this after provider registration and system
+// construction have completed.
+func NewAPI(components *system.Components) (*API, error) {
 	if components == nil ||
 		components.Roots == nil ||
 		components.Sources == nil {

@@ -3,88 +3,43 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log/slog"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	mcpSchemaadapter "github.com/flexigpt/flexigpt-app/internal/mcp/store/schemaadapter"
+	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	artifactConsumerAPIlifecycle "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/lifecycle"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/wailsapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
-	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
 )
 
 type ArtifactStoreWrapper struct {
-	api *artifactstore.API
+	api      *wailsapi.API
+	consumer artifactConsumerAPI.ConsumerAPI
 }
 
 func InitArtifactStoreWrapper(
 	wrapper *ArtifactStoreWrapper,
-	baseDirectory string,
+	consumer artifactConsumerAPI.ConsumerAPI,
 ) error {
 	if wrapper == nil {
 		return errors.New("artifact store wrapper is required")
 	}
-	if err := artifactbuiltin.ValidateApplicationTopology(); err != nil {
-		return err
+	if consumer == nil {
+		return errors.New("artifact store consumer API is required")
 	}
 
-	workspaceConfig := workspace.DefaultConfig()
-	workspaceProvider, err := workspace.NewProvider(workspaceConfig.ProviderConfig())
+	api, err := wailsapi.New(consumer)
 	if err != nil {
 		return err
 	}
-
-	skillProvider, err := skillBundle.NewProvider()
-	if err != nil {
-		return err
-	}
-
-	mcpProvider, err := mcpSchemaadapter.NewProvider()
-	if err != nil {
-		return err
-	}
-
-	api, err := artifactstore.Open(
-		context.Background(),
-		artifactstore.Config{
-			BaseDirectory: baseDirectory,
-			ArtifactProviders: []providerapi.Provider{
-				workspaceProvider,
-				skillProvider,
-				mcpProvider,
-			},
-			ProtectedRoots: artifactbuiltin.ProtectedRootIDs(),
-			RetainedRoots:  artifactbuiltin.RetainedRootIDs(),
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, draft := range artifactbuiltin.RetainedRootDrafts() {
-		if _, err := api.CreateArtifactRoot(
-			context.Background(),
-			&artifactstore.CreateArtifactRootRequest{
-				Body: &draft,
-			},
-		); err != nil {
-			api.Close()
-			return fmt.Errorf("ensure retained application Root %q: %w", draft.ID, err)
-		}
-	}
-
 	wrapper.api = api
-
+	wrapper.consumer = consumer
 	return nil
 }
 
 func (w *ArtifactStoreWrapper) CreateArtifactRoot(
-	request *artifactstore.CreateArtifactRootRequest,
-) (*artifactstore.CreateArtifactRootResponse, error) {
+	request *artifactConsumerAPIlifecycle.CreateArtifactRootRequest,
+) (*artifactConsumerAPIlifecycle.CreateArtifactRootResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.CreateArtifactRootResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.CreateArtifactRootResponse, error) {
 			return w.api.CreateArtifactRoot(
 				context.Background(),
 				request,
@@ -94,10 +49,10 @@ func (w *ArtifactStoreWrapper) CreateArtifactRoot(
 }
 
 func (w *ArtifactStoreWrapper) GetArtifactRoot(
-	request *artifactstore.GetArtifactRootRequest,
-) (*artifactstore.GetArtifactRootResponse, error) {
+	request *artifactConsumerAPIlifecycle.GetArtifactRootRequest,
+) (*artifactConsumerAPIlifecycle.GetArtifactRootResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.GetArtifactRootResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.GetArtifactRootResponse, error) {
 			return w.api.GetArtifactRoot(
 				context.Background(),
 				request,
@@ -107,10 +62,10 @@ func (w *ArtifactStoreWrapper) GetArtifactRoot(
 }
 
 func (w *ArtifactStoreWrapper) ListArtifactRoots(
-	request *artifactstore.ListArtifactRootsRequest,
-) (*artifactstore.ListArtifactRootsResponse, error) {
+	request *artifactConsumerAPIlifecycle.ListArtifactRootsRequest,
+) (*artifactConsumerAPIlifecycle.ListArtifactRootsResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.ListArtifactRootsResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.ListArtifactRootsResponse, error) {
 			return w.api.ListArtifactRoots(
 				context.Background(),
 				request,
@@ -120,10 +75,10 @@ func (w *ArtifactStoreWrapper) ListArtifactRoots(
 }
 
 func (w *ArtifactStoreWrapper) UpdateArtifactRoot(
-	request *artifactstore.UpdateArtifactRootRequest,
-) (*artifactstore.UpdateArtifactRootResponse, error) {
+	request *artifactConsumerAPIlifecycle.UpdateArtifactRootRequest,
+) (*artifactConsumerAPIlifecycle.UpdateArtifactRootResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.UpdateArtifactRootResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.UpdateArtifactRootResponse, error) {
 			return w.api.UpdateArtifactRoot(
 				context.Background(),
 				request,
@@ -133,10 +88,10 @@ func (w *ArtifactStoreWrapper) UpdateArtifactRoot(
 }
 
 func (w *ArtifactStoreWrapper) RetireArtifactRoot(
-	request *artifactstore.RetireArtifactRootRequest,
-) (*artifactstore.RetireArtifactRootResponse, error) {
+	request *artifactConsumerAPIlifecycle.RetireArtifactRootRequest,
+) (*artifactConsumerAPIlifecycle.RetireArtifactRootResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.RetireArtifactRootResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.RetireArtifactRootResponse, error) {
 			return w.api.RetireArtifactRoot(
 				context.Background(),
 				request,
@@ -146,10 +101,10 @@ func (w *ArtifactStoreWrapper) RetireArtifactRoot(
 }
 
 func (w *ArtifactStoreWrapper) PurgeArtifactRoot(
-	request *artifactstore.PurgeArtifactRootRequest,
-) (*artifactstore.PurgeArtifactRootResponse, error) {
+	request *artifactConsumerAPIlifecycle.PurgeArtifactRootRequest,
+) (*artifactConsumerAPIlifecycle.PurgeArtifactRootResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.PurgeArtifactRootResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.PurgeArtifactRootResponse, error) {
 			return w.api.PurgeArtifactRoot(
 				context.Background(),
 				request,
@@ -159,10 +114,10 @@ func (w *ArtifactStoreWrapper) PurgeArtifactRoot(
 }
 
 func (w *ArtifactStoreWrapper) CreateArtifactSource(
-	request *artifactstore.CreateArtifactSourceRequest,
-) (*artifactstore.CreateArtifactSourceResponse, error) {
+	request *artifactConsumerAPIlifecycle.CreateArtifactSourceRequest,
+) (*artifactConsumerAPIlifecycle.CreateArtifactSourceResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.CreateArtifactSourceResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.CreateArtifactSourceResponse, error) {
 			return w.api.CreateArtifactSource(
 				context.Background(),
 				request,
@@ -172,10 +127,10 @@ func (w *ArtifactStoreWrapper) CreateArtifactSource(
 }
 
 func (w *ArtifactStoreWrapper) GetArtifactSource(
-	request *artifactstore.GetArtifactSourceRequest,
-) (*artifactstore.GetArtifactSourceResponse, error) {
+	request *artifactConsumerAPIlifecycle.GetArtifactSourceRequest,
+) (*artifactConsumerAPIlifecycle.GetArtifactSourceResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.GetArtifactSourceResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.GetArtifactSourceResponse, error) {
 			return w.api.GetArtifactSource(
 				context.Background(),
 				request,
@@ -185,10 +140,10 @@ func (w *ArtifactStoreWrapper) GetArtifactSource(
 }
 
 func (w *ArtifactStoreWrapper) ListArtifactSources(
-	request *artifactstore.ListArtifactSourcesRequest,
-) (*artifactstore.ListArtifactSourcesResponse, error) {
+	request *artifactConsumerAPIlifecycle.ListArtifactSourcesRequest,
+) (*artifactConsumerAPIlifecycle.ListArtifactSourcesResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.ListArtifactSourcesResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.ListArtifactSourcesResponse, error) {
 			return w.api.ListArtifactSources(
 				context.Background(),
 				request,
@@ -198,10 +153,10 @@ func (w *ArtifactStoreWrapper) ListArtifactSources(
 }
 
 func (w *ArtifactStoreWrapper) UpdateArtifactSource(
-	request *artifactstore.UpdateArtifactSourceRequest,
-) (*artifactstore.UpdateArtifactSourceResponse, error) {
+	request *artifactConsumerAPIlifecycle.UpdateArtifactSourceRequest,
+) (*artifactConsumerAPIlifecycle.UpdateArtifactSourceResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.UpdateArtifactSourceResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.UpdateArtifactSourceResponse, error) {
 			return w.api.UpdateArtifactSource(
 				context.Background(),
 				request,
@@ -211,10 +166,10 @@ func (w *ArtifactStoreWrapper) UpdateArtifactSource(
 }
 
 func (w *ArtifactStoreWrapper) RetireArtifactSource(
-	request *artifactstore.RetireArtifactSourceRequest,
-) (*artifactstore.RetireArtifactSourceResponse, error) {
+	request *artifactConsumerAPIlifecycle.RetireArtifactSourceRequest,
+) (*artifactConsumerAPIlifecycle.RetireArtifactSourceResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.RetireArtifactSourceResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.RetireArtifactSourceResponse, error) {
 			return w.api.RetireArtifactSource(
 				context.Background(),
 				request,
@@ -224,10 +179,10 @@ func (w *ArtifactStoreWrapper) RetireArtifactSource(
 }
 
 func (w *ArtifactStoreWrapper) PurgeArtifactSource(
-	request *artifactstore.PurgeArtifactSourceRequest,
-) (*artifactstore.PurgeArtifactSourceResponse, error) {
+	request *artifactConsumerAPIlifecycle.PurgeArtifactSourceRequest,
+) (*artifactConsumerAPIlifecycle.PurgeArtifactSourceResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.PurgeArtifactSourceResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.PurgeArtifactSourceResponse, error) {
 			return w.api.PurgeArtifactSource(
 				context.Background(),
 				request,
@@ -237,10 +192,10 @@ func (w *ArtifactStoreWrapper) PurgeArtifactSource(
 }
 
 func (w *ArtifactStoreWrapper) ListArtifactSourceKinds(
-	request *artifactstore.ListArtifactSourceKindsRequest,
-) (*artifactstore.ListArtifactSourceKindsResponse, error) {
+	request *artifactConsumerAPIlifecycle.ListArtifactSourceKindsRequest,
+) (*artifactConsumerAPIlifecycle.ListArtifactSourceKindsResponse, error) {
 	return middleware.WithRecoveryResp(
-		func() (*artifactstore.ListArtifactSourceKindsResponse, error) {
+		func() (*artifactConsumerAPIlifecycle.ListArtifactSourceKindsResponse, error) {
 			return w.api.ListArtifactSourceKinds(
 				context.Background(),
 				request,
@@ -249,24 +204,17 @@ func (w *ArtifactStoreWrapper) ListArtifactSourceKinds(
 	)
 }
 
-func (w *ArtifactStoreWrapper) Store() *artifactstore.API {
+func (w *ArtifactStoreWrapper) Store() artifactConsumerAPI.ConsumerAPI {
 	if w == nil {
 		return nil
 	}
-	return w.api
+	return w.consumer
 }
 
 func (w *ArtifactStoreWrapper) close() {
 	if w == nil {
 		return
 	}
-
-	api := w.api
 	w.api = nil
-
-	if api != nil {
-		if err := api.Close(); err != nil {
-			slog.Error("close artifact store", "error", err)
-		}
-	}
+	w.consumer = nil
 }

@@ -14,9 +14,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
 )
 
-// API provides the transport-independent Artifact Store API.
+// API implements the transport-independent Artifact Store consumer contract.
 //
-// The caller owns the lifecycle of the supplied Components.
+// Construction and shutdown are owned by compositionapi.Store.
 type API struct {
 	components *system.Components
 	resources  *resource.Service
@@ -26,178 +26,74 @@ type API struct {
 	closed    atomic.Bool
 }
 
-func (a *API) CreateArtifactRoot(
+func (a *API) CreateRoot(
 	ctx context.Context,
-	request *CreateArtifactRootRequest,
-) (*CreateArtifactRootResponse, error) {
+	draft root.RootDraft,
+) (root.Root, error) {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return root.Root{}, err
 	}
-	if err := requireRequest(request, "create artifact root request"); err != nil {
-		return nil, err
-	}
-	if err := requireBody(request.Body, "artifact root body"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Roots.Create(ctx, *request.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CreateArtifactRootResponse{
-		Body: &value,
-	}, nil
+	return a.components.Roots.Create(ctx, draft)
 }
 
-func (a *API) GetArtifactRoot(
+func (a *API) GetRoot(
 	ctx context.Context,
-	request *GetArtifactRootRequest,
-) (*GetArtifactRootResponse, error) {
+	rootID root.RootID,
+) (root.Root, error) {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return root.Root{}, err
 	}
-	if err := requireRequest(request, "get artifact root request"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Roots.Get(ctx, request.RootID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetArtifactRootResponse{
-		Body: &value,
-	}, nil
+	return a.components.Roots.Get(ctx, rootID)
 }
 
-func (a *API) ListArtifactRoots(
+func (a *API) ListRoots(
 	ctx context.Context,
-	_ *ListArtifactRootsRequest,
-) (*ListArtifactRootsResponse, error) {
+) ([]root.Root, error) {
 	if err := a.check(ctx); err != nil {
 		return nil, err
 	}
-	values, err := a.components.Roots.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ListArtifactRootsResponse{
-		Body: &ListArtifactRootsResponseBody{
-			Roots: values,
-		},
-	}, nil
+	return a.components.Roots.List(ctx)
 }
 
-func (a *API) UpdateArtifactRoot(
+func (a *API) UpdateRoot(
 	ctx context.Context,
-	request *UpdateArtifactRootRequest,
-) (*UpdateArtifactRootResponse, error) {
+	rootID root.RootID,
+	update root.RootUpdate,
+) (root.Root, error) {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return root.Root{}, err
 	}
-	if err := requireRequest(request, "update artifact root request"); err != nil {
-		return nil, err
+	return a.components.Roots.Update(ctx, rootID, update)
+}
+
+func (a *API) RetireRoot(
+	ctx context.Context,
+	rootID root.RootID,
+	expectedRevision uint64,
+) (root.Root, error) {
+	if err := a.check(ctx); err != nil {
+		return root.Root{}, err
 	}
-	if err := requireBody(request.Body, "artifact root update body"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Roots.Update(
+	return a.components.Roots.Retire(
 		ctx,
-		request.RootID,
-		*request.Body,
+		rootID,
+		expectedRevision,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UpdateArtifactRootResponse{
-		Body: &value,
-	}, nil
 }
 
-func (a *API) RetireArtifactRoot(
+func (a *API) PurgeRoot(
 	ctx context.Context,
-	request *RetireArtifactRootRequest,
-) (*RetireArtifactRootResponse, error) {
+	rootID root.RootID,
+	expectedRevision uint64,
+) error {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return err
 	}
-	if err := requireRequest(request, "retire artifact root request"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Roots.Retire(
+	return a.components.Roots.Purge(
 		ctx,
-		request.RootID,
-		request.ExpectedRevision,
+		rootID,
+		expectedRevision,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RetireArtifactRootResponse{
-		Body: &value,
-	}, nil
-}
-
-func (a *API) PurgeArtifactRoot(
-	ctx context.Context,
-	request *PurgeArtifactRootRequest,
-) (*PurgeArtifactRootResponse, error) {
-	if err := a.check(ctx); err != nil {
-		return nil, err
-	}
-	if err := requireRequest(request, "purge artifact root request"); err != nil {
-		return nil, err
-	}
-	err := a.components.Roots.Purge(
-		ctx,
-		request.RootID,
-		request.ExpectedRevision,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PurgeArtifactRootResponse{
-		RootID: request.RootID,
-	}, nil
-}
-
-func (a *API) CreateArtifactSource(
-	ctx context.Context,
-	request *CreateArtifactSourceRequest,
-) (*CreateArtifactSourceResponse, error) {
-	if err := a.check(ctx); err != nil {
-		return nil, err
-	}
-	if err := requireRequest(request, "create artifact source request"); err != nil {
-		return nil, err
-	}
-	if err := requireBody(request.Body, "artifact source body"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Sources.Create(
-		ctx,
-		request.RootID,
-		source.Draft{
-			ID:          request.Body.ID,
-			StorageKey:  request.Body.StorageKey,
-			Kind:        request.Body.Kind,
-			DisplayName: request.Body.DisplayName,
-			Enabled:     request.Body.Enabled,
-			Config: append(
-				json.RawMessage(nil),
-				request.Body.Config...,
-			),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CreateArtifactSourceResponse{
-		Body: &value,
-	}, nil
 }
 
 func (a *API) CreateSource(
@@ -252,154 +148,75 @@ func (a *API) GetSource(
 	return a.components.Sources.Get(ctx, rootID, sourceID)
 }
 
-func (a *API) GetArtifactSource(
+func (a *API) ListSources(
 	ctx context.Context,
-	request *GetArtifactSourceRequest,
-) (*GetArtifactSourceResponse, error) {
+	rootID root.RootID,
+) ([]source.Summary, error) {
 	if err := a.check(ctx); err != nil {
 		return nil, err
 	}
-	if err := requireRequest(request, "get artifact source request"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Sources.Get(
-		ctx,
-		request.RootID,
-		request.SourceID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetArtifactSourceResponse{
-		Body: &value,
-	}, nil
+	return a.components.Sources.List(ctx, rootID)
 }
 
-func (a *API) ListArtifactSources(
+func (a *API) UpdateSource(
 	ctx context.Context,
-	request *ListArtifactSourcesRequest,
-) (*ListArtifactSourcesResponse, error) {
+	rootID root.RootID,
+	sourceID source.SourceID,
+	update source.Update,
+) (source.Summary, error) {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return source.Summary{}, err
 	}
-	if err := requireRequest(request, "list artifact sources request"); err != nil {
-		return nil, err
-	}
-	values, err := a.components.Sources.List(
+	update.Config = append(json.RawMessage(nil), update.Config...)
+	return a.components.Sources.Update(
 		ctx,
-		request.RootID,
+		rootID,
+		sourceID,
+		update,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ListArtifactSourcesResponse{
-		Body: &ListArtifactSourcesResponseBody{
-			Sources: values,
-		},
-	}, nil
 }
 
-func (a *API) UpdateArtifactSource(
+func (a *API) RetireSource(
 	ctx context.Context,
-	request *UpdateArtifactSourceRequest,
-) (*UpdateArtifactSourceResponse, error) {
+	rootID root.RootID,
+	sourceID source.SourceID,
+	expectedRevision uint64,
+) (source.Summary, error) {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return source.Summary{}, err
 	}
-	if err := requireRequest(request, "update artifact source request"); err != nil {
-		return nil, err
-	}
-	if err := requireBody(request.Body, "artifact source update body"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Sources.Update(
+	return a.components.Sources.Retire(
 		ctx,
-		request.RootID,
-		request.SourceID,
-		source.Update{
-			ExpectedRevision: request.Body.ExpectedRevision,
-			DisplayName:      request.Body.DisplayName,
-			Enabled:          request.Body.Enabled,
-			Config: append(
-				json.RawMessage(nil),
-				request.Body.Config...,
-			),
-		},
+		rootID,
+		sourceID,
+		expectedRevision,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UpdateArtifactSourceResponse{
-		Body: &value,
-	}, nil
 }
 
-func (a *API) RetireArtifactSource(
+func (a *API) PurgeSource(
 	ctx context.Context,
-	request *RetireArtifactSourceRequest,
-) (*RetireArtifactSourceResponse, error) {
+	rootID root.RootID,
+	sourceID source.SourceID,
+	expectedRevision uint64,
+) error {
 	if err := a.check(ctx); err != nil {
-		return nil, err
+		return err
 	}
-	if err := requireRequest(request, "retire artifact source request"); err != nil {
-		return nil, err
-	}
-	value, err := a.components.Sources.Retire(
+	return a.components.Sources.Purge(
 		ctx,
-		request.RootID,
-		request.SourceID,
-		request.ExpectedRevision,
+		rootID,
+		sourceID,
+		expectedRevision,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RetireArtifactSourceResponse{
-		Body: &value,
-	}, nil
 }
 
-func (a *API) PurgeArtifactSource(
+func (a *API) ListSourceKinds(
 	ctx context.Context,
-	request *PurgeArtifactSourceRequest,
-) (*PurgeArtifactSourceResponse, error) {
+) ([]source.SourceKind, error) {
 	if err := a.check(ctx); err != nil {
 		return nil, err
 	}
-	if err := requireRequest(request, "purge artifact source request"); err != nil {
-		return nil, err
-	}
-	err := a.components.Sources.Purge(
-		ctx,
-		request.RootID,
-		request.SourceID,
-		request.ExpectedRevision,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PurgeArtifactSourceResponse{
-		RootID:   request.RootID,
-		SourceID: request.SourceID,
-	}, nil
-}
-
-func (a *API) ListArtifactSourceKinds(
-	ctx context.Context,
-	_ *ListArtifactSourceKindsRequest,
-) (*ListArtifactSourceKindsResponse, error) {
-	if err := a.check(ctx); err != nil {
-		return nil, err
-	}
-	return &ListArtifactSourceKindsResponse{
-		Body: &ListArtifactSourceKindsResponseBody{
-			Kinds: a.components.Sources.Kinds(),
-		},
-	}, nil
+	return a.components.Sources.Kinds(), nil
 }
 
 func (a *API) Close() error {
@@ -432,18 +249,4 @@ func (a *API) check(ctx context.Context) error {
 		)
 	}
 	return ctx.Err()
-}
-
-func requireRequest[T any](value *T, subject string) error {
-	if value != nil {
-		return nil
-	}
-	return fmt.Errorf("%w: %s is required", basespec.ErrInvalid, subject)
-}
-
-func requireBody[T any](value *T, subject string) error {
-	if value != nil {
-		return nil
-	}
-	return fmt.Errorf("%w: %s is required", basespec.ErrInvalid, subject)
 }

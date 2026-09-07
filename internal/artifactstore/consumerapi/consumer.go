@@ -24,6 +24,8 @@ import (
 // composition.
 type ConsumerAPI interface {
 	ResourceResolver
+	RootLifecycle
+	SourceLifecycle
 
 	IsProtectedRoot(
 		rootID root.RootID,
@@ -38,31 +40,6 @@ type ConsumerAPI interface {
 		expected schema.Key,
 		raw []byte,
 	) (schema.ParsedDocument, error)
-
-	CreateSource(
-		ctx context.Context,
-		rootID root.RootID,
-		draft source.Draft,
-	) (source.Summary, error)
-
-	CreateSourceWithStatus(
-		ctx context.Context,
-		rootID root.RootID,
-		draft source.Draft,
-	) (source.Summary, bool, error)
-
-	DiscardSource(
-		ctx context.Context,
-		rootID root.RootID,
-		sourceID source.SourceID,
-		expectedRevision uint64,
-	) error
-
-	GetSource(
-		ctx context.Context,
-		rootID root.RootID,
-		sourceID source.SourceID,
-	) (source.Summary, error)
 
 	CreateCollection(
 		ctx context.Context,

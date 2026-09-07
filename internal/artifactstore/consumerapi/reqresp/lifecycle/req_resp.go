@@ -1,28 +1,9 @@
-package artifactstore
+package lifecycle
 
 import (
-	"encoding/json"
-
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
-
-// Config contains the application-composition inputs required to open one
-// Artifact Store.
-//
-// Store implementation dependencies, source snapshots, source adapters,
-// metadata repositories, SQLite handles, clocks, and automatic Artifact ID
-// providers remain private to Artifact Store.
-type Config struct {
-	BaseDirectory string
-
-	ArtifactProviders []providerapi.Provider
-
-	ProtectedRoots []root.RootID
-	RetainedRoots  []root.RootID
-}
 
 type CreateArtifactRootRequest struct {
 	Body *root.RootDraft
@@ -77,20 +58,9 @@ type PurgeArtifactRootResponse struct {
 	RootID root.RootID `json:"rootID"`
 }
 
-// ArtifactSourceDraft is write-only. Source configuration can contain local
-// filesystem paths or provider credentials and is not returned by the API.
-type ArtifactSourceDraft struct {
-	ID          source.SourceID     `json:"id"          required:"true"`
-	StorageKey  basespec.StorageKey `json:"storageKey"  required:"true"`
-	Kind        source.SourceKind   `json:"kind"        required:"true"`
-	DisplayName string              `json:"displayName" required:"true"`
-	Enabled     bool                `json:"enabled"`
-	Config      json.RawMessage     `json:"config"`
-}
-
 type CreateArtifactSourceRequest struct {
 	RootID root.RootID `path:"rootID" required:"true"`
-	Body   *ArtifactSourceDraft
+	Body   *source.Draft
 }
 
 type CreateArtifactSourceResponse struct {
@@ -118,17 +88,10 @@ type ListArtifactSourcesResponse struct {
 	Body *ListArtifactSourcesResponseBody
 }
 
-type UpdateArtifactSourceRequestBody struct {
-	ExpectedRevision uint64          `json:"expectedRevision" required:"true"`
-	DisplayName      string          `json:"displayName"      required:"true"`
-	Enabled          bool            `json:"enabled"`
-	Config           json.RawMessage `json:"config,omitempty"`
-}
-
 type UpdateArtifactSourceRequest struct {
 	RootID   root.RootID     `path:"rootID"   required:"true"`
 	SourceID source.SourceID `path:"sourceID" required:"true"`
-	Body     *UpdateArtifactSourceRequestBody
+	Body     *source.Update
 }
 
 type UpdateArtifactSourceResponse struct {

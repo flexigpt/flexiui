@@ -5,16 +5,16 @@ import (
 	"errors"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 )
 
 func EnsureBuiltinArtifactTopology(
 	ctx context.Context,
-	store *artifactstore.API,
+	composition *compositionapi.Store,
 	skills *SkillStoreWrapper,
 	mcp *MCPStoreWrapper,
 ) error {
-	if store == nil ||
+	if composition == nil ||
 		skills == nil ||
 		mcp == nil ||
 		skills.builtInInstaller == nil ||
@@ -27,8 +27,8 @@ func EnsureBuiltinArtifactTopology(
 
 	bootstrap, err := artifactbuiltin.NewBootstrapRegistry(
 		artifactbuiltin.BuiltinTopologyDeclaration(),
-		store,
-		store,
+		composition,
+		composition,
 	)
 	if err != nil {
 		return err

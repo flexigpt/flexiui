@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/adrg/xdg"
@@ -34,6 +35,8 @@ type App struct {
 	assistantPresetStoreAPI *AssistantPresetStoreWrapper
 	artifactStoreAPI        *ArtifactStoreWrapper
 	workspaceAPI            *WorkspaceWrapper
+
+	artifactStoreComposition *compositionapi.Store
 
 	dataBasePath string
 
@@ -241,17 +244,31 @@ func (a *App) initManagers() {
 		panic("failed to initialize managers: tool runtime initialization failed\n" + err.Error())
 	}
 
-	err = InitArtifactStoreWrapper(
-		a.artifactStoreAPI,
+	artifactComposition, err := composeArtifactStore(
+		context.Background(),
 		a.artifactStoreDirPath,
 	)
 	if err != nil {
 		slog.Error(
-			"couldn't initialize artifact store",
+			"couldn't compose artifact store",
 			"directory", a.artifactStoreDirPath,
 			"error", err,
 		)
-		panic("failed to initialize managers: artifact store initialization failed\n" + err.Error())
+		panic(
+			"failed to initialize managers: artifact store composition failed\n" +
+				err.Error(),
+		)
+	}
+	a.artifactStoreComposition = artifactComposition
+
+	err = InitArtifactStoreWrapper(
+		a.artifactStoreAPI,
+		artifactComposition.Consumer(),
+	)
+	if err != nil {
+		_ = artifactComposition.Close()
+		a.artifactStoreComposition = nil
+		panic("failed to initialize managers: artifact store Wails API failed\n" + err.Error())
 	}
 	slog.Info("artifact store initialized", "directory", a.artifactStoreDirPath)
 
@@ -331,7 +348,7 @@ func (a *App) initManagers() {
 
 	err = EnsureBuiltinArtifactTopology(
 		context.Background(),
-		a.artifactStoreAPI.Store(),
+		a.artifactStoreComposition,
 		a.skillStoreAPI,
 		a.mcpStoreAPI,
 	)
@@ -463,6 +480,16 @@ func (a *App) shutdown(ctx context.Context) { //nolint:all
 
 	if a.artifactStoreAPI != nil {
 		a.artifactStoreAPI.close()
+	}
+	if a.artifactStoreComposition != nil {
+		if err := a.artifactStoreComposition.Close(); err != nil {
+			slog.Error(
+				"close Artifact Store composition",
+				"error",
+				err,
+			)
+		}
+		a.artifactStoreComposition = nil
 	}
 	if a.toolStoreAPI != nil {
 		a.toolStoreAPI.close()
