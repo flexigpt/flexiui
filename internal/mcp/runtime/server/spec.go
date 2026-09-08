@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 var (
@@ -156,7 +156,7 @@ type RuntimeConfig struct {
 	StreamableHTTP            *MCPRuntimeStreamableHTTPConfig
 	OAuthClientSecretRequired bool
 
-	Policy mcpPolicy.MCPPolicy
+	Policy mcpDomainPolicy.MCPPolicy
 
 	SensitiveValues []string
 }
@@ -215,7 +215,7 @@ func (config RuntimeConfig) Validate() error {
 }
 
 func validatePolicy(config RuntimeConfig) error {
-	if err := mcpPolicy.ValidateMCPPolicy(config.Policy); err != nil {
+	if err := mcpDomainPolicy.ValidateMCPPolicy(config.Policy); err != nil {
 		return fmt.Errorf("%w: invalid MCP runtime policy: %w", ErrInvalid, err)
 	}
 	return nil

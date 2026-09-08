@@ -11,22 +11,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
-	mcpSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/secret"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
+	mcpDomainSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/secret"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
-
-type BundleServerStore interface {
-	ListServers(
-		ctx context.Context,
-		ref collection.CollectionRef,
-	) ([]artifact.Artifact, error)
-
-	GetServerInstallation(
-		ctx context.Context,
-		ref artifact.ArtifactRef,
-	) (mcpStore.ServerInstallationView, error)
-}
 
 type AuthState interface {
 	ClearAuthStatus(server mcpServer.ServerID)
@@ -55,7 +43,7 @@ type Dependencies struct {
 	Lifecycle *Lifecycle
 	Servers   *ArtifactServerResolver
 	Source    *RuntimeServerSource
-	Bundles   BundleServerStore
+	Bundles   mcpConsumerAPI.BundleServerStore
 	Auth      AuthState
 	Secrets   SecretStore
 }
@@ -64,7 +52,7 @@ type Service struct {
 	lifecycle *Lifecycle
 	servers   *ArtifactServerResolver
 	source    *RuntimeServerSource
-	bundles   BundleServerStore
+	bundles   mcpConsumerAPI.BundleServerStore
 	auth      AuthState
 	secrets   SecretStore
 }
@@ -98,24 +86,24 @@ func NewService(dependencies Dependencies) (*Service, error) {
 func (s *Service) InspectRuntimeConfig(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-) (mcpServer.RuntimeConfig, mcpStoreServer.Resolved, error) {
+) (mcpServer.RuntimeConfig, mcpDomainServer.Resolved, error) {
 	if err := s.ready(); err != nil {
-		return mcpServer.RuntimeConfig{}, mcpStoreServer.Resolved{}, err
+		return mcpServer.RuntimeConfig{}, mcpDomainServer.Resolved{}, err
 	}
 	return s.source.InspectRuntimeConfig(ctx, ref)
 }
 
 func (s *Service) ReplaceDocument(
 	ctx context.Context,
-	request mcpStore.ReplaceDocumentRequest,
-) (mcpStore.Bundle, error) {
+	request mcpConsumerAPI.ReplaceDocumentRequest,
+) (mcpConsumerAPI.Bundle, error) {
 	ids, err := s.serverIDsForBundle(ctx, request.Bundle)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	value, err := s.lifecycle.ReplaceDocument(ctx, request)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	s.clearAuthStatuses(ids)
 	return value, nil
@@ -125,14 +113,14 @@ func (s *Service) RefreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	allowProtected bool,
-) (mcpStore.Bundle, error) {
+) (mcpConsumerAPI.Bundle, error) {
 	ids, err := s.serverIDsForBundle(ctx, ref)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	value, err := s.lifecycle.RefreshBundle(ctx, ref, allowProtected)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	s.clearAuthStatuses(ids)
 	return value, nil
@@ -143,14 +131,14 @@ func (s *Service) UpdateBundleEnabled(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 	enabled bool,
-) (mcpStore.Bundle, error) {
+) (mcpConsumerAPI.Bundle, error) {
 	ids, err := s.serverIDsForBundle(ctx, ref)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	value, err := s.lifecycle.UpdateBundleEnabled(ctx, ref, expectedRevision, enabled)
 	if err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	s.clearAuthStatuses(ids)
 	return value, nil
@@ -210,7 +198,7 @@ func (s *Service) UpdateServerInstallation(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedArtifactRevision uint64,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) (artifact.Artifact, error) {
 	if err := s.ready(); err != nil {
 		return artifact.Artifact{}, err
@@ -233,7 +221,7 @@ func (s *Service) UpdateProtectedServerInstallation(
 	ref artifact.ArtifactRef,
 	expectedOverlayRevision uint64,
 	runtimeEnabled bool,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) error {
 	if err := s.ready(); err != nil {
 		return err
@@ -254,14 +242,14 @@ func (s *Service) UpdateProtectedServerInstallation(
 func (s *Service) PutServerSecret(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-	kind mcpSecret.MCPSecretKind,
+	kind mcpDomainSecret.MCPSecretKind,
 	slot string,
 	value string,
 ) (SecretWriteResult, error) {
 	if err := s.ready(); err != nil {
 		return SecretWriteResult{}, err
 	}
-	if kind == mcpSecret.MCPSecretKindOAuthToken {
+	if kind == mcpDomainSecret.MCPSecretKindOAuthToken {
 		return SecretWriteResult{}, fmt.Errorf(
 			"%w: OAuth token secrets are runtime-managed",
 			mcpAuth.ErrMCPInvalidAuthRequest,
@@ -272,13 +260,17 @@ func (s *Service) PutServerSecret(
 	if err != nil {
 		return SecretWriteResult{}, err
 	}
-	if err := validateSecretTarget(installation.Document, kind, slot); err != nil {
+	if err := mcpDomainServer.ValidateSecretInputTarget(
+		installation.Document,
+		kind,
+		slot,
+	); err != nil {
 		return SecretWriteResult{}, err
 	}
 
-	if kind == mcpSecret.MCPSecretKindOAuthClientCredentials {
+	if kind == mcpDomainSecret.MCPSecretKindOAuthClientCredentials {
 		switch installation.Document.Extension.Auth.Mode {
-		case mcpServer.MCPHTTPAuthNone, mcpServer.MCPHTTPAuthClientCredentials:
+		case mcpDomainServer.MCPHTTPAuthNone, mcpDomainServer.MCPHTTPAuthClientCredentials:
 		default:
 			return SecretWriteResult{}, fmt.Errorf(
 				"%w: MCP server does not declare OAuth client credentials",
@@ -293,7 +285,7 @@ func (s *Service) PutServerSecret(
 		}
 	}
 
-	if kind == mcpSecret.MCPSecretKindHTTPHeader &&
+	if kind == mcpDomainSecret.MCPSecretKindHTTPHeader &&
 		(strings.TrimSpace(value) == "" || strings.ContainsAny(value, "\r\n\x00")) {
 		return SecretWriteResult{}, fmt.Errorf(
 			"%w: invalid HTTP header secret value",
@@ -304,7 +296,7 @@ func (s *Service) PutServerSecret(
 	if err := s.lifecycle.InvalidateServer(ctx, ref); err != nil {
 		return SecretWriteResult{}, err
 	}
-	secretRef, err := mcpSecret.NewMCPSecretRefString(ref, kind, slot)
+	secretRef, err := mcpDomainSecret.NewMCPSecretRefString(ref, kind, slot)
 	if err != nil {
 		return SecretWriteResult{}, err
 	}
@@ -323,13 +315,13 @@ func (s *Service) PutServerSecret(
 func (s *Service) DeleteServerSecret(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-	kind mcpSecret.MCPSecretKind,
+	kind mcpDomainSecret.MCPSecretKind,
 	slot string,
 ) error {
 	if err := s.ready(); err != nil {
 		return err
 	}
-	if kind == mcpSecret.MCPSecretKindOAuthToken {
+	if kind == mcpDomainSecret.MCPSecretKindOAuthToken {
 		return fmt.Errorf(
 			"%w: OAuth token secrets are runtime-managed",
 			mcpAuth.ErrMCPInvalidAuthRequest,
@@ -338,10 +330,11 @@ func (s *Service) DeleteServerSecret(
 	if _, err := s.bundles.GetServerInstallation(ctx, ref); err != nil {
 		return err
 	}
+
 	if err := s.lifecycle.InvalidateServer(ctx, ref); err != nil {
 		return err
 	}
-	secretRef, err := mcpSecret.NewMCPSecretRefString(ref, kind, slot)
+	secretRef, err := mcpDomainSecret.NewMCPSecretRefString(ref, kind, slot)
 	if err != nil {
 		return err
 	}
@@ -374,7 +367,7 @@ func (s *Service) GetServerAuthHealth(
 	}
 	return mcpAuth.MCPAuthHealth{
 		Server:     serverID,
-		AuthMode:   resolved.Document.Extension.Auth.Mode,
+		AuthMode:   mcpServer.MCPHTTPAuthMode(resolved.Document.Extension.Auth.Mode),
 		State:      mcpAuth.MCPAuthHealthStateNotConfigured,
 		Configured: false,
 		LastError:  "required MCP installation input is not configured",
@@ -433,53 +426,4 @@ func (s *Service) ready() error {
 		return mcpServer.ErrClosed
 	}
 	return nil
-}
-
-func validateSecretTarget(
-	document mcpStoreServer.ServerDocument,
-	kind mcpSecret.MCPSecretKind,
-	slot string,
-) error {
-	switch kind {
-	case mcpSecret.MCPSecretKindOAuthClientCredentials:
-		input := document.Extension.Auth.ClientCredentialsInput
-		declaration, found := document.Extension.Install.Inputs[input]
-		if input == "" ||
-			!found ||
-			declaration.Kind != mcpStoreServer.InputOAuthClientCredentials ||
-			!strings.EqualFold(strings.TrimSpace(slot), "clientCredentials") {
-			return fmt.Errorf(
-				"%w: invalid OAuth client credentials secret target",
-				mcpAuth.ErrMCPInvalidAuthRequest,
-			)
-		}
-		return nil
-
-	case mcpSecret.MCPSecretKindStdioEnv, mcpSecret.MCPSecretKindHTTPHeader:
-		targets, err := mcpStoreServer.SecretInputTargets(document)
-		if err != nil {
-			return err
-		}
-		for _, target := range targets {
-			expectedKind := mcpSecret.MCPSecretKindStdioEnv
-			if target.Kind == mcpStoreServer.SecretInputTargetHTTPHeader {
-				expectedKind = mcpSecret.MCPSecretKindHTTPHeader
-			}
-			if kind == expectedKind &&
-				strings.EqualFold(target.Slot, strings.TrimSpace(slot)) {
-				return nil
-			}
-		}
-		return fmt.Errorf(
-			"%w: secret target is not declared by the MCP server",
-			mcpAuth.ErrMCPInvalidAuthRequest,
-		)
-
-	default:
-		return fmt.Errorf(
-			"%w: unsupported MCP secret kind %q",
-			mcpAuth.ErrMCPInvalidAuthRequest,
-			kind,
-		)
-	}
 }

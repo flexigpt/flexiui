@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 const (
@@ -1701,7 +1701,7 @@ func cloneRuntimeConfig(input mcpServer.RuntimeConfig) mcpServer.RuntimeConfig {
 		value.Headers = maps.Clone(input.StreamableHTTP.Headers)
 		output.StreamableHTTP = &value
 	}
-	output.Policy = mcpPolicy.CloneMCPPolicy(input.Policy)
+	output.Policy = mcpDomainPolicy.CloneMCPPolicy(input.Policy)
 	output.SensitiveValues = append([]string(nil), input.SensitiveValues...)
 	return output
 }

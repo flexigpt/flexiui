@@ -7,64 +7,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
-
-// BundleMutator is the narrow Store write port used by lifecycle coordination.
-type BundleMutator interface {
-	ReplaceDocument(
-		ctx context.Context,
-		request mcpStore.ReplaceDocumentRequest,
-	) (mcpStore.Bundle, error)
-
-	Refresh(
-		ctx context.Context,
-		ref collection.CollectionRef,
-		allowProtected bool,
-	) (mcpStore.Bundle, error)
-
-	UpdateBundleEnabled(
-		ctx context.Context,
-		ref collection.CollectionRef,
-		expectedRevision uint64,
-		enabled bool,
-	) (mcpStore.Bundle, error)
-
-	Retire(
-		ctx context.Context,
-		ref collection.CollectionRef,
-		expectedRevision uint64,
-	) (collection.Collection, error)
-
-	Purge(
-		ctx context.Context,
-		ref collection.CollectionRef,
-		expectedRevision uint64,
-	) error
-
-	UpdateProtectedBundleInstallation(
-		ctx context.Context,
-		ref collection.CollectionRef,
-		expectedOverlayRevision uint64,
-		runtimeEnabled bool,
-	) error
-
-	UpdateServerInstallation(
-		ctx context.Context,
-		ref artifact.ArtifactRef,
-		expectedArtifactRevision uint64,
-		data mcpStoreServer.ServerData,
-	) (artifact.Artifact, error)
-
-	UpdateProtectedServerInstallation(
-		ctx context.Context,
-		ref artifact.ArtifactRef,
-		expectedOverlayRevision uint64,
-		runtimeEnabled bool,
-		data mcpStoreServer.ServerData,
-	) error
-}
 
 // RuntimeInvalidator is the only Runtime capability required by Store mutation
 // coordination. Runtime does not know who persists a server.
@@ -81,12 +26,12 @@ type RuntimeInvalidator interface {
 }
 
 type Lifecycle struct {
-	store   BundleMutator
+	store   mcpConsumerAPI.BundleMutator
 	runtime RuntimeInvalidator
 }
 
 func NewLifecycle(
-	store BundleMutator,
+	store mcpConsumerAPI.BundleMutator,
 	runtime RuntimeInvalidator,
 ) (*Lifecycle, error) {
 	if store == nil || runtime == nil {
@@ -128,10 +73,10 @@ func (l *Lifecycle) InvalidateCollection(
 
 func (l *Lifecycle) ReplaceDocument(
 	ctx context.Context,
-	request mcpStore.ReplaceDocumentRequest,
-) (mcpStore.Bundle, error) {
+	request mcpConsumerAPI.ReplaceDocumentRequest,
+) (mcpConsumerAPI.Bundle, error) {
 	if err := l.InvalidateCollection(ctx, request.Bundle); err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	return l.store.ReplaceDocument(ctx, request)
 }
@@ -140,9 +85,9 @@ func (l *Lifecycle) RefreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	allowProtected bool,
-) (mcpStore.Bundle, error) {
+) (mcpConsumerAPI.Bundle, error) {
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	return l.store.Refresh(ctx, ref, allowProtected)
 }
@@ -152,9 +97,9 @@ func (l *Lifecycle) UpdateBundleEnabled(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 	enabled bool,
-) (mcpStore.Bundle, error) {
+) (mcpConsumerAPI.Bundle, error) {
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
-		return mcpStore.Bundle{}, err
+		return mcpConsumerAPI.Bundle{}, err
 	}
 	return l.store.UpdateBundleEnabled(ctx, ref, expectedRevision, enabled)
 }
@@ -202,7 +147,7 @@ func (l *Lifecycle) UpdateServerInstallation(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedArtifactRevision uint64,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) (artifact.Artifact, error) {
 	if err := l.InvalidateServer(ctx, ref); err != nil {
 		return artifact.Artifact{}, err
@@ -220,7 +165,7 @@ func (l *Lifecycle) UpdateProtectedServerInstallation(
 	ref artifact.ArtifactRef,
 	expectedOverlayRevision uint64,
 	runtimeEnabled bool,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) error {
 	if err := l.InvalidateServer(ctx, ref); err != nil {
 		return err

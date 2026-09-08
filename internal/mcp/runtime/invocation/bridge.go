@@ -10,12 +10,12 @@ import (
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	mcpApps "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/apps"
 	mcpConnection "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/connection"
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 const (
-	toolDigestChangedReason = mcpPolicy.ToolDigestChangedReason
+	toolDigestChangedReason = mcpDomainPolicy.ToolDigestChangedReason
 	toolPolicyDeniesReason  = "server/tool policy denies this tool"
 	policyAllowedReason     = "policy allowed"
 )
@@ -461,7 +461,7 @@ func applyMappedPolicyConstraints(
 ) (mcpServer.RuntimeConfig, error) {
 	currentApproval, currentExecution := currentToolConstraints(config, tool)
 
-	effective, err := mcpPolicy.TightenToolPolicy(
+	effective, err := mcpDomainPolicy.TightenToolPolicy(
 		config.Policy,
 		tool.ToolName,
 		currentApproval,
@@ -485,8 +485,8 @@ func applyMappedPolicyConstraints(
 func currentToolConstraints(
 	config mcpServer.RuntimeConfig,
 	tool mcpServer.MCPToolCapability,
-) (mcpPolicy.MCPApprovalRule, mcpPolicy.MCPExecutionMode) {
-	return mcpPolicy.EffectiveToolConstraints(
+) (mcpDomainPolicy.MCPApprovalRule, mcpDomainPolicy.MCPExecutionMode) {
+	return mcpDomainPolicy.EffectiveToolConstraints(
 		config.Policy,
 		tool.ToolName,
 		tool.ApprovalRule,
@@ -502,9 +502,9 @@ func evaluateTool(
 	approvalRule, executionMode := currentToolConstraints(config, tool)
 	override := config.Policy.ToolPolicies[tool.ToolName]
 
-	outcome := mcpPolicy.EvaluateTool(
+	outcome := mcpDomainPolicy.EvaluateTool(
 		config.Policy,
-		mcpPolicy.ToolEvaluationInput{
+		mcpDomainPolicy.ToolEvaluationInput{
 			Enabled:             tool.Enabled,
 			TaskSupportRequired: tool.TaskSupport == mcpServer.MCPTaskSupportRequired,
 			ToolDigest:          tool.Digest,
@@ -520,9 +520,9 @@ func evaluateTool(
 
 	decision := mcpServer.MCPApprovalDecisionDenied
 	switch outcome.Decision {
-	case mcpPolicy.ToolDecisionAllowed:
+	case mcpDomainPolicy.ToolDecisionAllowed:
 		decision = mcpServer.MCPApprovalDecisionAllowed
-	case mcpPolicy.ToolDecisionApprovalRequired:
+	case mcpDomainPolicy.ToolDecisionApprovalRequired:
 		decision = mcpServer.MCPApprovalDecisionApprovalRequired
 	default:
 	}

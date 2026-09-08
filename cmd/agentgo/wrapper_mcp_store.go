@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 )
 
@@ -13,126 +12,124 @@ import (
 // Runtime-affecting MCP changes belong to MCPAggregateWrapper. Runtime
 // connection operations belong to MCPRuntimeWrapper.
 type MCPStoreWrapper struct {
-	api *mcpStore.StoreAPI
-
-	builtInInstaller artifactbuiltin.HydrationInstaller
+	api *mcpConsumerAPI.API
 }
 
 func (w *MCPStoreWrapper) CreateMCPBundle(
-	request *mcpStore.CreateMCPBundleRequest,
-) (*mcpStore.CreateMCPBundleResponse, error) {
+	request *mcpConsumerAPI.CreateMCPBundleRequest,
+) (*mcpConsumerAPI.CreateMCPBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.CreateMCPBundleResponse, error) {
+		func() (*mcpConsumerAPI.CreateMCPBundleResponse, error) {
 			return w.api.CreateMCPBundle(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundle(
-	request *mcpStore.GetMCPBundleRequest,
-) (*mcpStore.GetMCPBundleResponse, error) {
+	request *mcpConsumerAPI.GetMCPBundleRequest,
+) (*mcpConsumerAPI.GetMCPBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.GetMCPBundleResponse, error) {
+		func() (*mcpConsumerAPI.GetMCPBundleResponse, error) {
 			return w.api.GetMCPBundle(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundles(
-	request *mcpStore.ListMCPBundlesRequest,
-) (*mcpStore.ListMCPBundlesResponse, error) {
+	request *mcpConsumerAPI.ListMCPBundlesRequest,
+) (*mcpConsumerAPI.ListMCPBundlesResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.ListMCPBundlesResponse, error) {
+		func() (*mcpConsumerAPI.ListMCPBundlesResponse, error) {
 			return w.api.ListMCPBundles(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundleDocument(
-	request *mcpStore.GetMCPBundleDocumentRequest,
-) (*mcpStore.GetMCPBundleDocumentResponse, error) {
+	request *mcpConsumerAPI.GetMCPBundleDocumentRequest,
+) (*mcpConsumerAPI.GetMCPBundleDocumentResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.GetMCPBundleDocumentResponse, error) {
+		func() (*mcpConsumerAPI.GetMCPBundleDocumentResponse, error) {
 			return w.api.GetMCPBundleDocument(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundleServers(
-	request *mcpStore.ListMCPBundleServersRequest,
-) (*mcpStore.ListMCPBundleServersResponse, error) {
+	request *mcpConsumerAPI.ListMCPBundleServersRequest,
+) (*mcpConsumerAPI.ListMCPBundleServersResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.ListMCPBundleServersResponse, error) {
+		func() (*mcpConsumerAPI.ListMCPBundleServersResponse, error) {
 			return w.api.ListMCPBundleServers(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundlePolicies(
-	request *mcpStore.ListMCPBundlePoliciesRequest,
-) (*mcpStore.ListMCPBundlePoliciesResponse, error) {
+	request *mcpConsumerAPI.ListMCPBundlePoliciesRequest,
+) (*mcpConsumerAPI.ListMCPBundlePoliciesResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.ListMCPBundlePoliciesResponse, error) {
+		func() (*mcpConsumerAPI.ListMCPBundlePoliciesResponse, error) {
 			return w.api.ListMCPBundlePolicies(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) GetMCPServerInstallation(
-	request *mcpStore.GetMCPServerInstallationRequest,
-) (*mcpStore.GetMCPServerInstallationResponse, error) {
+	request *mcpConsumerAPI.GetMCPServerInstallationRequest,
+) (*mcpConsumerAPI.GetMCPServerInstallationResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.GetMCPServerInstallationResponse, error) {
+		func() (*mcpConsumerAPI.GetMCPServerInstallationResponse, error) {
 			return w.api.GetMCPServerInstallation(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) InspectMCPServer(
-	request *mcpStore.InspectMCPServerRequest,
-) (*mcpStore.InspectMCPServerResponse, error) {
+	request *mcpConsumerAPI.InspectMCPServerRequest,
+) (*mcpConsumerAPI.InspectMCPServerResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.InspectMCPServerResponse, error) {
+		func() (*mcpConsumerAPI.InspectMCPServerResponse, error) {
 			return w.api.InspectMCPServer(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) InspectMCPPolicy(
-	request *mcpStore.InspectMCPPolicyRequest,
-) (*mcpStore.InspectMCPPolicyResponse, error) {
+	request *mcpConsumerAPI.InspectMCPPolicyRequest,
+) (*mcpConsumerAPI.InspectMCPPolicyResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.InspectMCPPolicyResponse, error) {
+		func() (*mcpConsumerAPI.InspectMCPPolicyResponse, error) {
 			return w.api.InspectMCPPolicy(ctx, request)
 		},
 	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundleInstallation(
-	request *mcpStore.GetMCPBundleInstallationRequest,
-) (*mcpStore.GetMCPBundleInstallationResponse, error) {
+	request *mcpConsumerAPI.GetMCPBundleInstallationRequest,
+) (*mcpConsumerAPI.GetMCPBundleInstallationResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*mcpStore.GetMCPBundleInstallationResponse, error) {
+		func() (*mcpConsumerAPI.GetMCPBundleInstallationResponse, error) {
 			return w.api.GetMCPBundleInstallation(ctx, request)
 		},
 	)
@@ -143,5 +140,4 @@ func (w *MCPStoreWrapper) close() {
 		return
 	}
 	w.api = nil
-	w.builtInInstaller = nil
 }

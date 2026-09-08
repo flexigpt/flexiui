@@ -11,9 +11,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/bundleitemutils"
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	modelpresetSpec "github.com/flexigpt/flexigpt-app/internal/modelpreset/spec"
 	modelpresetStore "github.com/flexigpt/flexigpt-app/internal/modelpreset/store"
 	skillAggregate "github.com/flexigpt/flexigpt-app/internal/skill/aggregate"
@@ -130,7 +130,7 @@ type MCPServerResolver interface {
 	ResolveMCPServer(
 		ctx context.Context,
 		ref mcpServer.ServerID,
-	) (mcpStoreServer.Resolved, error)
+	) (mcpDomainServer.Resolved, error)
 }
 
 type MCPDiscoveryLookup interface {
@@ -315,7 +315,11 @@ func (a *mcpContextLookupAdapter) validateSelectedMCPTools(
 				)
 			}
 			if selected.ApprovalRule != nil &&
-				mcpPolicy.ApprovalRuleRank(*selected.ApprovalRule) < mcpPolicy.ApprovalRuleRank(current.ApprovalRule) {
+				mcpDomainPolicy.ApprovalRuleRank(
+					*selected.ApprovalRule,
+				) < mcpDomainPolicy.ApprovalRuleRank(
+					current.ApprovalRule,
+				) {
 				return fmt.Errorf(
 					"servers[%d].selectedTools[%d]: approval override weakens policy",
 					i,
@@ -323,8 +327,8 @@ func (a *mcpContextLookupAdapter) validateSelectedMCPTools(
 				)
 			}
 			if selected.ExecutionMode != nil &&
-				current.ExecutionMode == mcpPolicy.MCPExecutionModeManual &&
-				*selected.ExecutionMode == mcpPolicy.MCPExecutionModeAuto {
+				current.ExecutionMode == mcpDomainPolicy.MCPExecutionModeManual &&
+				*selected.ExecutionMode == mcpDomainPolicy.MCPExecutionModeAuto {
 				return fmt.Errorf(
 					"servers[%d].selectedTools[%d]: execution override weakens policy",
 					i,

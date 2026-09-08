@@ -9,9 +9,9 @@ import (
 	mcpAggregate "github.com/flexigpt/flexigpt-app/internal/mcp/aggregate"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
-	mcpSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/secret"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
+	mcpDomainSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/secret"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 )
 
@@ -81,11 +81,11 @@ func (w *MCPAggregateWrapper) CollectionRefForRuntimeCatalogID(
 }
 
 func (w *MCPAggregateWrapper) ReplaceMCPBundleDocument(
-	request *mcpStore.ReplaceDocumentRequest,
-) (mcpStore.Bundle, error) {
-	return withMCPAggregate(w, func(service *mcpAggregate.Service) (mcpStore.Bundle, error) {
+	request *mcpConsumerAPI.ReplaceDocumentRequest,
+) (mcpConsumerAPI.Bundle, error) {
+	return withMCPAggregate(w, func(service *mcpAggregate.Service) (mcpConsumerAPI.Bundle, error) {
 		if request == nil {
-			return mcpStore.Bundle{}, basespec.ErrInvalid
+			return mcpConsumerAPI.Bundle{}, basespec.ErrInvalid
 		}
 		return service.ReplaceDocument(context.Background(), *request)
 	})
@@ -94,7 +94,7 @@ func (w *MCPAggregateWrapper) ReplaceMCPBundleDocument(
 func (w *MCPAggregateWrapper) UpdateMCPServerInstallation(
 	ref artifact.ArtifactRef,
 	expectedArtifactRevision uint64,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) (artifact.Artifact, error) {
 	return withMCPAggregate(w, func(service *mcpAggregate.Service) (artifact.Artifact, error) {
 		return service.UpdateServerInstallation(
@@ -110,7 +110,7 @@ func (w *MCPAggregateWrapper) UpdateProtectedMCPServerInstallation(
 	ref artifact.ArtifactRef,
 	expectedOverlayRevision uint64,
 	runtimeEnabled bool,
-	data mcpStoreServer.ServerData,
+	data mcpDomainServer.ServerData,
 ) error {
 	return withMCPAggregateError(w, func(service *mcpAggregate.Service) error {
 		return service.UpdateProtectedServerInstallation(
@@ -140,7 +140,7 @@ func (w *MCPAggregateWrapper) UpdateProtectedMCPBundleInstallation(
 
 func (w *MCPAggregateWrapper) PutMCPServerSecret(
 	ref artifact.ArtifactRef,
-	kind mcpSecret.MCPSecretKind,
+	kind mcpDomainSecret.MCPSecretKind,
 	slot string,
 	value string,
 ) (mcpAggregate.SecretWriteResult, error) {
@@ -151,7 +151,7 @@ func (w *MCPAggregateWrapper) PutMCPServerSecret(
 
 func (w *MCPAggregateWrapper) DeleteMCPServerSecret(
 	ref artifact.ArtifactRef,
-	kind mcpSecret.MCPSecretKind,
+	kind mcpDomainSecret.MCPSecretKind,
 	slot string,
 ) error {
 	return withMCPAggregateError(w, func(service *mcpAggregate.Service) error {

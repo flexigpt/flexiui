@@ -6,23 +6,23 @@ import (
 	"maps"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
 // RuntimeServerSource is the Store-to-Runtime anti-corruption adapter.
 // Runtime receives only runtime/spec values and never Store values.
 type RuntimeServerSource struct {
 	servers     *ArtifactServerResolver
-	secrets     mcpStoreServer.SecretResolver
-	environment mcpStoreServer.EnvironmentResolver
+	secrets     mcpDomainServer.SecretResolver
+	environment mcpDomainServer.EnvironmentResolver
 }
 
 func NewRuntimeServerSource(
 	servers *ArtifactServerResolver,
-	secrets mcpStoreServer.SecretResolver,
-	environment mcpStoreServer.EnvironmentResolver,
+	secrets mcpDomainServer.SecretResolver,
+	environment mcpDomainServer.EnvironmentResolver,
 ) (*RuntimeServerSource, error) {
 	if servers == nil {
 		return nil, errors.New("MCP Artifact server resolver is required")
@@ -73,15 +73,15 @@ func (s *RuntimeServerSource) ResolveServer(
 func (s *RuntimeServerSource) InspectRuntimeConfig(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-) (mcpServer.RuntimeConfig, mcpStoreServer.Resolved, error) {
+) (mcpServer.RuntimeConfig, mcpDomainServer.Resolved, error) {
 	if s == nil || s.servers == nil {
 		return mcpServer.RuntimeConfig{},
-			mcpStoreServer.Resolved{},
+			mcpDomainServer.Resolved{},
 			mcpServer.ErrClosed
 	}
 	resolved, err := s.servers.InspectMCPServer(ctx, ref)
 	if err != nil {
-		return mcpServer.RuntimeConfig{}, mcpStoreServer.Resolved{}, err
+		return mcpServer.RuntimeConfig{}, mcpDomainServer.Resolved{}, err
 	}
 	materialized, err := resolved.MaterializeForInspection(
 		ctx,
@@ -98,8 +98,8 @@ func (s *RuntimeServerSource) InspectRuntimeConfig(
 }
 
 func runtimeConfig(
-	resolved mcpStoreServer.Resolved,
-	input mcpStoreServer.MaterializedServer,
+	resolved mcpDomainServer.Resolved,
+	input mcpDomainServer.MaterializedServer,
 ) (mcpServer.RuntimeConfig, error) {
 	serverID, err := RuntimeServerIDForArtifact(resolved.Server)
 	if err != nil {
@@ -116,10 +116,10 @@ func runtimeConfig(
 		LogicalName:               string(resolved.Document.LogicalName),
 		DisplayName:               resolved.Document.DisplayName,
 		OAuthClientSecretRequired: input.ClientCredentialSecretRequired,
-		Policy: mcpPolicy.MCPPolicy{
+		Policy: mcpDomainPolicy.MCPPolicy{
 			TrustLevel:    resolved.Policy.Body.TrustLevel,
 			DefaultPolicy: resolved.Policy.Body.DefaultPolicy,
-			ToolPolicies:  mcpPolicy.CloneToolPolicies(resolved.Policy.Body.ToolPolicies),
+			ToolPolicies:  mcpDomainPolicy.CloneToolPolicies(resolved.Policy.Body.ToolPolicies),
 			AppsPolicy:    resolved.Policy.Body.AppsPolicy,
 		},
 		SensitiveValues: append(
@@ -129,7 +129,7 @@ func runtimeConfig(
 	}
 
 	switch input.Core.Type {
-	case mcpStoreServer.ServerTypeStdio:
+	case mcpDomainServer.ServerTypeStdio:
 		output.Transport = mcpServer.MCPTransportStdio
 		output.Stdio = &mcpServer.MCPRuntimeStdioConfig{
 			Command:          input.Core.Command,
@@ -138,7 +138,7 @@ func runtimeConfig(
 			StartupTimeoutMS: input.TimeoutMS,
 		}
 
-	case mcpStoreServer.ServerTypeHTTP:
+	case mcpDomainServer.ServerTypeHTTP:
 		authMode, err := runtimeHTTPAuthMode(input.Auth.Mode)
 		if err != nil {
 			return mcpServer.RuntimeConfig{}, err
@@ -166,16 +166,16 @@ func runtimeConfig(
 }
 
 func runtimeHTTPAuthMode(
-	input mcpServer.MCPHTTPAuthMode,
+	input mcpDomainServer.MCPHTTPAuthMode,
 ) (mcpServer.MCPHTTPAuthMode, error) {
 	switch input {
-	case mcpServer.MCPHTTPAuthNone:
+	case mcpDomainServer.MCPHTTPAuthNone:
 		return mcpServer.MCPHTTPAuthNone, nil
-	case mcpServer.MCPHTTPAuthAPIKey:
+	case mcpDomainServer.MCPHTTPAuthAPIKey:
 		return mcpServer.MCPHTTPAuthAPIKey, nil
-	case mcpServer.MCPHTTPAuthOAuth:
+	case mcpDomainServer.MCPHTTPAuthOAuth:
 		return mcpServer.MCPHTTPAuthOAuth, nil
-	case mcpServer.MCPHTTPAuthClientCredentials:
+	case mcpDomainServer.MCPHTTPAuthClientCredentials:
 		return mcpServer.MCPHTTPAuthClientCredentials, nil
 	default:
 		return "", errors.New("unsupported materialized MCP authentication mode")

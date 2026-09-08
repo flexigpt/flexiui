@@ -1,0 +1,183 @@
+package builtin
+
+import (
+	"fmt"
+	"path"
+	"sort"
+
+	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
+	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+)
+
+type ArtifactRegistration struct {
+	ID          artifact.ArtifactID         `json:"id"`
+	Subresource basespec.SubresourceLocator `json:"subresource"`
+	Kind        artifact.ArtifactKind       `json:"kind"`
+	Enabled     bool                        `json:"enabled"`
+}
+
+type BundleRegistration struct {
+	CollectionID            collection.CollectionID `json:"collectionID"`
+	EmbeddedPackageRoot     basespec.Locator        `json:"embeddedPackageRoot"`
+	EmbeddedDocumentLocator basespec.Locator        `json:"embeddedDocumentLocator"`
+	Artifacts               []ArtifactRegistration  `json:"artifacts"`
+}
+
+type Registry struct {
+	SchemaVersion string               `json:"schemaVersion"`
+	Bundles       []BundleRegistration `json:"bundles"`
+}
+
+func (r Registry) Validate() error {
+	if r.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
+		return fmt.Errorf(
+			"%w: unsupported MCP built-in registry schema %q",
+			basespec.ErrInvalid,
+			r.SchemaVersion,
+		)
+	}
+	if len(r.Bundles) == 0 {
+		return fmt.Errorf(
+			"%w: MCP built-in registry has no Bundle registrations",
+			basespec.ErrInvalid,
+		)
+	}
+
+	collections := make(map[collection.CollectionID]struct{}, len(r.Bundles))
+	artifacts := make(map[artifact.ArtifactID]struct{})
+
+	for index, registered := range r.Bundles {
+		if err := registered.CollectionID.Validate(); err != nil {
+			return fmt.Errorf("bundles[%d]: %w", index, err)
+		}
+		if err := registered.EmbeddedPackageRoot.ValidatePortable(false); err != nil {
+			return fmt.Errorf("bundles[%d]: %w", index, err)
+		}
+		if err := mcpDomain.ValidateDocumentLocator(
+			registered.EmbeddedDocumentLocator,
+		); err != nil {
+			return fmt.Errorf("bundles[%d]: %w", index, err)
+		}
+		if path.Dir(string(registered.EmbeddedDocumentLocator)) !=
+			string(registered.EmbeddedPackageRoot) {
+			return fmt.Errorf(
+				"%w: MCP built-in document locator must belong to its package directory",
+				basespec.ErrInvalid,
+			)
+		}
+		if _, duplicate := collections[registered.CollectionID]; duplicate {
+			return fmt.Errorf(
+				"%w: duplicate MCP built-in Collection ID %q",
+				basespec.ErrConflict,
+				registered.CollectionID,
+			)
+		}
+		collections[registered.CollectionID] = struct{}{}
+
+		if len(registered.Artifacts) == 0 {
+			return fmt.Errorf(
+				"%w: MCP built-in Bundle %q has no static Artifacts",
+				basespec.ErrInvalid,
+				registered.CollectionID,
+			)
+		}
+
+		subresources := make(
+			map[basespec.SubresourceLocator]struct{},
+			len(registered.Artifacts),
+		)
+		for artifactIndex, value := range registered.Artifacts {
+			if err := value.ID.Validate(); err != nil {
+				return fmt.Errorf(
+					"bundles[%d].artifacts[%d]: %w",
+					index,
+					artifactIndex,
+					err,
+				)
+			}
+			if err := value.Subresource.Validate(); err != nil {
+				return fmt.Errorf(
+					"bundles[%d].artifacts[%d]: %w",
+					index,
+					artifactIndex,
+					err,
+				)
+			}
+			var expectedParent string
+			switch value.Kind {
+			case artifactbuiltin.ServerKind:
+				expectedParent = string(artifactbuiltin.MCPServerSubresourceDirectory)
+			case artifactbuiltin.PolicyKind:
+				expectedParent = string(artifactbuiltin.MCPPolicySubresourceDirectory)
+			default:
+				return fmt.Errorf(
+					"%w: unsupported MCP built-in Artifact kind %q",
+					basespec.ErrInvalid,
+					value.Kind,
+				)
+			}
+			if path.Dir(string(value.Subresource)) != expectedParent {
+				return fmt.Errorf(
+					"%w: MCP built-in subresource %q must be directly below %q",
+					basespec.ErrInvalid,
+					value.Subresource,
+					expectedParent,
+				)
+			}
+			if err := basespec.ValidatePortableName(
+				"MCP built-in subresource name",
+				path.Base(string(value.Subresource)),
+			); err != nil {
+				return fmt.Errorf(
+					"bundles[%d].artifacts[%d]: %w",
+					index,
+					artifactIndex,
+					err,
+				)
+			}
+			if _, duplicate := artifacts[value.ID]; duplicate {
+				return fmt.Errorf(
+					"%w: duplicate MCP built-in Artifact ID %q",
+					basespec.ErrConflict,
+					value.ID,
+				)
+			}
+			if _, duplicate := subresources[value.Subresource]; duplicate {
+				return fmt.Errorf(
+					"%w: duplicate MCP built-in subresource %q",
+					basespec.ErrConflict,
+					value.Subresource,
+				)
+			}
+			artifacts[value.ID] = struct{}{}
+			subresources[value.Subresource] = struct{}{}
+		}
+	}
+	return nil
+}
+
+func (r Registry) OrderedBundles() []BundleRegistration {
+	output := append([]BundleRegistration(nil), r.Bundles...)
+	sort.Slice(output, func(left, right int) bool {
+		return output[left].EmbeddedPackageRoot <
+			output[right].EmbeddedPackageRoot
+	})
+	return output
+}
+
+func (r BundleRegistration) ToBundleRegistrations() []mcpConsumerAPI.Registration {
+	output := make([]mcpConsumerAPI.Registration, 0, len(r.Artifacts))
+	for _, value := range r.Artifacts {
+		output = append(output, mcpConsumerAPI.Registration{
+			ArtifactID:  value.ID,
+			Subresource: value.Subresource,
+			Kind:        value.Kind,
+			Enabled:     value.Enabled,
+		})
+	}
+	return output
+}

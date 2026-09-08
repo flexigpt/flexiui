@@ -15,7 +15,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
 // SettingsOverlayRepository implements OverlayRepository over application
@@ -233,7 +233,7 @@ func ValidateServerOverlay(value ServerOverlay) error {
 			basespec.ErrInvalid,
 		)
 	}
-	return mcpStoreServer.ValidateServerData(value.ServerData)
+	return value.ServerData.Validate()
 }
 
 func ValidateBundleOverlay(value BundleOverlay) error {
@@ -344,7 +344,7 @@ func cloneServerOverlay(input ServerOverlay) ServerOverlay {
 	output := input
 	output.ServerData = input.ServerData
 	output.ServerData.Inputs = make(
-		map[string]mcpStoreServer.InputBinding,
+		map[string]mcpDomainServer.InputBinding,
 		len(input.ServerData.Inputs),
 	)
 	for name, binding := range input.ServerData.Inputs {

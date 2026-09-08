@@ -32,6 +32,7 @@ type App struct {
 	mcpStoreAPI             *MCPStoreWrapper
 	mcpRuntimeAPI           *MCPRuntimeWrapper
 	mcpAggregateAPI         *MCPAggregateWrapper
+	mcpBuiltInInstaller     artifactbuiltin.HydrationInstaller
 	aggregateAPI            *AggregrateWrapper
 	assistantPresetStoreAPI *AssistantPresetStoreWrapper
 	workspaceStoreAPI       *WorkspaceStoreWrapper
@@ -351,7 +352,7 @@ func (a *App) initManagers() {
 	}
 	slog.Info("settings store initialized", "directory", a.settingsDirPath)
 
-	err = InitMCPWrappers(
+	a.mcpBuiltInInstaller, err = InitMCPWrappers(
 		context.Background(),
 		a.mcpStoreAPI,
 		a.mcpRuntimeAPI,
@@ -381,7 +382,7 @@ func (a *App) initManagers() {
 		context.Background(),
 		a.artifactStoreComposition.Topology,
 		a.skillBuiltInInstaller,
-		a.mcpStoreAPI,
+		a.mcpBuiltInInstaller,
 	)
 	if err != nil {
 		slog.Error(
@@ -515,6 +516,7 @@ func (a *App) shutdown(ctx context.Context) { //nolint:all
 		a.skillStoreAPI.close()
 	}
 	a.skillBuiltInInstaller = nil
+	a.mcpBuiltInInstaller = nil
 
 	if a.artifactStoreComposition != nil {
 		if err := a.artifactStoreComposition.Close(); err != nil {

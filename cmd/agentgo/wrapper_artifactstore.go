@@ -6,7 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	mcpSchemaadapter "github.com/flexigpt/flexigpt-app/internal/mcp/store/schemaadapter"
+	mcpProviderAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/providerapi"
 	skillProviderAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace"
 )
@@ -32,7 +32,7 @@ func composeArtifactStore(
 		return nil, err
 	}
 
-	mcpProvider, err := mcpSchemaadapter.NewProvider()
+	mcpProvider, err := mcpProviderAPI.NewProvider()
 	if err != nil {
 		return nil, err
 	}

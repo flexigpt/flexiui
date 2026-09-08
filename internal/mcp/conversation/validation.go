@@ -5,8 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 // ValidateMCPProviderToolMappingsForContext validates durable provider-tool
@@ -185,14 +185,22 @@ func mappingMatchesSelection(
 		)
 	}
 	if selection.ApprovalRule != nil &&
-		mcpPolicy.ApprovalRuleRank(mapping.ApprovalRule) < mcpPolicy.ApprovalRuleRank(*selection.ApprovalRule) {
+		mcpDomainPolicy.ApprovalRuleRank(
+			mapping.ApprovalRule,
+		) < mcpDomainPolicy.ApprovalRuleRank(
+			*selection.ApprovalRule,
+		) {
 		return fmt.Errorf(
 			"%w: mapped MCP approval rule weakens conversation policy",
 			mcpServer.ErrInvalid,
 		)
 	}
 	if selection.ExecutionMode != nil &&
-		mcpPolicy.ExecutionModeRank(mapping.ExecutionMode) < mcpPolicy.ExecutionModeRank(*selection.ExecutionMode) {
+		mcpDomainPolicy.ExecutionModeRank(
+			mapping.ExecutionMode,
+		) < mcpDomainPolicy.ExecutionModeRank(
+			*selection.ExecutionMode,
+		) {
 		return fmt.Errorf(
 			"%w: mapped MCP execution mode weakens conversation policy",
 			mcpServer.ErrInvalid,
@@ -395,10 +403,10 @@ func ValidateMCPProviderToolMapping(m MCPProviderToolMapping) error {
 	); err != nil {
 		return err
 	}
-	if err := mcpPolicy.ValidateMCPApprovalRule(m.ApprovalRule); err != nil {
+	if err := mcpDomainPolicy.ValidateMCPApprovalRule(m.ApprovalRule); err != nil {
 		return err
 	}
-	if err := mcpPolicy.ValidateMCPExecutionMode(m.ExecutionMode); err != nil {
+	if err := mcpDomainPolicy.ValidateMCPExecutionMode(m.ExecutionMode); err != nil {
 		return err
 	}
 	if err := mcpServer.ValidateOptionalText(
@@ -507,12 +515,12 @@ func validateMCPToolSelection(value MCPToolSelection) error {
 		return err
 	}
 	if value.ApprovalRule != nil {
-		if err := mcpPolicy.ValidateMCPApprovalRule(*value.ApprovalRule); err != nil {
+		if err := mcpDomainPolicy.ValidateMCPApprovalRule(*value.ApprovalRule); err != nil {
 			return err
 		}
 	}
 	if value.ExecutionMode != nil {
-		if err := mcpPolicy.ValidateMCPExecutionMode(*value.ExecutionMode); err != nil {
+		if err := mcpDomainPolicy.ValidateMCPExecutionMode(*value.ExecutionMode); err != nil {
 			return err
 		}
 	}

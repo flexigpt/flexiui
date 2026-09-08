@@ -19,9 +19,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
+	mcpDomainSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/secret"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
-	mcpSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/secret"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 	settingSpec "github.com/flexigpt/flexigpt-app/internal/setting/spec"
 )
 
@@ -448,7 +448,7 @@ func (s *mcpSettingsAdapter) deleteOverlaySecretsLocked(
 		return err
 	}
 
-	refs, err := mcpStoreServer.SecretReferences(ovr.ServerData)
+	refs, err := mcpDomainServer.SecretReferences(ovr.ServerData)
 	if err != nil {
 		return err
 	}
@@ -473,9 +473,9 @@ func (s *mcpSettingsAdapter) deleteOverlaySecretsLocked(
 		return errors.Join(output, err)
 	}
 
-	tokenRef, err := mcpSecret.NewMCPSecretRefString(
+	tokenRef, err := mcpDomainSecret.NewMCPSecretRefString(
 		srv,
-		mcpSecret.MCPSecretKindOAuthToken,
+		mcpDomainSecret.MCPSecretKindOAuthToken,
 		"token",
 	)
 	if err != nil {
@@ -488,7 +488,7 @@ func (s *mcpSettingsAdapter) deleteSecretRefLocked(
 	ctx context.Context,
 	ref string,
 ) error {
-	parsed, err := mcpSecret.ParseMCPSecretRef(ref)
+	parsed, err := mcpDomainSecret.ParseMCPSecretRef(ref)
 	if err != nil {
 		return err
 	}
@@ -497,7 +497,7 @@ func (s *mcpSettingsAdapter) deleteSecretRefLocked(
 		&settingSpec.DeleteAuthKeyRequest{
 			Type: settingSpec.AuthKeyTypeMCP,
 			KeyName: settingSpec.AuthKeyName(
-				mcpSecret.GetMCPSecretRefStorageKey(parsed),
+				mcpDomainSecret.GetMCPSecretRefStorageKey(parsed),
 			),
 		},
 	)
@@ -593,13 +593,13 @@ func (r *settingMCPSecretResolver) SetMCPSecret(
 		return "", false, errors.New("MCP secret writer is not configured")
 	}
 
-	parsed, err := mcpSecret.ParseMCPSecretRef(ref)
+	parsed, err := mcpDomainSecret.ParseMCPSecretRef(ref)
 	if err != nil {
 		return "", false, err
 	}
 
 	keyName := settingSpec.AuthKeyName(
-		mcpSecret.GetMCPSecretRefStorageKey(parsed),
+		mcpDomainSecret.GetMCPSecretRefStorageKey(parsed),
 	)
 	_, err = r.store.SetAuthKey(
 		ctx,
@@ -646,7 +646,7 @@ func (r *settingMCPSecretResolver) ResolveSecret(
 		return "", errors.New("MCP secret resolver is not configured")
 	}
 
-	parsed, err := mcpSecret.ParseMCPSecretRef(ref)
+	parsed, err := mcpDomainSecret.ParseMCPSecretRef(ref)
 	if err != nil {
 		return "", err
 	}
@@ -655,7 +655,7 @@ func (r *settingMCPSecretResolver) ResolveSecret(
 		&settingSpec.GetAuthKeyRequest{
 			Type: settingSpec.AuthKeyTypeMCP,
 			KeyName: settingSpec.AuthKeyName(
-				mcpSecret.GetMCPSecretRefStorageKey(parsed),
+				mcpDomainSecret.GetMCPSecretRefStorageKey(parsed),
 			),
 		},
 	)
@@ -664,7 +664,7 @@ func (r *settingMCPSecretResolver) ResolveSecret(
 			return "", fmt.Errorf(
 				"%w: %w: MCP secret %q is unavailable",
 				basespec.ErrReferenceUnresolved,
-				mcpSecret.ErrNotFound,
+				mcpDomainSecret.ErrNotFound,
 				ref,
 			)
 		}
@@ -674,7 +674,7 @@ func (r *settingMCPSecretResolver) ResolveSecret(
 		return "", fmt.Errorf(
 			"%w: %w: MCP secret %q is unavailable",
 			basespec.ErrReferenceUnresolved,
-			mcpSecret.ErrNotFound,
+			mcpDomainSecret.ErrNotFound,
 			ref,
 		)
 	}
@@ -689,7 +689,7 @@ func (r *settingMCPSecretResolver) DeleteSecret(
 		return errors.New("MCP secret cleaner is not configured")
 	}
 
-	parsed, err := mcpSecret.ParseMCPSecretRef(ref)
+	parsed, err := mcpDomainSecret.ParseMCPSecretRef(ref)
 	if err != nil {
 		return err
 	}
@@ -698,7 +698,7 @@ func (r *settingMCPSecretResolver) DeleteSecret(
 		&settingSpec.DeleteAuthKeyRequest{
 			Type: settingSpec.AuthKeyTypeMCP,
 			KeyName: settingSpec.AuthKeyName(
-				mcpSecret.GetMCPSecretRefStorageKey(parsed),
+				mcpDomainSecret.GetMCPSecretRefStorageKey(parsed),
 			),
 		},
 	)

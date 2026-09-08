@@ -18,14 +18,14 @@ import (
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpConnection "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/connection"
 	"github.com/flexigpt/flexigpt-app/internal/mcp/runtime/invocation"
-	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	"github.com/flexigpt/flexigpt-app/internal/mcp/runtime/sdkclient"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
+	mcpBuiltin "github.com/flexigpt/flexigpt-app/internal/mcp/store/builtin"
+	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
+	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
-	mcpStorePolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/policy"
-	mcpSchemaadapter "github.com/flexigpt/flexigpt-app/internal/mcp/store/schemaadapter"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
 
 func InitMCPWrappers(
@@ -43,23 +43,23 @@ func InitMCPWrappers(
 	protection compositionapi.ProtectionAPI,
 	userRootID root.RootID,
 	settingsStore mcpAuthKeyStore,
-) error {
+) (artifactbuiltin.HydrationInstaller, error) {
 	if storeWrapper == nil ||
 		runtimeWrapper == nil ||
 		aggregateWrapper == nil {
-		return errors.New("MCP wrapper dependencies are incomplete")
+		return nil, errors.New("MCP wrapper dependencies are incomplete")
 	}
 
 	settings, err := newMCPSettingsAdapter(settingsStore)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	overlays, err := mcpOverlay.NewSettingsOverlayRepository(settings)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secrets := newSettingMCPSecretResolver(settingsStore)
-	storeAPI, err := mcpStore.NewStoreAPI(
+	storeAPI, err := mcpConsumerAPI.New(
 		sources,
 		collections,
 		artifacts,
@@ -71,19 +71,19 @@ func InitMCPWrappers(
 		userRootID,
 		overlays,
 		secrets,
-		mcpPolicy.Baseline(),
+		mcpDomainPolicy.Baseline(),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := ensureDefaultMCPBundle(ctx, storeAPI); err != nil {
-		return err
+		return nil, err
 	}
 
 	serverResolver, err := mcpAggregate.NewArtifactServerResolver(storeAPI)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	source, err := mcpAggregate.NewRuntimeServerSource(
 		serverResolver,
@@ -91,12 +91,12 @@ func InitMCPWrappers(
 		mcpEnvironmentResolver{},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	global, _, err := settings.GetMCPGlobalSettings(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	configuredLoopback := strings.TrimSpace(global.OAuthLoopbackListenAddr)
 	broker, err := mcpAuth.NewOAuthLoopbackBroker(
@@ -106,16 +106,16 @@ func InitMCPWrappers(
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var runtimeManager *mcpConnection.MCPRuntimeManager
-	cleanup := func(cause error) error {
+	cleanup := func(cause error) (artifactbuiltin.HydrationInstaller, error) {
 		if runtimeManager != nil {
 			_ = runtimeManager.Close(context.Background())
 		}
 		_ = broker.Close()
-		return cause
+		return nil, cause
 	}
 
 	tokenStore, err := mcpAggregate.NewOAuthTokenStore(secrets)
@@ -169,7 +169,7 @@ func InitMCPWrappers(
 		return cleanup(err)
 	}
 
-	builtIns, err := newMCPBuiltInInstaller(
+	builtIns, err := NewMCPBuiltInInstaller(
 		schemas,
 		storeAPI,
 		overlays,
@@ -179,7 +179,6 @@ func InitMCPWrappers(
 	}
 
 	storeWrapper.api = storeAPI
-	storeWrapper.builtInInstaller = builtIns
 
 	runtimeWrapper.runtime = runtimeManager
 	runtimeWrapper.toolBridge = toolBridge
@@ -191,22 +190,22 @@ func InitMCPWrappers(
 	aggregateWrapper.service = service
 	aggregateWrapper.serverResolver = serverResolver
 
-	return nil
+	return builtIns, nil
 }
 
-func newMCPBuiltInInstaller(
+func NewMCPBuiltInInstaller(
 	documents providerapi.ExpectedCanonicalizer,
-	bundles *mcpStore.StoreAPI,
+	store mcpConsumerAPI.BuiltinStore,
 	overlays mcpOverlay.OverlayRepository,
 ) (artifactbuiltin.HydrationInstaller, error) {
-	registry, packages, err := mcpSchemaadapter.LoadEmbeddedRegistry()
+	registry, packages, err := mcpBuiltin.LoadEmbeddedRegistry()
 	if err != nil {
 		return nil, err
 	}
 
-	return mcpSchemaadapter.NewInstaller(
-		mcpSchemaadapter.InstallerDependencies{
-			Bundles:            bundles,
+	return mcpBuiltin.NewInstaller(
+		mcpBuiltin.InstallerDependencies{
+			Bundles:            store,
 			Registry:           registry,
 			Packages:           packages,
 			Overlays:           overlays,
@@ -217,7 +216,7 @@ func newMCPBuiltInInstaller(
 
 func ensureDefaultMCPBundle(
 	ctx context.Context,
-	api *mcpStore.StoreAPI,
+	api *mcpConsumerAPI.API,
 ) error {
 	if ctx == nil {
 		return fmt.Errorf("%w: default MCP Bundle context is nil", basespec.ErrInvalid)
@@ -250,7 +249,7 @@ func ensureDefaultMCPBundle(
 	if err != nil {
 		return fmt.Errorf("encode default MCP Bundle document: %w", err)
 	}
-	_, err = api.Create(ctx, mcpStore.CreateMCPBundleBody{
+	_, err = api.Create(ctx, mcpConsumerAPI.CreateMCPBundleBody{
 		RootID:           artifactbuiltin.MCPUserRootID,
 		CollectionID:     artifactbuiltin.DefaultMCPBundleCollectionID,
 		SourceID:         artifactbuiltin.DefaultMCPBundleSourceID,
@@ -263,18 +262,18 @@ func ensureDefaultMCPBundle(
 	return nil
 }
 
-func defaultMCPBundleDocument() mcpStore.BundleDocument {
-	return mcpStore.BundleDocument{
+func defaultMCPBundleDocument() mcpDomain.BundleDocument {
+	return mcpDomain.BundleDocument{
 		Kind:          artifactbuiltin.BundleKind,
 		SchemaID:      artifactbuiltin.BundleSchemaID,
 		SchemaVersion: artifactbuiltin.MCPSchemaVersion,
 		LogicalName:   artifactbuiltin.DefaultMCPBundleLogicalName,
 		DisplayName:   artifactbuiltin.DefaultMCPBundleDisplayName,
 		Description:   artifactbuiltin.DefaultMCPBundleDescription,
-		MCPServers:    map[string]mcpStoreServer.CoreServer{},
-		BundleExtension: mcpStore.BundleExtension{
-			Servers:  map[string]mcpStoreServer.ServerExtension{},
-			Policies: map[string]mcpStorePolicy.PolicyDocument{},
+		MCPServers:    map[string]mcpDomainServer.CoreServer{},
+		BundleExtension: mcpDomain.BundleExtension{
+			Servers:  map[string]mcpDomainServer.ServerExtension{},
+			Policies: map[string]mcpDomainPolicy.PolicyDocument{},
 		},
 	}
 }

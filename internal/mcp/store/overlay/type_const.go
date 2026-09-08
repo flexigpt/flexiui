@@ -7,7 +7,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
+	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
 const settingsOverlayPrefix = "mcp.installation.v1/"
@@ -50,10 +50,10 @@ type SettingsPrefixValueStore interface {
 // Anonymous embedding would produce two schemaVersion fields at JSON encoding
 // time and causes the embedded ServerData schemaVersion to decode as empty.
 type ServerOverlay struct {
-	SchemaVersion  string                    `json:"schemaVersion"`
-	Revision       uint64                    `json:"revision"`
-	RuntimeEnabled bool                      `json:"runtimeEnabled"`
-	ServerData     mcpStoreServer.ServerData `json:"serverData"`
+	SchemaVersion  string                     `json:"schemaVersion"`
+	Revision       uint64                     `json:"revision"`
+	RuntimeEnabled bool                       `json:"runtimeEnabled"`
+	ServerData     mcpDomainServer.ServerData `json:"serverData"`
 }
 
 type BundleOverlay struct {

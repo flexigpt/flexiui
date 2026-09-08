@@ -12,12 +12,11 @@ func EnsureBuiltinArtifactTopology(
 	ctx context.Context,
 	topologyAPI installerapi.API,
 	skills artifactbuiltin.HydrationInstaller,
-	mcp *MCPStoreWrapper,
+	mcp artifactbuiltin.HydrationInstaller,
 ) error {
 	if topologyAPI == nil ||
 		skills == nil ||
-		mcp == nil ||
-		mcp.builtInInstaller == nil {
+		mcp == nil {
 		return errors.New("built-in topology dependencies are incomplete")
 	}
 	if err := artifactbuiltin.ValidateApplicationTopology(); err != nil {
@@ -35,7 +34,7 @@ func EnsureBuiltinArtifactTopology(
 	if err := bootstrap.Register(skills); err != nil {
 		return err
 	}
-	if err := bootstrap.Register(mcp.builtInInstaller); err != nil {
+	if err := bootstrap.Register(mcp); err != nil {
 		return err
 	}
 	return bootstrap.Ensure(ctx)
