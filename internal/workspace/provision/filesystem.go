@@ -10,7 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
 
@@ -30,22 +30,22 @@ type workspaceManager interface {
 }
 
 type Service struct {
-	store      *artifactConsumerAPI.API
+	sourceAPI  compositionapi.SourceAPI
 	workspaces workspaceManager
 }
 
 func NewService(
 	workspaces workspaceManager,
-	store *artifactConsumerAPI.API,
+	sourceAPI compositionapi.SourceAPI,
 ) (*Service, error) {
-	if store == nil || workspaces == nil {
+	if sourceAPI == nil || workspaces == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace provisioner dependencies are incomplete",
 			spec.ErrInvalidWorkspace,
 		)
 	}
 	return &Service{
-		store:      store,
+		sourceAPI:  sourceAPI,
 		workspaces: workspaces,
 	}, nil
 }
@@ -84,7 +84,7 @@ func (s *Service) CreateFilesystem(
 		return spec.Workspace{}, err
 	}
 
-	sourceValue, sourceCreated, err := s.store.CreateSourceWithStatus(
+	sourceValue, sourceCreated, err := s.sourceAPI.CreateWithStatus(
 		ctx,
 		request.RootID,
 		source.Draft{
@@ -110,7 +110,7 @@ func (s *Service) CreateFilesystem(
 		return spec.Workspace{}, createErr
 	}
 
-	discardErr := s.store.DiscardSource(
+	discardErr := s.sourceAPI.Discard(
 		context.WithoutCancel(ctx),
 		request.RootID,
 		sourceValue.ID,

@@ -16,7 +16,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
@@ -26,7 +26,14 @@ import (
 )
 
 type Dependencies struct {
-	Store *artifactConsumerAPI.API
+	Sources          compositionapi.SourceAPI
+	Collections      compositionapi.CollectionAPI
+	Artifacts        compositionapi.ArtifactAPI
+	Catalogs         compositionapi.CatalogAPI
+	Resources        compositionapi.ResourceAPI
+	Schemas          compositionapi.SchemaAPI
+	ManagedArtifacts compositionapi.ManagedArtifactAPI
+	Protection       compositionapi.ProtectionAPI
 
 	UserRootID     root.RootID
 	Overlays       mcpOverlay.OverlayRepository
@@ -39,7 +46,14 @@ type API struct {
 }
 
 func New(dependencies Dependencies) (*API, error) {
-	if dependencies.Store == nil ||
+	if dependencies.Sources == nil ||
+		dependencies.Collections == nil ||
+		dependencies.Artifacts == nil ||
+		dependencies.Catalogs == nil ||
+		dependencies.Resources == nil ||
+		dependencies.Schemas == nil ||
+		dependencies.ManagedArtifacts == nil ||
+		dependencies.Protection == nil ||
 		dependencies.SecretCleaner == nil {
 		return nil, fmt.Errorf(
 			"%w: MCP Bundle dependencies are incomplete",
@@ -134,7 +148,7 @@ func (a *API) Create(
 	if err != nil {
 		return Bundle{}, err
 	}
-	sourceValue, createdSource, err := a.dependencies.Store.CreateSourceWithStatus(
+	sourceValue, createdSource, err := a.dependencies.Sources.CreateWithStatus(
 		ctx,
 		request.RootID,
 		source.Draft{
@@ -155,7 +169,7 @@ func (a *API) Create(
 		}
 		return errors.Join(
 			cause,
-			a.dependencies.Store.DiscardSource(
+			a.dependencies.Sources.Discard(
 				context.WithoutCancel(ctx),
 				request.RootID,
 				request.SourceID,
@@ -183,7 +197,7 @@ func (a *API) Create(
 		return Bundle{}, cleanupSource(err)
 	}
 
-	created, _, err := a.dependencies.Store.CreateCollection(
+	created, _, err := a.dependencies.Collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{
@@ -238,7 +252,7 @@ func (a *API) List(
 	ctx context.Context,
 	rootID root.RootID,
 ) ([]Bundle, error) {
-	values, err := a.dependencies.Store.ListCollections(ctx, rootID)
+	values, err := a.dependencies.Collections.ListByRoot(ctx, rootID)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +308,7 @@ func (a *API) Refresh(
 		)
 	}
 
-	if _, err := a.dependencies.Store.RefreshCollection(
+	if _, err := a.dependencies.Catalogs.RefreshCollection(
 		ctx,
 		ref,
 	); err != nil {
@@ -319,7 +333,7 @@ func (a *API) EnsureBuiltInCurrent(
 	if err := ref.Validate(); err != nil {
 		return err
 	}
-	if !a.dependencies.Store.IsProtectedRoot(ref.RootID) {
+	if !a.dependencies.Protection.IsProtectedRoot(ref.RootID) {
 		return fmt.Errorf(
 			"%w: MCP Bundle %q is not protected",
 			basespec.ErrProtected,
@@ -349,7 +363,7 @@ func (a *API) Get(
 	if a == nil {
 		return Bundle{}, basespec.ErrClosed
 	}
-	value, err := a.dependencies.Store.GetCollection(ctx, ref)
+	value, err := a.dependencies.Collections.Get(ctx, ref)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -365,7 +379,7 @@ func (a *API) Get(
 	if err != nil {
 		return Bundle{}, err
 	}
-	attachments, err := a.dependencies.Store.ListCollectionAttachments(
+	attachments, err := a.dependencies.Collections.ListAttachments(
 		ctx,
 		ref,
 	)
@@ -399,7 +413,7 @@ func (a *API) Get(
 		return Bundle{}, err
 	}
 
-	sourceValue, err := a.dependencies.Store.GetSource(
+	sourceValue, err := a.dependencies.Sources.Get(
 		ctx,
 		ref.RootID,
 		attachment.SourceID,
@@ -490,7 +504,7 @@ func (a *API) serverInstallationDataForCleanup(
 		return mcpStoreServer.DefaultServerData(), nil
 	}
 
-	if !a.dependencies.Store.IsProtectedRoot(record.RootID) {
+	if !a.dependencies.Protection.IsProtectedRoot(record.RootID) {
 		return mcpStoreServer.DecodeServerData(record.Data)
 	}
 	if a.dependencies.Overlays == nil {

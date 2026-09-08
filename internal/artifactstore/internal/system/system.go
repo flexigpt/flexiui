@@ -19,6 +19,7 @@ import (
 	managedartifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/providerregistry"
 	refreshimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/refresh"
+	resourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/resource"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/shareable"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
@@ -55,6 +56,7 @@ type Components struct {
 	Collections      *collectionimpl.Service
 	Artifacts        *artifactimpl.Service
 	Refresh          *refreshimpl.Service
+	Resources        *resourceimpl.Service
 	ShareableSchemas *shareable.Registry
 
 	ManagedArtifacts *managedartifactimpl.Service
@@ -274,12 +276,24 @@ func Open(
 		return nil, err
 	}
 
+	resourceService, err := resourceimpl.NewService(
+		artifactRepository,
+		collectionRepository,
+		refreshService,
+		sourceRuntime,
+	)
+	if err != nil {
+		_ = metadata.Close()
+		return nil, err
+	}
+
 	components := &Components{
 		Roots:              rootService,
 		Sources:            sourceService,
 		Collections:        collectionService,
 		Artifacts:          artifactService,
 		Refresh:            refreshService,
+		Resources:          resourceService,
 		ShareableSchemas:   shareableRegistry,
 		CollectionReader:   collectionRepository,
 		ArtifactReader:     artifactRepository,
@@ -374,16 +388,6 @@ func (c *Components) RootMutationPolicy() root.RootPolicy {
 		return nil
 	}
 	return c.rootMutationPolicy
-}
-
-func (c *Components) ValidateCollectionLifecycle(
-	ctx context.Context,
-	command providerapi.LifecycleCommand,
-) error {
-	if c == nil || c.providers == nil {
-		return basespec.ErrClosed
-	}
-	return c.providers.ValidateCollectionLifecycle(ctx, command)
 }
 
 func (c *Components) Close() error {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"sync/atomic"
 
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
@@ -30,7 +29,6 @@ type API struct {
 	dependencies Dependencies
 	workspace    *components
 	provisioner  *provision.Service
-	closed       atomic.Bool
 }
 
 func New(
@@ -48,7 +46,7 @@ func New(
 	}
 	provisioner, err := provision.NewService(
 		workspaceComponents.service,
-		dependencies.Store,
+		dependencies.Sources,
 	)
 	if err != nil {
 		return nil, err
@@ -60,21 +58,9 @@ func New(
 	}, nil
 }
 
-func (a *API) Close() error {
-	if a != nil {
-		a.closed.Store(true)
-	}
-	return nil
-}
-
 // SkillAdapter returns the Workspace-owned Skill source adapter. Consumers may
 // list or load Workspace Skills, but lifecycle policy remains outside workspace.
 func (a *API) SkillAdapter() *workspaceadapter.Adapter {
-	if a == nil ||
-		a.closed.Load() ||
-		a.workspace == nil {
-		return nil
-	}
 	return a.workspace.skillAdapter
 }
 
@@ -82,11 +68,13 @@ func (a *API) CreateFilesystemWorkspace(
 	ctx context.Context,
 	request *CreateFilesystemWorkspaceRequest,
 ) (*CreateFilesystemWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"filesystem Workspace creation",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("filesystem workspace body is required")
 	}
 
 	// Workspace is composed with one application-owned Root. Root selection
@@ -116,11 +104,13 @@ func (a *API) CreateEmptyWorkspace(
 	ctx context.Context,
 	request *CreateEmptyWorkspaceRequest,
 ) (*CreateEmptyWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"empty Workspace creation",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("empty workspace body is required")
 	}
 
 	// Keep empty and filesystem Workspaces in the same configured namespace,
@@ -150,11 +140,13 @@ func (a *API) GetWorkspace(
 	ctx context.Context,
 	request *GetWorkspaceRequest,
 ) (*GetWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace get",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace request is required")
 	}
 	value, err := a.workspace.service.Get(ctx, request.Workspace)
 	if err != nil {
@@ -171,11 +163,13 @@ func (a *API) ListWorkspaces(
 	ctx context.Context,
 	request *ListWorkspacesRequest,
 ) (*ListWorkspacesResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace list",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace list request is required")
 	}
 
 	// Listing follows the same single-Root contract as creation. In
@@ -201,11 +195,13 @@ func (a *API) UpdateWorkspace(
 	ctx context.Context,
 	request *UpdateWorkspaceRequest,
 ) (*UpdateWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace update",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace update body is required")
 	}
 	value, err := a.workspace.service.Update(ctx, spec.UpdateRequest{
 		Workspace:        request.Workspace,
@@ -229,11 +225,13 @@ func (a *API) SetWorkspacePrimarySource(
 	ctx context.Context,
 	request *SetWorkspacePrimarySourceRequest,
 ) (*SetWorkspacePrimarySourceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace primary Source update",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace primary-source body is required")
 	}
 	value, err := a.workspace.service.SetPrimary(
 		ctx,
@@ -260,11 +258,13 @@ func (a *API) RetireWorkspace(
 	ctx context.Context,
 	request *RetireWorkspaceRequest,
 ) (*RetireWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace retirement",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace retirement request is required")
 	}
 	value, err := a.workspace.service.Retire(
 		ctx,
@@ -286,11 +286,13 @@ func (a *API) PurgeWorkspace(
 	ctx context.Context,
 	request *PurgeWorkspaceRequest,
 ) (*PurgeWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace purge",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace purge request is required")
 	}
 	if err := a.workspace.service.Purge(
 		ctx,
@@ -310,11 +312,13 @@ func (a *API) AttachWorkspaceSource(
 	ctx context.Context,
 	request *AttachWorkspaceSourceRequest,
 ) (*AttachWorkspaceSourceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Source attachment",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace attachment body is required")
 	}
 	value, err := a.workspace.service.Attach(ctx, spec.AttachRequest{
 		Workspace:                  request.Workspace,
@@ -338,11 +342,13 @@ func (a *API) UpdateWorkspaceAttachment(
 	ctx context.Context,
 	request *UpdateWorkspaceAttachmentRequest,
 ) (*UpdateWorkspaceAttachmentResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace attachment update",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace attachment update body is required")
 	}
 	value, err := a.workspace.service.UpdateAttachment(
 		ctx,
@@ -370,11 +376,13 @@ func (a *API) DetachWorkspaceSource(
 	ctx context.Context,
 	request *DetachWorkspaceSourceRequest,
 ) (*DetachWorkspaceSourceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Source detach",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace detach request is required")
 	}
 	value, err := a.workspace.service.Detach(
 		ctx,
@@ -397,16 +405,18 @@ func (a *API) RefreshWorkspace(
 	ctx context.Context,
 	request *RefreshWorkspaceRequest,
 ) (*RefreshWorkspaceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace refresh",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace refresh request is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.RefreshCollection(
+	value, err := a.dependencies.Catalogs.RefreshCollection(
 		ctx,
 		request.Workspace,
 	)
@@ -434,11 +444,13 @@ func (a *API) GetWorkspaceCatalog(
 	ctx context.Context,
 	request *GetWorkspaceCatalogRequest,
 ) (*GetWorkspaceCatalogResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace catalog get",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace catalog request is required")
 	}
 	value, err := a.workspace.query.Catalog(ctx, request.Workspace)
 	if err != nil {
@@ -455,11 +467,13 @@ func (a *API) GetWorkspaceArtifact(
 	ctx context.Context,
 	request *GetWorkspaceArtifactRequest,
 ) (*GetWorkspaceArtifactResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Artifact get",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace Artifact request is required")
 	}
 	value, err := a.workspaceArtifact(
 		ctx,
@@ -477,16 +491,18 @@ func (a *API) ListWorkspaceArtifacts(
 	ctx context.Context,
 	request *ListWorkspaceArtifactsRequest,
 ) (*ListWorkspaceArtifactsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Artifact list",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace Artifact list request is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
 	}
-	values, err := a.dependencies.Store.ListCollectionArtifacts(
+	values, err := a.dependencies.Artifacts.ListByCollection(
 		ctx,
 		request.Workspace,
 	)
@@ -512,14 +528,13 @@ func (a *API) AdoptWorkspaceOccurrence(
 	ctx context.Context,
 	request *AdoptWorkspaceOccurrenceRequest,
 ) (*AdoptWorkspaceOccurrenceResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace occurrence adoption",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace occurrence adoption body is required")
-	}
-	if request.Body.ExpectedCatalogRevision == 0 {
-		return nil, invalidAPIRequest("expected catalog revision is required")
 	}
 
 	key := catalog.OccurrenceKey{
@@ -543,7 +558,7 @@ func (a *API) AdoptWorkspaceOccurrence(
 	if err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.AdoptArtifact(ctx, catalog.AdoptRequest{
+	value, err := a.dependencies.Artifacts.Adopt(ctx, catalog.AdoptRequest{
 		ArtifactID:              request.Body.ArtifactID,
 		Collection:              request.Workspace,
 		Occurrence:              key,
@@ -563,14 +578,13 @@ func (a *API) PinWorkspaceArtifact(
 	ctx context.Context,
 	request *PinWorkspaceArtifactRequest,
 ) (*PinWorkspaceArtifactResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Artifact pin",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace artifact pin body is required")
-	}
-	if request.Body.ExpectedCollectionRevision == 0 {
-		return nil, invalidAPIRequest("expected collection revision is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
@@ -584,7 +598,7 @@ func (a *API) PinWorkspaceArtifact(
 	if err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
+	value, err := a.dependencies.Artifacts.Pin(ctx, catalog.PinRequest{
 		ArtifactID:                 request.Body.ArtifactID,
 		Collection:                 request.Workspace,
 		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
@@ -604,16 +618,18 @@ func (a *API) ListWorkspaceSuppressions(
 	ctx context.Context,
 	request *ListWorkspaceSuppressionsRequest,
 ) (*ListWorkspaceSuppressionsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace suppression list",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace suppression list request is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
 	}
-	values, err := a.dependencies.Store.ListCollectionSuppressions(
+	values, err := a.dependencies.Artifacts.ListSuppressions(
 		ctx,
 		request.Workspace,
 	)
@@ -633,14 +649,13 @@ func (a *API) SuppressWorkspaceBinding(
 	ctx context.Context,
 	request *SuppressWorkspaceBindingRequest,
 ) (*SuppressWorkspaceBindingResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace suppression",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace suppression body is required")
-	}
-	if request.Body.ExpectedCollectionRevision == 0 {
-		return nil, invalidAPIRequest("expected collection revision is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
@@ -650,7 +665,7 @@ func (a *API) SuppressWorkspaceBinding(
 	); err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.SuppressBinding(ctx, catalog.SuppressRequest{
+	value, err := a.dependencies.Artifacts.Suppress(ctx, catalog.SuppressRequest{
 		Collection:                 request.Workspace,
 		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
 		Binding:                    request.Body.Binding,
@@ -666,16 +681,18 @@ func (a *API) UnsuppressWorkspaceBinding(
 	ctx context.Context,
 	request *UnsuppressWorkspaceBindingRequest,
 ) (*UnsuppressWorkspaceBindingResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace unsuppression",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace unsuppression request is required")
 	}
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
 	}
-	if err := a.dependencies.Store.UnsuppressBinding(
+	if err := a.dependencies.Artifacts.Unsuppress(
 		ctx,
 		request.Workspace,
 		request.Binding,
@@ -695,11 +712,13 @@ func (a *API) ListWorkspaceContexts(
 	ctx context.Context,
 	request *ListWorkspaceContextsRequest,
 ) (*ListWorkspaceContextsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Context list",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace Context list request is required")
 	}
 	values, err := a.workspace.contextAdapter.List(ctx, request.Workspace)
 	if err != nil {
@@ -718,11 +737,13 @@ func (a *API) LoadWorkspaceContexts(
 	ctx context.Context,
 	request *LoadWorkspaceContextsRequest,
 ) (*LoadWorkspaceContextsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Context load",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace Context load body is required")
 	}
 	value, err := a.workspace.contextAdapter.Load(
 		ctx,
@@ -755,11 +776,13 @@ func (a *API) ComposeWorkspaceContext(
 	ctx context.Context,
 	request *ComposeWorkspaceContextRequest,
 ) (*ComposeWorkspaceContextResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Context composition",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace context body is required")
 	}
 	value, err := a.workspace.contextAdapter.Compose(
 		ctx,
@@ -777,11 +800,13 @@ func (a *API) ListWorkspaceSkills(
 	ctx context.Context,
 	request *ListWorkspaceSkillsRequest,
 ) (*ListWorkspaceSkillsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Skill list",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace skill list request is required")
 	}
 	values, err := a.workspace.skillAdapter.List(ctx, request.Workspace)
 	if err != nil {
@@ -800,11 +825,13 @@ func (a *API) LoadWorkspaceSkills(
 	ctx context.Context,
 	request *LoadWorkspaceSkillsRequest,
 ) (*LoadWorkspaceSkillsResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Skill load",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace skill load body is required")
 	}
 	value, err := a.workspace.skillAdapter.Load(
 		ctx,
@@ -822,16 +849,18 @@ func (a *API) SetWorkspaceArtifactEnabled(
 	ctx context.Context,
 	request *SetWorkspaceArtifactEnabledRequest,
 ) (*SetWorkspaceArtifactEnabledResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Artifact enabled update",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace Artifact update body is required")
 	}
 	if _, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact); err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.SetArtifactEnabled(
+	value, err := a.dependencies.Artifacts.SetEnabled(
 		ctx,
 		request.Artifact,
 		request.Body.ExpectedRevision,
@@ -848,16 +877,18 @@ func (a *API) UnadoptWorkspaceArtifact(
 	ctx context.Context,
 	request *UnadoptWorkspaceArtifactRequest,
 ) (*UnadoptWorkspaceArtifactResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Artifact unadopt",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace Artifact unadopt request is required")
 	}
 	if _, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact); err != nil {
 		return nil, err
 	}
-	if err := a.dependencies.Store.UnadoptArtifact(
+	if err := a.dependencies.Artifacts.Unadopt(
 		ctx,
 		request.Artifact,
 		request.ExpectedRevision,
@@ -876,11 +907,13 @@ func (a *API) PurgeWorkspaceArtifact(
 	ctx context.Context,
 	request *PurgeWorkspaceArtifactRequest,
 ) (*PurgeWorkspaceArtifactResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		false,
+		false,
+		"Workspace Artifact purge",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil {
-		return nil, invalidAPIRequest("workspace Artifact purge request is required")
 	}
 	if _, err := a.workspaceArtifact(
 		ctx,
@@ -889,7 +922,7 @@ func (a *API) PurgeWorkspaceArtifact(
 	); err != nil {
 		return nil, err
 	}
-	if err := a.dependencies.Store.PurgeArtifact(
+	if err := a.dependencies.Artifacts.Purge(
 		ctx,
 		request.Artifact,
 		request.ExpectedRevision,
@@ -907,11 +940,13 @@ func (a *API) SetWorkspaceArtifactRuntimeDisabled(
 	ctx context.Context,
 	request *SetWorkspaceArtifactRuntimeDisabledRequest,
 ) (*SetWorkspaceArtifactRuntimeDisabledResponse, error) {
-	if err := a.Ready(); err != nil {
+	if err := requireRequestBody(
+		request,
+		request != nil && request.Body != nil,
+		true,
+		"Workspace Artifact runtime settings update",
+	); err != nil {
 		return nil, err
-	}
-	if request == nil || request.Body == nil {
-		return nil, invalidAPIRequest("workspace Artifact data body is required")
 	}
 	current, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact)
 	if err != nil {
@@ -926,7 +961,7 @@ func (a *API) SetWorkspaceArtifactRuntimeDisabled(
 	if err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.UpdateArtifactData(
+	value, err := a.dependencies.Artifacts.UpdateData(
 		ctx,
 		request.Artifact,
 		request.Body.ExpectedRevision,
@@ -939,16 +974,6 @@ func (a *API) SetWorkspaceArtifactRuntimeDisabled(
 	return &SetWorkspaceArtifactRuntimeDisabledResponse{Body: &output}, nil
 }
 
-func (a *API) Ready() error {
-	if a == nil ||
-		a.closed.Load() ||
-		a.workspace == nil ||
-		a.provisioner == nil {
-		return invalidAPIRequest("workspace API is not initialized")
-	}
-	return a.dependencies.Validate()
-}
-
 func (a *API) workspaceArtifact(
 	ctx context.Context,
 	workspace collection.CollectionRef,
@@ -957,7 +982,7 @@ func (a *API) workspaceArtifact(
 	if _, err := a.workspace.service.Get(ctx, workspace); err != nil {
 		return artifact.Artifact{}, err
 	}
-	value, err := a.dependencies.Store.GetArtifact(ctx, ref)
+	value, err := a.dependencies.Artifacts.Get(ctx, ref)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
@@ -1100,14 +1125,14 @@ func (a *API) enrichWorkspaceSourcePresentation(
 			)
 		}
 		sourceKind := source.SourceKind(attachment.SourceKind)
-		if !a.dependencies.Store.SupportsLocalPath(sourceKind) {
+		if !a.dependencies.Resources.SupportsLocalPath(sourceKind) {
 			continue
 		}
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 
-		pathValue, err := a.dependencies.Store.ResolveSourceLocalPath(
+		pathValue, err := a.dependencies.Resources.ResolveSourceLocalPath(
 			ctx,
 			value.Collection.RootID,
 			attachment.SourceID,

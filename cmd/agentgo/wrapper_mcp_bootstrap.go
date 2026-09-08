@@ -11,7 +11,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	mcpAggregate "github.com/flexigpt/flexigpt-app/internal/mcp/aggregate"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
@@ -32,13 +31,12 @@ func InitMCPWrappers(
 	storeWrapper *MCPStoreWrapper,
 	runtimeWrapper *MCPRuntimeWrapper,
 	aggregateWrapper *MCPAggregateWrapper,
-	store *artifactConsumerAPI.API,
+	storeDependencies mcpStore.Dependencies,
 	settingsStore mcpAuthKeyStore,
 ) error {
 	if storeWrapper == nil ||
 		runtimeWrapper == nil ||
-		aggregateWrapper == nil ||
-		store == nil {
+		aggregateWrapper == nil {
 		return errors.New("MCP wrapper dependencies are incomplete")
 	}
 
@@ -51,13 +49,11 @@ func InitMCPWrappers(
 		return err
 	}
 	secrets := newSettingMCPSecretResolver(settingsStore)
-	storeAPI, err := mcpStore.New(mcpStore.Dependencies{
-		Store:          store,
-		UserRootID:     artifactbuiltin.MCPUserRootID,
-		Overlays:       overlays,
-		SecretCleaner:  secrets,
-		BaselinePolicy: mcpPolicy.Baseline(),
-	})
+	storeDependencies.Overlays = overlays
+	storeDependencies.SecretCleaner = secrets
+	storeDependencies.BaselinePolicy = mcpPolicy.Baseline()
+
+	storeAPI, err := mcpStore.New(storeDependencies)
 	if err != nil {
 		return err
 	}
@@ -153,7 +149,11 @@ func InitMCPWrappers(
 		return cleanup(err)
 	}
 
-	builtIns, err := newMCPBuiltInInstaller(store, storeAPI, overlays)
+	builtIns, err := newMCPBuiltInInstaller(
+		storeDependencies.Schemas,
+		storeAPI,
+		overlays,
+	)
 	if err != nil {
 		return cleanup(err)
 	}

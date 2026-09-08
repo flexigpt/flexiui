@@ -25,32 +25,6 @@ func (mcpCollectionBehavior) Revision() string {
 	return artifactbuiltin.DecoderRevision
 }
 
-func (b mcpCollectionBehavior) ValidateLifecycle(
-	ctx context.Context,
-	command providerapi.LifecycleCommand,
-) error {
-	if ctx == nil {
-		return fmt.Errorf(
-			"%w: MCP lifecycle context is nil",
-			basespec.ErrInvalid,
-		)
-	}
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if err := command.Validate(); err != nil {
-		return err
-	}
-	if command.CollectionKind != b.CollectionKind() {
-		return fmt.Errorf(
-			"%w: MCP lifecycle received collection kind %q",
-			basespec.ErrInvalid,
-			command.CollectionKind,
-		)
-	}
-	return nil
-}
-
 func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 	ctx context.Context,
 	collectionValue providerapi.Collection,

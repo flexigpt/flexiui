@@ -122,9 +122,6 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 	if cr.workspaceAPI == nil {
 		return ConversationResolution{}, errors.New("invalid workspaceAPI")
 	}
-	if err := cr.workspaceAPI.Ready(); err != nil {
-		return ConversationResolution{}, err
-	}
 	if err := selection.Workspace.Validate(); err != nil {
 		return ConversationResolution{}, err
 	}

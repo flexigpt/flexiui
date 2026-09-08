@@ -103,7 +103,6 @@ func main() {
 			app.modelPresetStoreAPI,
 			app.toolStoreAPI,
 			app.toolRuntimeAPI,
-			app.artifactStoreAPI,
 			app.skillStoreAPI,
 			app.skillAggregateAPI,
 			app.skillRuntimeAPI,

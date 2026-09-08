@@ -89,43 +89,6 @@ func (b *workspaceCollectionBehavior) Revision() string {
 	return b.revision
 }
 
-func (b *workspaceCollectionBehavior) ValidateLifecycle(
-	ctx context.Context,
-	command providerapi.LifecycleCommand,
-) error {
-	if b == nil {
-		return basespec.ErrClosed
-	}
-	if ctx == nil {
-		return fmt.Errorf(
-			"%w: Workspace lifecycle context is nil",
-			spec.ErrInvalidWorkspace,
-		)
-	}
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if err := command.Validate(); err != nil {
-		return err
-	}
-	if command.CollectionKind != b.CollectionKind() {
-		return fmt.Errorf(
-			"%w: Workspace lifecycle received collection kind %q",
-			spec.ErrInvalidWorkspace,
-			command.CollectionKind,
-		)
-	}
-	if command.RootID != b.workspaceRootID {
-		return fmt.Errorf(
-			"%w: Workspace lifecycle received Root %q, expected %q",
-			spec.ErrInvalidWorkspace,
-			command.RootID,
-			b.workspaceRootID,
-		)
-	}
-	return nil
-}
-
 func (b *workspaceCollectionBehavior) BuildDiscoveryPlanWithDocuments(
 	ctx context.Context,
 	collectionValue providerapi.Collection,

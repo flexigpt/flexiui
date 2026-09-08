@@ -230,12 +230,6 @@ func (a *API) canonicalizeBundleBytes(
 	ctx context.Context,
 	raw []byte,
 ) (BundleDocument, schema.ParsedDocument, error) {
-	if a == nil || a.dependencies.Store == nil {
-		return BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
-			"%w: Artifact Store shareable document canonicalizer is unavailable",
-			basespec.ErrClosed,
-		)
-	}
 	if len(raw) == 0 {
 		return BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
 			"%w: MCP Bundle document is required",
@@ -243,7 +237,7 @@ func (a *API) canonicalizeBundleBytes(
 		)
 	}
 
-	parsed, err := a.dependencies.Store.CanonicalizeExpected(
+	parsed, err := a.dependencies.Schemas.CanonicalizeExpected(
 		ctx,
 		artifactbuiltin.MCPBundleSchemaKey,
 		raw,

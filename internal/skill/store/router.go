@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 )
 
 type ResolvedArtifactSkill struct {
@@ -35,23 +35,26 @@ type ArtifactSkillLoader interface {
 }
 
 type ArtifactRouter struct {
-	store   *artifactConsumerAPI.API
-	mu      sync.RWMutex
-	loaders map[collection.CollectionKind]ArtifactSkillLoader
+	artifacts   compositionapi.ArtifactAPI
+	collections compositionapi.CollectionAPI
+	mu          sync.RWMutex
+	loaders     map[collection.CollectionKind]ArtifactSkillLoader
 }
 
 func NewArtifactRouter(
-	store *artifactConsumerAPI.API,
+	artifacts compositionapi.ArtifactAPI,
+	collections compositionapi.CollectionAPI,
 ) (*ArtifactRouter, error) {
-	if store == nil {
+	if artifacts == nil || collections == nil {
 		return nil, fmt.Errorf(
 			"%w: Artifact Skill router dependencies are incomplete",
 			basespec.ErrInvalid,
 		)
 	}
 	return &ArtifactRouter{
-		store:   store,
-		loaders: map[collection.CollectionKind]ArtifactSkillLoader{},
+		artifacts:   artifacts,
+		collections: collections,
+		loaders:     map[collection.CollectionKind]ArtifactSkillLoader{},
 	}, nil
 }
 
@@ -91,7 +94,7 @@ func (r *ArtifactRouter) CollectionForArtifact(
 		return collection.CollectionRef{}, err
 	}
 
-	record, err := r.store.GetArtifact(ctx, ref)
+	record, err := r.artifacts.Get(ctx, ref)
 	if err != nil {
 		return collection.CollectionRef{}, err
 	}
@@ -99,7 +102,7 @@ func (r *ArtifactRouter) CollectionForArtifact(
 		RootID:       record.RootID,
 		CollectionID: record.CollectionID,
 	}
-	collectionValue, err := r.store.GetCollection(ctx, collectionRef)
+	collectionValue, err := r.collections.Get(ctx, collectionRef)
 	if err != nil {
 		return collection.CollectionRef{}, err
 	}
@@ -117,7 +120,7 @@ func (r *ArtifactRouter) ResolveArtifactSkill(
 		return ResolvedArtifactSkill{}, err
 	}
 
-	record, err := r.store.GetArtifact(ctx, ref)
+	record, err := r.artifacts.Get(ctx, ref)
 	if err != nil {
 		return ResolvedArtifactSkill{}, err
 	}
@@ -125,7 +128,7 @@ func (r *ArtifactRouter) ResolveArtifactSkill(
 		RootID:       record.RootID,
 		CollectionID: record.CollectionID,
 	}
-	collectionValue, err := r.store.GetCollection(ctx, collectionRef)
+	collectionValue, err := r.collections.Get(ctx, collectionRef)
 	if err != nil {
 		return ResolvedArtifactSkill{}, err
 	}
@@ -157,7 +160,7 @@ func (r *ArtifactRouter) ListCollectionSkills(
 	if err := ref.Validate(); err != nil {
 		return nil, err
 	}
-	collectionValue, err := r.store.GetCollection(ctx, ref)
+	collectionValue, err := r.collections.Get(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +184,7 @@ func (r *ArtifactRouter) ListCollectionSkills(
 				basespec.ErrInvalid,
 			)
 		}
-		record, err := r.store.GetArtifact(ctx, value.Artifact)
+		record, err := r.artifacts.Get(ctx, value.Artifact)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"read runtime Skill %d Artifact: %w",

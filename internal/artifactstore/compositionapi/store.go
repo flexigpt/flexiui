@@ -7,24 +7,45 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	rootimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/system"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
-// Store owns one composed Artifact Store instance.
+// Store owns the composed Artifact Store and its lifecycle.
 //
-// Consumer returns the application-facing contract. Privileged topology
-// operations and Close remain on this composition owner.
+// The entity fields are direct, request-shape-free contracts. Application
+// domains receive only the fields they need.
 type Store struct {
-	mu         sync.RWMutex
+	Roots            RootAPI
+	Sources          SourceAPI
+	Collections      CollectionAPI
+	Artifacts        ArtifactAPI
+	Catalogs         CatalogAPI
+	Resources        ResourceAPI
+	Schemas          SchemaAPI
+	ManagedArtifacts ManagedArtifactAPI
+	Protection       ProtectionAPI
+
 	components *system.Components
-	consumer   *consumerapi.API
+	closeOnce  sync.Once
+	closeErr   error
 }
 
-// Open constructs Artifact Store from already initialized provider plugins.
+type protectionAPI struct {
+	policy root.RootPolicy
+}
+
+func (p protectionAPI) IsProtectedRoot(rootID root.RootID) bool {
+	return p.policy != nil && p.policy.IsProtectedRoot(rootID)
+}
+
+func (p protectionAPI) RequirePrivilegedInstaller(ctx context.Context) error {
+	return installerapi.RequirePrivileged(ctx)
+}
+
 func Open(
 	ctx context.Context,
 	config Config,
@@ -78,18 +99,23 @@ func Open(
 		return nil, err
 	}
 
-	consumer, err := consumerapi.New(components)
-	if err != nil {
-		_ = components.Close()
-		return nil, err
-	}
-
 	output := &Store{
-		consumer:   consumer,
+		Roots:            components.Roots,
+		Sources:          components.Sources,
+		Collections:      components.Collections,
+		Artifacts:        components.Artifacts,
+		Catalogs:         components.Refresh,
+		Resources:        components.Resources,
+		Schemas:          components.ShareableSchemas,
+		ManagedArtifacts: components.ManagedArtifacts,
+		Protection: protectionAPI{
+			policy: rootPolicy,
+		},
 		components: components,
 	}
+
 	for _, draft := range config.RetainedRoots {
-		if _, err := consumer.CreateRoot(ctx, draft); err != nil {
+		if _, err := output.Roots.Create(ctx, draft); err != nil {
 			_ = output.Close()
 			return nil, fmt.Errorf(
 				"ensure retained application Root %q: %w",
@@ -98,29 +124,15 @@ func Open(
 			)
 		}
 	}
-	return output, nil
-}
 
-// Consumer returns the direct Artifact Store consumer implementation.
-func (s *Store) Consumer() *consumerapi.API {
-	if s == nil {
-		return nil
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.consumer
+	return output, nil
 }
 
 func (s *Store) EnsureProtectedTopology(
 	ctx context.Context,
 	declaration topology.Declaration,
 ) (topology.Installed, error) {
-	if s == nil {
-		return topology.Installed{}, basespec.ErrClosed
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if s.components == nil {
+	if s == nil || s.components == nil {
 		return topology.Installed{}, basespec.ErrClosed
 	}
 	return s.components.EnsureProtectedTopology(ctx, declaration)
@@ -130,12 +142,7 @@ func (s *Store) PrepareTopologyHydrations(
 	ctx context.Context,
 	desired []topology.Hydration,
 ) (map[string]bool, error) {
-	if s == nil {
-		return nil, basespec.ErrClosed
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if s.components == nil {
+	if s == nil || s.components == nil {
 		return nil, basespec.ErrClosed
 	}
 	return s.components.PrepareTopologyHydrations(ctx, desired)
@@ -145,31 +152,23 @@ func (s *Store) CommitTopologyHydration(
 	ctx context.Context,
 	desired topology.Hydration,
 ) error {
-	if s == nil {
-		return basespec.ErrClosed
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if s.components == nil {
+	if s == nil || s.components == nil {
 		return basespec.ErrClosed
 	}
 	return s.components.CommitTopologyHydration(ctx, desired)
 }
 
-// Close releases all Artifact Store resources owned by this composition.
 func (s *Store) Close() error {
 	if s == nil {
 		return nil
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.closeOnce.Do(func() {
+		if s.components != nil {
+			s.closeErr = s.components.Close()
+		}
+		s.components = nil
+	})
 
-	consumer := s.consumer
-	s.consumer = nil
-	s.components = nil
-	if consumer == nil {
-		return nil
-	}
-	return consumer.Close()
+	return s.closeErr
 }

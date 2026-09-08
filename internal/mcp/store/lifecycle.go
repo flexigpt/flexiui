@@ -41,7 +41,7 @@ func (a *API) UpdateBundleEnabled(
 		return current, nil
 	}
 
-	updated, err := a.dependencies.Store.UpdateCollection(
+	updated, err := a.dependencies.Collections.Update(
 		ctx,
 		ref,
 		collection.Update{
@@ -70,7 +70,7 @@ func (a *API) Retire(
 		return collection.Collection{}, err
 	}
 
-	records, err := a.dependencies.Store.ListCollectionArtifacts(ctx, ref)
+	records, err := a.dependencies.Artifacts.ListByCollection(ctx, ref)
 	if err != nil {
 		return collection.Collection{}, err
 	}
@@ -81,7 +81,7 @@ func (a *API) Retire(
 		)
 	}
 
-	return a.dependencies.Store.RetireCollection(
+	return a.dependencies.Collections.Retire(
 		ctx,
 		ref,
 		expectedRevision,
@@ -100,7 +100,7 @@ func (a *API) Purge(
 		return err
 	}
 
-	retired, err := a.dependencies.Store.GetRetiredCollection(ctx, ref)
+	retired, err := a.dependencies.Collections.GetRetired(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (a *API) Purge(
 
 	var owned source.Summary
 	if data.ManagedSourceID != "" {
-		owned, err = a.dependencies.Store.GetSource(
+		owned, err = a.dependencies.Sources.Get(
 			ctx,
 			ref.RootID,
 			data.ManagedSourceID,
@@ -128,7 +128,7 @@ func (a *API) Purge(
 		}
 	}
 
-	if err := a.dependencies.Store.PurgeCollection(
+	if err := a.dependencies.Collections.Purge(
 		ctx,
 		ref,
 		expectedRevision,
@@ -139,7 +139,7 @@ func (a *API) Purge(
 		return nil
 	}
 
-	if err := a.dependencies.Store.DiscardSource(
+	if err := a.dependencies.Sources.Discard(
 		ctx,
 		ref.RootID,
 		owned.ID,
@@ -163,7 +163,7 @@ func (a *API) UpdateProtectedBundleInstallation(
 		return basespec.ErrClosed
 	}
 
-	if !a.dependencies.Store.IsProtectedRoot(ref.RootID) {
+	if !a.dependencies.Protection.IsProtectedRoot(ref.RootID) {
 		return fmt.Errorf(
 			"%w: MCP Bundle is not in a protected Root",
 			basespec.ErrProtected,

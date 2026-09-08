@@ -278,7 +278,7 @@ func (a *API) InstallBuiltInCollection(
 		}
 	}
 
-	if _, err := a.dependencies.Store.PublishManagedCollection(
+	if _, err := a.dependencies.ManagedArtifacts.PublishCollection(
 		ctx,
 		collection.PublishCollectionRequest{
 			Collection:     request.Bundle,
@@ -293,7 +293,7 @@ func (a *API) InstallBuiltInCollection(
 
 	output := make([]CreateManagedSkillResponse, 0, len(prepared))
 	for _, value := range prepared {
-		resolved, err := a.dependencies.Store.GetArtifact(
+		resolved, err := a.dependencies.Artifacts.Get(
 			ctx,
 			artifact.ArtifactRef{
 				RootID:     request.Bundle.RootID,
@@ -378,7 +378,7 @@ func (a *API) ensurePinnedManagedSkill(
 		if err != nil {
 			return artifact.Artifact{}, err
 		}
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
+		value, pinErr := a.dependencies.Artifacts.Pin(ctx, catalog.PinRequest{
 			ArtifactID:                 artifactID,
 			Collection:                 bundle,
 			ExpectedCollectionRevision: expectedCollectionRevision,
@@ -416,7 +416,7 @@ func (a *API) ensurePinnedManagedSkill(
 		return artifact.Artifact{}, err
 	}
 	if pinned.Name != name {
-		updated, err := a.dependencies.Store.SetArtifactName(
+		updated, err := a.dependencies.Artifacts.SetName(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,
@@ -438,7 +438,7 @@ func (a *API) ensurePinnedManagedSkill(
 		if err != nil {
 			return artifact.Artifact{}, err
 		}
-		updated, err := a.dependencies.Store.UpdateArtifactData(
+		updated, err := a.dependencies.Artifacts.UpdateData(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,
@@ -451,7 +451,7 @@ func (a *API) ensurePinnedManagedSkill(
 	}
 
 	if pinned.Enabled != enabled {
-		updated, err := a.dependencies.Store.SetArtifactEnabled(
+		updated, err := a.dependencies.Artifacts.SetEnabled(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,

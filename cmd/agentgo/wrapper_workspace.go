@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	"github.com/flexigpt/flexigpt-app/internal/workspace"
 )
@@ -15,17 +14,17 @@ type WorkspaceWrapper struct {
 
 func InitWorkspaceWrapper(
 	wrapper *WorkspaceWrapper,
-	store *artifactConsumerAPI.API,
+	dependencies workspace.Dependencies,
 ) error {
 	if wrapper == nil {
 		return errors.New("workspace wrapper is nil")
 	}
-	if store == nil {
-		return errors.New("artifact store API is nil")
+	if err := dependencies.Validate(); err != nil {
+		return err
 	}
 
 	api, err := workspace.New(
-		workspace.Dependencies{Store: store},
+		dependencies,
 		workspace.DefaultConfig(),
 	)
 	if err != nil {
@@ -38,16 +37,20 @@ func InitWorkspaceWrapper(
 func (w *WorkspaceWrapper) GetWorkspace(
 	request *workspace.GetWorkspaceRequest,
 ) (*workspace.GetWorkspaceResponse, error) {
+	ctx := context.Background()
+
 	return middleware.WithRecoveryResp(func() (*workspace.GetWorkspaceResponse, error) {
-		return w.api.GetWorkspace(context.Background(), request)
+		return w.api.GetWorkspace(ctx, request)
 	})
 }
 
 func (w *WorkspaceWrapper) ListWorkspaces(
 	request *workspace.ListWorkspacesRequest,
 ) (*workspace.ListWorkspacesResponse, error) {
+	ctx := context.Background()
+
 	return middleware.WithRecoveryResp(func() (*workspace.ListWorkspacesResponse, error) {
-		return w.api.ListWorkspaces(context.Background(), request)
+		return w.api.ListWorkspaces(ctx, request)
 	})
 }
 
@@ -133,9 +136,5 @@ func (w *WorkspaceWrapper) close() {
 	if w == nil {
 		return
 	}
-	api := w.api
 	w.api = nil
-	if api != nil {
-		_ = api.Close()
-	}
 }

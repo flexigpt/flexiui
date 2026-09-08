@@ -109,7 +109,7 @@ func (a *API) prepareDocumentReplace(
 		return documentReplacePlan{}, err
 	}
 
-	existing, err := a.dependencies.Store.ListCollectionArtifacts(
+	existing, err := a.dependencies.Artifacts.ListByCollection(
 		ctx,
 		bundle.Collection.Ref(),
 	)

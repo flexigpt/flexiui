@@ -47,7 +47,7 @@ func (a *API) ListResolvedSkills(
 	if err != nil {
 		return nil, err
 	}
-	records, err := a.dependencies.Store.ListCollectionArtifacts(ctx, bundle)
+	records, err := a.dependencies.Artifacts.ListByCollection(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (a *API) ResolveSkill(
 		return ResolvedSkill{}, err
 	}
 
-	record, err := a.dependencies.Store.GetArtifact(ctx, ref)
+	record, err := a.dependencies.Artifacts.Get(ctx, ref)
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
@@ -196,7 +196,7 @@ func (a *API) resolvedSkillFromSnapshot(
 		return ResolvedSkill{}, err
 	}
 
-	resolved, err := a.dependencies.Store.ResolveArtifact(
+	resolved, err := a.dependencies.Resources.ResolveArtifact(
 		ctx,
 		record.Ref(),
 		resource.ResolveOptions{},
@@ -233,7 +233,7 @@ func (a *API) resolvedSkillFromSnapshot(
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
-	location, err := a.dependencies.Store.ResolveVerifiedLocalPath(
+	location, err := a.dependencies.Resources.ResolveVerifiedLocalPath(
 		ctx,
 		resolved,
 		packageLocator,

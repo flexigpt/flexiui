@@ -15,7 +15,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
@@ -75,15 +75,15 @@ type SkillLoadPlan struct {
 type Adapter struct {
 	query         *artifactadapter.QueryService
 	runtimePolicy artifactadapter.SourceUsePolicy
-	resources     *artifactConsumerAPI.API
+	resourceAPI   compositionapi.ResourceAPI
 }
 
 func NewAdapter(
 	query *artifactadapter.QueryService,
 	runtimePolicy artifactadapter.SourceUsePolicy,
-	resources *artifactConsumerAPI.API,
+	resourceAPI compositionapi.ResourceAPI,
 ) (*Adapter, error) {
-	if query == nil || runtimePolicy == nil || resources == nil {
+	if query == nil || runtimePolicy == nil || resourceAPI == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace Skill adapter dependencies are incomplete",
 			spec.ErrInvalidWorkspace,
@@ -92,7 +92,7 @@ func NewAdapter(
 	return &Adapter{
 		query:         query,
 		runtimePolicy: runtimePolicy,
-		resources:     resources,
+		resourceAPI:   resourceAPI,
 	}, nil
 }
 
@@ -258,7 +258,7 @@ func (f *Adapter) loadLocal(
 			continue
 		}
 
-		resolved, err := f.resources.ResolveArtifact(
+		resolved, err := f.resourceAPI.ResolveArtifact(
 			ctx,
 			item.Artifact.Ref(),
 			resource.ResolveOptions{},
@@ -298,7 +298,7 @@ func (f *Adapter) loadLocal(
 			)
 			continue
 		}
-		runtimeLocation, err := f.resources.ResolveVerifiedLocalPath(
+		runtimeLocation, err := f.resourceAPI.ResolveVerifiedLocalPath(
 			ctx,
 			resolved,
 			packageLocator,
@@ -409,7 +409,7 @@ func sortWorkspaceSkills(values []WorkspaceSkill) {
 func (f *Adapter) supportsRuntimePath(
 	kind source.SourceKind,
 ) bool {
-	return f.resources.SupportsLocalPath(kind)
+	return f.resourceAPI.SupportsLocalPath(kind)
 }
 
 func runtimeLocationDiagnostic(

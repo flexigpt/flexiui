@@ -60,7 +60,7 @@ func (a *API) ListBundles(
 	if err := a.Ready(); err != nil {
 		return nil, err
 	}
-	values, err := a.dependencies.Store.ListCollections(ctx, rootID)
+	values, err := a.dependencies.Collections.ListByRoot(ctx, rootID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (a *API) UpdateBundle(
 	if err != nil {
 		return Bundle{}, err
 	}
-	updated, err := a.dependencies.Store.UpdateCollection(
+	updated, err := a.dependencies.Collections.Update(
 		ctx,
 		request.Bundle,
 		collection.Update{
@@ -151,7 +151,7 @@ func (a *API) RetireBundle(
 			basespec.ErrConflict,
 		)
 	}
-	return a.dependencies.Store.RetireCollection(ctx, ref, expectedRevision)
+	return a.dependencies.Collections.Retire(ctx, ref, expectedRevision)
 }
 
 func (a *API) PurgeBundle(
@@ -165,7 +165,7 @@ func (a *API) PurgeBundle(
 	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
 		return err
 	}
-	value, err := a.dependencies.Store.GetRetiredCollection(ctx, ref)
+	value, err := a.dependencies.Collections.GetRetired(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (a *API) PurgeBundle(
 
 	var ownedSource source.Summary
 	if data.ManagedSourceID != "" {
-		ownedSource, err = a.dependencies.Store.GetSource(
+		ownedSource, err = a.dependencies.Sources.Get(
 			ctx,
 			ref.RootID,
 			data.ManagedSourceID,
@@ -201,11 +201,11 @@ func (a *API) PurgeBundle(
 			)
 		}
 	}
-	if err := a.dependencies.Store.PurgeCollection(ctx, ref, expectedRevision); err != nil {
+	if err := a.dependencies.Collections.Purge(ctx, ref, expectedRevision); err != nil {
 		return err
 	}
 	if data.ManagedSourceID != "" {
-		if err := a.dependencies.Store.DiscardSource(
+		if err := a.dependencies.Sources.Discard(
 			ctx,
 			ref.RootID,
 			data.ManagedSourceID,
@@ -259,7 +259,7 @@ func (a *API) AttachSource(
 		return Bundle{}, err
 	}
 
-	_, _, err = a.dependencies.Store.AttachCollectionSource(
+	_, _, err = a.dependencies.Collections.Attach(
 		ctx,
 		bundle,
 		expectedCollectionRevision,
@@ -461,7 +461,7 @@ func (a *API) AdoptSkill(
 	if err := request.ArtifactID.Validate(); err != nil {
 		return artifact.Artifact{}, err
 	}
-	return a.dependencies.Store.AdoptArtifact(ctx, catalog.AdoptRequest{
+	return a.dependencies.Artifacts.Adopt(ctx, catalog.AdoptRequest{
 		ArtifactID:              request.ArtifactID,
 		Collection:              request.Bundle,
 		Occurrence:              request.Occurrence,
@@ -501,7 +501,7 @@ func (a *API) PinSkill(
 			basespec.ErrUnsupported,
 		)
 	}
-	return a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
+	return a.dependencies.Artifacts.Pin(ctx, catalog.PinRequest{
 		ArtifactID:                 request.ArtifactID,
 		Collection:                 request.Bundle,
 		ExpectedCollectionRevision: request.ExpectedCollectionRevision,
@@ -519,7 +519,7 @@ func (a *API) ListSkills(
 	if _, err := a.GetBundle(ctx, bundle); err != nil {
 		return nil, err
 	}
-	values, err := a.dependencies.Store.ListCollectionArtifacts(ctx, bundle)
+	values, err := a.dependencies.Artifacts.ListByCollection(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
@@ -544,7 +544,7 @@ func (a *API) SetSkillEnabled(
 	if _, err := a.GetSkill(ctx, ref); err != nil {
 		return artifact.Artifact{}, err
 	}
-	return a.dependencies.Store.SetArtifactEnabled(
+	return a.dependencies.Artifacts.SetEnabled(
 		ctx,
 		ref,
 		expectedRevision,
@@ -564,7 +564,7 @@ func (a *API) UnadoptSkill(
 	if _, err := a.GetSkill(ctx, ref); err != nil {
 		return err
 	}
-	return a.dependencies.Store.UnadoptArtifact(
+	return a.dependencies.Artifacts.Unadopt(
 		ctx,
 		ref,
 		expectedRevision,
@@ -626,21 +626,21 @@ func (a *API) PurgeSkill(
 		}
 	default:
 		if value.Adoption == artifact.AdoptionObserved {
-			return a.dependencies.Store.UnadoptArtifact(
+			return a.dependencies.Artifacts.Unadopt(
 				ctx,
 				ref,
 				expectedRevision,
 				true,
 			)
 		}
-		return a.dependencies.Store.PurgeAndSuppressArtifact(ctx, ref, expectedRevision)
+		return a.dependencies.Artifacts.PurgeAndSuppress(ctx, ref, expectedRevision)
 	}
 
 	packageAddress, err := managedSkillPackageAddressOf(value.Binding)
 	if err != nil {
 		return err
 	}
-	if err := a.dependencies.Store.RemoveManagedArtifact(
+	if err := a.dependencies.ManagedArtifacts.Remove(
 		ctx,
 		artifact.RemoveArtifactRequest{
 			Artifact:       value,
@@ -660,7 +660,7 @@ func (a *API) GetSkill(
 	if err := a.Ready(); err != nil {
 		return artifact.Artifact{}, err
 	}
-	value, err := a.dependencies.Store.GetArtifact(ctx, ref)
+	value, err := a.dependencies.Artifacts.Get(ctx, ref)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
@@ -723,7 +723,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 			bundle.Collection.Description != request.Description ||
 			bundle.Collection.Enabled != request.Enabled ||
 			!bytes.Equal(bundle.Collection.Data, data) {
-			if _, err := a.dependencies.Store.UpdateCollection(
+			if _, err := a.dependencies.Collections.Update(
 				ctx,
 				bundle.Collection.Ref(),
 				collection.Update{
@@ -753,11 +753,11 @@ func (a *API) EnsureBuiltInBundleTopology(
 			}
 			if attachment.Role != artifactbuiltin.BuiltInAttachmentRole || !attachment.Enabled ||
 				!bytes.Equal(attachment.Data, encodedAttachmentData) {
-				currentColl, err := a.dependencies.Store.GetCollection(ctx, bundle.Collection.Ref())
+				currentColl, err := a.dependencies.Collections.Get(ctx, bundle.Collection.Ref())
 				if err != nil {
 					return Bundle{}, err
 				}
-				if _, _, err := a.dependencies.Store.UpdateCollectionAttachment(
+				if _, _, err := a.dependencies.Collections.UpdateAttachment(
 					ctx,
 					bundle.Collection.Ref(),
 					request.SourceID,
@@ -801,7 +801,7 @@ func (a *API) GetBundle(
 		return Bundle{}, err
 	}
 
-	value, err := a.dependencies.Store.GetCollection(ctx, ref)
+	value, err := a.dependencies.Collections.Get(ctx, ref)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -817,7 +817,7 @@ func (a *API) GetBundle(
 	if err != nil {
 		return Bundle{}, err
 	}
-	attachments, err := a.dependencies.Store.ListCollectionAttachments(ctx, ref)
+	attachments, err := a.dependencies.Collections.ListAttachments(ctx, ref)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -827,7 +827,7 @@ func (a *API) GetBundle(
 		if err := a.validateAttachment(ctx, ref.RootID, attachment); err != nil {
 			return Bundle{}, err
 		}
-		value, err := a.dependencies.Store.GetSource(
+		value, err := a.dependencies.Sources.Get(
 			ctx,
 			ref.RootID,
 			attachment.SourceID,
@@ -866,7 +866,7 @@ func (a *API) currentBundleCatalog(
 	ctx context.Context,
 	bundle Bundle,
 ) (catalog.Snapshot, error) {
-	return a.dependencies.Store.CurrentCollectionCatalog(
+	return a.dependencies.Catalogs.CurrentCatalog(
 
 		ctx,
 
@@ -886,7 +886,7 @@ func (a *API) currentDefinitionForArtifact(
 		)
 	}
 
-	snapshot, err := a.dependencies.Store.CurrentCollectionCatalog(
+	snapshot, err := a.dependencies.Catalogs.CurrentCatalog(
 		ctx,
 
 		collection.CollectionRef{
@@ -1007,7 +1007,7 @@ func (a *API) createBundle(
 			)
 		}
 
-		value, createdNew, err := a.dependencies.Store.CreateSourceWithStatus(
+		value, createdNew, err := a.dependencies.Sources.CreateWithStatus(
 			ctx,
 			request.RootID,
 			source.Draft{
@@ -1046,7 +1046,7 @@ func (a *API) createBundle(
 		if provisionedSource == nil {
 			return cause
 		}
-		cleanupErr := a.dependencies.Store.DiscardSource(
+		cleanupErr := a.dependencies.Sources.Discard(
 			context.WithoutCancel(ctx),
 			request.RootID,
 			provisionedSource.ID,
@@ -1055,7 +1055,7 @@ func (a *API) createBundle(
 		return errors.Join(cause, cleanupErr)
 	}
 
-	created, _, err := a.dependencies.Store.CreateCollection(
+	created, _, err := a.dependencies.Collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{
@@ -1264,7 +1264,7 @@ func (a *API) refreshBundle(
 			ref.CollectionID,
 		)
 	}
-	return a.dependencies.Store.RefreshCollection(ctx, ref)
+	return a.dependencies.Catalogs.RefreshCollection(ctx, ref)
 }
 
 // createManagedSkill performs the managed package publication workflow.
@@ -1438,7 +1438,7 @@ func (a *API) createManagedSkill(
 			return CreateManagedSkillResponse{}, basespec.ErrConflict
 		}
 
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
+		value, pinErr := a.dependencies.Artifacts.Pin(ctx, catalog.PinRequest{
 			ArtifactID:                 request.ArtifactID,
 			Collection:                 request.Bundle,
 			ExpectedCollectionRevision: request.ExpectedCollectionRevision,
@@ -1514,7 +1514,7 @@ func (a *API) createManagedSkill(
 		// Persist full package intent before touching source-side storage.
 		// If publication or refresh later fails, this marker permits a retry
 		// using the original Artifact revision.
-		updated, err := a.dependencies.Store.UpdateArtifactData(
+		updated, err := a.dependencies.Artifacts.UpdateData(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,
@@ -1527,7 +1527,7 @@ func (a *API) createManagedSkill(
 	}
 
 	if pinned.Name != artifactName {
-		updated, err := a.dependencies.Store.SetArtifactName(
+		updated, err := a.dependencies.Artifacts.SetName(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,
@@ -1540,7 +1540,7 @@ func (a *API) createManagedSkill(
 	}
 
 	if pinned.Enabled != request.Enabled {
-		updated, err := a.dependencies.Store.SetArtifactEnabled(
+		updated, err := a.dependencies.Artifacts.SetEnabled(
 			ctx,
 			pinned.Ref(),
 			pinned.Revision,
@@ -1552,7 +1552,7 @@ func (a *API) createManagedSkill(
 		pinned = &updated
 	}
 
-	published, err := a.dependencies.Store.PublishManagedArtifact(
+	published, err := a.dependencies.ManagedArtifacts.Publish(
 		ctx,
 		artifact.PublishArtifactRequest{
 			Artifact:           *pinned,
@@ -1600,7 +1600,7 @@ func (a *API) requireBundleMutation(
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if !a.dependencies.Store.IsProtectedRoot(rootID) {
+	if !a.dependencies.Protection.IsProtectedRoot(rootID) {
 		return nil
 	}
 	if !allowProtected {
@@ -1610,7 +1610,7 @@ func (a *API) requireBundleMutation(
 			rootID,
 		)
 	}
-	return a.dependencies.Store.RequirePrivilegedInstaller(ctx)
+	return a.dependencies.Protection.RequirePrivilegedInstaller(ctx)
 }
 
 func managedSkillCreateResult(
@@ -1717,7 +1717,7 @@ func (a *API) validateAttachmentDraft(
 	); err != nil {
 		return err
 	}
-	value, err := a.dependencies.Store.GetSource(ctx, rootID, draft.SourceID)
+	value, err := a.dependencies.Sources.Get(ctx, rootID, draft.SourceID)
 	if err != nil {
 		return err
 	}
@@ -1735,7 +1735,7 @@ func (a *API) validateAttachment(
 	if _, err := DecodeAttachmentData(value.Data); err != nil {
 		return err
 	}
-	sourceValue, err := a.dependencies.Store.GetSource(
+	sourceValue, err := a.dependencies.Sources.Get(
 		ctx,
 		rootID,
 		value.SourceID,
@@ -2047,7 +2047,7 @@ func (a *API) managedSkillByID(
 	rootID root.RootID,
 	artifactID artifact.ArtifactID,
 ) (*artifact.Artifact, error) {
-	value, err := a.dependencies.Store.GetArtifact(ctx, artifact.ArtifactRef{
+	value, err := a.dependencies.Artifacts.Get(ctx, artifact.ArtifactRef{
 		RootID:     rootID,
 		ArtifactID: artifactID,
 	})

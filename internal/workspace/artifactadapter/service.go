@@ -11,22 +11,24 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/attachmentdata"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/collectiondata"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
 
 type Service struct {
-	store           *artifactConsumerAPI.API
+	collections     compositionapi.CollectionAPI
+	sources         compositionapi.SourceAPI
 	workspaceRootID root.RootID
 }
 
 func NewService(
-	store *artifactConsumerAPI.API,
+	collections compositionapi.CollectionAPI,
+	sources compositionapi.SourceAPI,
 	workspaceRootID root.RootID,
 ) (*Service, error) {
-	if store == nil {
+	if collections == nil || sources == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace service dependencies are incomplete",
 			spec.ErrInvalidWorkspace,
@@ -36,7 +38,8 @@ func NewService(
 		return nil, err
 	}
 	return &Service{
-		store:           store,
+		collections:     collections,
+		sources:         sources,
 		workspaceRootID: workspaceRootID,
 	}, nil
 }
@@ -61,7 +64,7 @@ func (s *Service) CreateEmpty(
 	if err != nil {
 		return spec.Workspace{}, err
 	}
-	created, _, err := s.store.CreateCollection(
+	created, _, err := s.collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{
@@ -98,7 +101,7 @@ func (s *Service) CreateFilesystem(
 	if err := s.ValidateFilesystemCreate(request); err != nil {
 		return spec.Workspace{}, err
 	}
-	sourceValue, err := s.store.GetSource(
+	sourceValue, err := s.sources.Get(
 		ctx,
 		request.RootID,
 		request.PrimarySourceID,
@@ -131,7 +134,7 @@ func (s *Service) CreateFilesystem(
 	if err != nil {
 		return spec.Workspace{}, err
 	}
-	created, _, err := s.store.CreateCollection(
+	created, _, err := s.collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{
@@ -191,7 +194,7 @@ func (s *Service) List(
 	if err := s.requireWorkspaceRoot(rootID); err != nil {
 		return nil, err
 	}
-	collections, err := s.store.ListCollections(ctx, rootID)
+	collections, err := s.collections.ListByRoot(ctx, rootID)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +231,7 @@ func (s *Service) Update(
 	if err != nil {
 		return spec.Workspace{}, err
 	}
-	_, err = s.store.UpdateCollection(
+	_, err = s.collections.Update(
 		ctx,
 		request.Workspace,
 		collection.Update{
@@ -265,7 +268,7 @@ func (s *Service) Attach(
 	if _, err := s.Get(ctx, request.Workspace); err != nil {
 		return spec.Workspace{}, err
 	}
-	sourceValue, err := s.store.GetSource(
+	sourceValue, err := s.sources.Get(
 		ctx,
 		request.Workspace.RootID,
 		request.SourceID,
@@ -286,7 +289,7 @@ func (s *Service) Attach(
 	if err := attachmentdata.ValidateAttachmentDataForRole(request.Role, request.Data); err != nil {
 		return spec.Workspace{}, err
 	}
-	if _, _, err := s.store.AttachCollectionSource(
+	if _, _, err := s.collections.Attach(
 
 		ctx,
 		request.Workspace,
@@ -317,7 +320,7 @@ func (s *Service) UpdateAttachment(
 	if _, err := s.Get(ctx, request.Workspace); err != nil {
 		return spec.Workspace{}, err
 	}
-	current, err := s.store.GetCollectionAttachment(
+	current, err := s.collections.GetAttachment(
 		ctx,
 		request.Workspace,
 		request.SourceID,
@@ -329,7 +332,7 @@ func (s *Service) UpdateAttachment(
 	if !currentOperation.CanAttach {
 		return spec.Workspace{}, spec.ErrPrimarySourceImmutable
 	}
-	sourceValue, err := s.store.GetSource(
+	sourceValue, err := s.sources.Get(
 		ctx,
 		request.Workspace.RootID,
 		request.SourceID,
@@ -350,7 +353,7 @@ func (s *Service) UpdateAttachment(
 	if err := attachmentdata.ValidateAttachmentDataForRole(request.Role, request.Data); err != nil {
 		return spec.Workspace{}, err
 	}
-	if _, _, err := s.store.UpdateCollectionAttachment(
+	if _, _, err := s.collections.UpdateAttachment(
 		ctx,
 		request.Workspace,
 		request.SourceID,
@@ -431,7 +434,7 @@ func (s *Service) SetPrimary(
 		if err != nil {
 			return spec.Workspace{}, err
 		}
-		if _, _, err := s.store.AttachCollectionSource(
+		if _, _, err := s.collections.Attach(
 			ctx,
 			request.Workspace,
 			request.ExpectedCollectionRevision,
@@ -458,7 +461,7 @@ func (s *Service) SetPrimary(
 		)
 	}
 
-	previous, err := s.store.GetCollectionAttachment(
+	previous, err := s.collections.GetAttachment(
 		ctx,
 		request.Workspace,
 		current.PrimarySourceID,
@@ -471,7 +474,7 @@ func (s *Service) SetPrimary(
 	}
 
 	if request.Clear {
-		if _, err := s.store.DetachCollectionSource(
+		if _, err := s.collections.Detach(
 			ctx,
 			request.Workspace,
 			current.PrimarySourceID,
@@ -495,7 +498,7 @@ func (s *Service) SetPrimary(
 		return spec.Workspace{}, err
 	}
 
-	if _, err := s.store.GetCollectionAttachment(
+	if _, err := s.collections.GetAttachment(
 		ctx,
 		request.Workspace,
 		request.SourceID,
@@ -512,7 +515,7 @@ func (s *Service) SetPrimary(
 	if err != nil {
 		return spec.Workspace{}, err
 	}
-	_, _, err = s.store.ReplaceCollectionAttachment(
+	_, _, err = s.collections.ReplaceAttachment(
 		ctx,
 		request.Workspace,
 		collection.AttachmentReplacement{
@@ -549,7 +552,7 @@ func (s *Service) Detach(
 	if _, err := s.Get(ctx, ref); err != nil {
 		return spec.Workspace{}, err
 	}
-	attachment, err := s.store.GetCollectionAttachment(ctx, ref, sourceID)
+	attachment, err := s.collections.GetAttachment(ctx, ref, sourceID)
 	if err != nil {
 		return spec.Workspace{}, err
 	}
@@ -557,7 +560,7 @@ func (s *Service) Detach(
 	if !operation.CanAttach {
 		return spec.Workspace{}, spec.ErrPrimarySourceImmutable
 	}
-	if _, err := s.store.DetachCollectionSource(
+	if _, err := s.collections.Detach(
 		ctx,
 		ref,
 		sourceID,
@@ -577,7 +580,7 @@ func (s *Service) Retire(
 	if _, err := s.Get(ctx, ref); err != nil {
 		return collection.Collection{}, err
 	}
-	return s.store.RetireCollection(ctx, ref, expectedRevision)
+	return s.collections.Retire(ctx, ref, expectedRevision)
 }
 
 // Purge destructively removes a retired Workspace Collection and its
@@ -601,7 +604,7 @@ func (s *Service) Purge(
 			spec.ErrInvalidWorkspace,
 		)
 	}
-	value, err := s.store.GetRetiredCollection(ctx, ref)
+	value, err := s.collections.GetRetired(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -611,7 +614,7 @@ func (s *Service) Purge(
 	if value.Revision != expectedRevision {
 		return basespec.ErrConflict
 	}
-	return s.store.PurgeCollection(ctx, ref, expectedRevision)
+	return s.collections.Purge(ctx, ref, expectedRevision)
 }
 
 func (s *Service) Get(
@@ -625,7 +628,7 @@ func (s *Service) Get(
 		return spec.Workspace{}, err
 	}
 
-	value, err := s.store.GetCollection(ctx, ref)
+	value, err := s.collections.Get(ctx, ref)
 	if err != nil {
 		return spec.Workspace{}, err
 	}
@@ -654,7 +657,7 @@ func (s *Service) Get(
 	if err != nil {
 		return spec.Workspace{}, fmt.Errorf("%w: %w", spec.ErrInvalidWorkspace, err)
 	}
-	attachments, err := s.store.ListCollectionAttachments(ctx, ref)
+	attachments, err := s.collections.ListAttachments(ctx, ref)
 	if err != nil {
 		return spec.Workspace{}, err
 	}
@@ -665,7 +668,7 @@ func (s *Service) Get(
 
 	sources := make([]source.Summary, 0, len(attachments))
 	for _, attachment := range attachments {
-		sourceValue, err := s.store.GetSource(
+		sourceValue, err := s.sources.Get(
 			ctx,
 			ref.RootID,
 			attachment.SourceID,
@@ -704,7 +707,9 @@ func (s *Service) validateWorkspaceCreate(
 	description string,
 	discovery spec.DiscoveryPreferences,
 ) error {
-	if s == nil || s.store == nil {
+	if s == nil ||
+		s.collections == nil ||
+		s.sources == nil {
 		return fmt.Errorf(
 			"%w: Workspace service is unavailable",
 			spec.ErrInvalidWorkspace,
@@ -754,7 +759,7 @@ func (s *Service) requirePrimarySource(
 	rootID root.RootID,
 	sourceID source.SourceID,
 ) error {
-	sourceValue, err := s.store.GetSource(ctx, rootID, sourceID)
+	sourceValue, err := s.sources.Get(ctx, rootID, sourceID)
 	if err != nil {
 		return err
 	}

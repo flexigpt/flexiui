@@ -499,9 +499,3 @@ func (w *ArtifactStoreWrapper) Store() *artifactConsumerAPI.API {
 	}
 	return w.api
 }
-
-func (w *ArtifactStoreWrapper) close() {
-	if w != nil {
-		w.api = nil
-	}
-}

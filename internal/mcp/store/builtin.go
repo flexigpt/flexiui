@@ -53,7 +53,7 @@ func (a *API) EnsureBuiltIn(
 	if err := validateBundlePackageAddress(request.PackageAddress); err != nil {
 		return Bundle{}, err
 	}
-	if !a.dependencies.Store.IsProtectedRoot(request.RootID) {
+	if !a.dependencies.Protection.IsProtectedRoot(request.RootID) {
 		return Bundle{}, fmt.Errorf(
 			"%w: MCP built-in Root %q is not protected",
 			basespec.ErrProtected,
@@ -82,7 +82,7 @@ func (a *API) EnsureBuiltIn(
 		)
 	}
 
-	sourceValue, err := a.dependencies.Store.GetSource(
+	sourceValue, err := a.dependencies.Sources.Get(
 		ctx,
 		request.RootID,
 		request.SourceID,
@@ -116,7 +116,7 @@ func (a *API) EnsureBuiltIn(
 		return Bundle{}, err
 	}
 
-	created, _, err := a.dependencies.Store.CreateCollection(
+	created, _, err := a.dependencies.Collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{

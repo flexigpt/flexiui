@@ -8,7 +8,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	artifactConsumerAPI "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -25,21 +24,27 @@ type SkillStoreWrapper struct {
 
 func InitSkillStoreWrapper(
 	wrapper *SkillStoreWrapper,
-	store *artifactConsumerAPI.API,
+	dependencies skillBundle.Dependencies,
 	workspaceSkills *workspaceadapter.Adapter,
 ) error {
-	if wrapper == nil || store == nil || workspaceSkills == nil {
+	if wrapper == nil || workspaceSkills == nil {
 		return errors.New("skill store wrapper dependencies are incomplete")
+	}
+	if err := dependencies.Validate(); err != nil {
+		return err
 	}
 
 	api, err := skillBundle.New(
-		skillBundle.Dependencies{Store: store},
+		dependencies,
 	)
 	if err != nil {
 		return err
 	}
 
-	router, err := skillStore.NewArtifactRouter(store)
+	router, err := skillStore.NewArtifactRouter(
+		dependencies.Artifacts,
+		dependencies.Collections,
+	)
 	if err != nil {
 		return err
 	}
@@ -84,7 +89,7 @@ func InitSkillStoreWrapper(
 			Skills:                 api,
 			SkillRegistry:          skillRegistry,
 			Packages:               packages,
-			ShareableCanonicalizer: store,
+			ShareableCanonicalizer: dependencies.Schemas,
 		},
 	)
 	if err != nil {
@@ -174,13 +179,8 @@ func (w *SkillStoreWrapper) close() {
 		return
 	}
 
-	api := w.api
 	w.builtInInstaller = nil
 
 	w.router = nil
 	w.api = nil
-
-	if api != nil {
-		_ = api.Close()
-	}
 }
