@@ -24,13 +24,13 @@ type occurrenceKindKey struct {
 
 type QueryService struct {
 	workspaces *Service
-	store      artifactConsumerAPI.ConsumerAPI
+	store      *artifactConsumerAPI.API
 	validators map[artifact.ArtifactKind]spec.DefinitionValidator
 }
 
 func NewQueryService(
 	workspaces *Service,
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 	supports ...spec.ArtifactSupport,
 ) (*QueryService, error) {
 	if workspaces == nil ||

@@ -1,6 +1,7 @@
 package providerregistry
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
@@ -178,4 +179,37 @@ func (r *Registry) CollectionBehavior(
 		return nil, false
 	}
 	return behavior, true
+}
+
+// ValidateCollectionLifecycle resolves the registered provider behavior for a
+// Collection kind and invokes its validation hook before Artifact Store
+// mutates the aggregate.
+func (r *Registry) ValidateCollectionLifecycle(
+	ctx context.Context,
+	command providerapi.LifecycleCommand,
+) error {
+	if r == nil {
+		return basespec.ErrClosed
+	}
+	if ctx == nil {
+		return fmt.Errorf(
+			"%w: provider lifecycle context is nil",
+			basespec.ErrInvalid,
+		)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := command.Validate(); err != nil {
+		return err
+	}
+	behavior, found := r.CollectionBehavior(command.CollectionKind)
+	if !found {
+		return fmt.Errorf(
+			"%w: collection kind %q has no registered provider lifecycle",
+			basespec.ErrUnsupported,
+			command.CollectionKind,
+		)
+	}
+	return behavior.ValidateLifecycle(ctx, command)
 }

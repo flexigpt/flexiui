@@ -30,13 +30,13 @@ type workspaceManager interface {
 }
 
 type Service struct {
-	store      artifactConsumerAPI.ConsumerAPI
+	store      *artifactConsumerAPI.API
 	workspaces workspaceManager
 }
 
 func NewService(
 	workspaces workspaceManager,
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 ) (*Service, error) {
 	if store == nil || workspaces == nil {
 		return nil, fmt.Errorf(

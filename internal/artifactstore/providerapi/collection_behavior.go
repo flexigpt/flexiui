@@ -133,6 +133,8 @@ func (d AdoptionDecision) Validate() error {
 // It receives immutable generic views and returns declarations. It must not
 // perform direct Artifact Store mutations or depend on system.Components.
 type CollectionBehavior interface {
+	CollectionLifecycle
+
 	CollectionKind() collection.CollectionKind
 
 	// Revision must change whenever provider behavior can alter discovery

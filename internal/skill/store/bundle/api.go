@@ -20,9 +20,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
@@ -295,7 +292,7 @@ func (a *API) AttachSource(
 func (a *API) RefreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.RefreshCollectionResult, error) {
+) (catalog.RefreshCollectionResult, error) {
 	return a.refreshBundle(ctx, ref, false)
 }
 
@@ -464,7 +461,7 @@ func (a *API) AdoptSkill(
 	if err := request.ArtifactID.Validate(); err != nil {
 		return artifact.Artifact{}, err
 	}
-	return a.dependencies.Store.AdoptArtifact(ctx, artifactConsumerAPIartifact.AdoptRequest{
+	return a.dependencies.Store.AdoptArtifact(ctx, catalog.AdoptRequest{
 		ArtifactID:              request.ArtifactID,
 		Collection:              request.Bundle,
 		Occurrence:              request.Occurrence,
@@ -504,7 +501,7 @@ func (a *API) PinSkill(
 			basespec.ErrUnsupported,
 		)
 	}
-	return a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
+	return a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
 		ArtifactID:                 request.ArtifactID,
 		Collection:                 request.Bundle,
 		ExpectedCollectionRevision: request.ExpectedCollectionRevision,
@@ -645,7 +642,7 @@ func (a *API) PurgeSkill(
 	}
 	if err := a.dependencies.Store.RemoveManagedArtifact(
 		ctx,
-		managedartifact.RemoveRequest{
+		artifact.RemoveArtifactRequest{
 			Artifact:       value,
 			Package:        packageAddress,
 			AllowProtected: false,
@@ -1248,20 +1245,20 @@ func (a *API) refreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	allowProtected bool,
-) (refresh.RefreshCollectionResult, error) {
+) (catalog.RefreshCollectionResult, error) {
 	if err := a.requireBundleMutation(
 		ctx,
 		ref.RootID,
 		allowProtected,
 	); err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 	bundle, err := a.GetBundle(ctx, ref)
 	if err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 	if !bundle.Collection.Enabled {
-		return refresh.RefreshCollectionResult{}, fmt.Errorf(
+		return catalog.RefreshCollectionResult{}, fmt.Errorf(
 			"%w: skill bundle %q is disabled",
 			basespec.ErrConflict,
 			ref.CollectionID,
@@ -1441,7 +1438,7 @@ func (a *API) createManagedSkill(
 			return CreateManagedSkillResponse{}, basespec.ErrConflict
 		}
 
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
+		value, pinErr := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
 			ArtifactID:                 request.ArtifactID,
 			Collection:                 request.Bundle,
 			ExpectedCollectionRevision: request.ExpectedCollectionRevision,
@@ -1557,7 +1554,7 @@ func (a *API) createManagedSkill(
 
 	published, err := a.dependencies.Store.PublishManagedArtifact(
 		ctx,
-		managedartifact.PublishRequest{
+		artifact.PublishArtifactRequest{
 			Artifact:           *pinned,
 			ExpectedDefinition: definitionValue.Digest,
 			Package: source.ManagedPackagePublication{

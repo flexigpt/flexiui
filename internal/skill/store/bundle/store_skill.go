@@ -12,9 +12,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 
-	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 )
 
@@ -199,7 +199,7 @@ func (a *API) resolvedSkillFromSnapshot(
 	resolved, err := a.dependencies.Store.ResolveArtifact(
 		ctx,
 		record.Ref(),
-		artifactConsumerAPIresource.ResolveOptions{},
+		resource.ResolveOptions{},
 	)
 	if err != nil {
 		return ResolvedSkill{}, err

@@ -1,9 +1,8 @@
-package artifactstore
+package consumerapi
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
@@ -12,9 +11,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 )
 
@@ -38,9 +34,6 @@ func (a *API) CreateCollection(
 	draft collection.Draft,
 	attachments []collection.AttachmentDraft,
 ) (collection.Collection, []collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, nil, err
-	}
 	return a.components.Collections.Create(
 		ctx,
 		rootID,
@@ -53,9 +46,6 @@ func (a *API) GetCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, err
-	}
 	return a.components.Collections.Get(ctx, ref)
 }
 
@@ -63,9 +53,6 @@ func (a *API) GetRetiredCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, err
-	}
 	return a.components.Collections.GetRetired(ctx, ref)
 }
 
@@ -73,9 +60,6 @@ func (a *API) ListCollections(
 	ctx context.Context,
 	rootID root.RootID,
 ) ([]collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return nil, err
-	}
 	return a.components.Collections.ListByRoot(ctx, rootID)
 }
 
@@ -84,9 +68,6 @@ func (a *API) UpdateCollection(
 	ref collection.CollectionRef,
 	update collection.Update,
 ) (collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, err
-	}
 	update.Data = append(json.RawMessage(nil), update.Data...)
 	return a.components.Collections.Update(ctx, ref, update)
 }
@@ -96,9 +77,6 @@ func (a *API) RetireCollection(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) (collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, err
-	}
 	return a.components.Collections.Retire(
 		ctx,
 		ref,
@@ -111,9 +89,6 @@ func (a *API) PurgeCollection(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.Collections.Purge(
 		ctx,
 		ref,
@@ -127,9 +102,6 @@ func (a *API) AttachCollectionSource(
 	expectedCollectionRevision uint64,
 	draft collection.AttachmentDraft,
 ) (collection.Collection, collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, collection.Attachment{}, err
-	}
 	draft.Data = append(json.RawMessage(nil), draft.Data...)
 	return a.components.Collections.Attach(
 		ctx,
@@ -144,9 +116,6 @@ func (a *API) GetCollectionAttachment(
 	ref collection.CollectionRef,
 	sourceID source.SourceID,
 ) (collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Attachment{}, err
-	}
 	return a.components.Collections.GetAttachment(
 		ctx,
 		ref,
@@ -158,9 +127,6 @@ func (a *API) ListCollectionAttachments(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return nil, err
-	}
 	return a.components.Collections.ListAttachments(ctx, ref)
 }
 
@@ -170,9 +136,6 @@ func (a *API) UpdateCollectionAttachment(
 	sourceID source.SourceID,
 	update collection.AttachmentUpdate,
 ) (collection.Collection, collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, collection.Attachment{}, err
-	}
 	update.Data = append(json.RawMessage(nil), update.Data...)
 	return a.components.Collections.UpdateAttachment(
 		ctx,
@@ -189,9 +152,6 @@ func (a *API) DetachCollectionSource(
 	expectedCollectionRevision uint64,
 	expectedAttachmentRevision uint64,
 ) (collection.Collection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, err
-	}
 	return a.components.Collections.Detach(
 		ctx,
 		ref,
@@ -206,9 +166,6 @@ func (a *API) ReplaceCollectionAttachment(
 	ref collection.CollectionRef,
 	replacement collection.AttachmentReplacement,
 ) (collection.Collection, collection.Attachment, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return collection.Collection{}, collection.Attachment{}, err
-	}
 	replacement.Replacement.Data = append(
 		json.RawMessage(nil),
 		replacement.Replacement.Data...,
@@ -224,9 +181,6 @@ func (a *API) GetArtifact(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	return a.components.Artifacts.Get(ctx, ref)
 }
 
@@ -234,30 +188,21 @@ func (a *API) ListCollectionArtifacts(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return nil, err
-	}
 	return a.components.Artifacts.ListByCollection(ctx, ref)
 }
 
 func (a *API) AdoptArtifact(
 	ctx context.Context,
-	request artifactConsumerAPIartifact.AdoptRequest,
+	request catalog.AdoptRequest,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	request.Data = append(json.RawMessage(nil), request.Data...)
 	return a.components.Artifacts.Adopt(ctx, request)
 }
 
 func (a *API) PinArtifact(
 	ctx context.Context,
-	request artifactConsumerAPIartifact.PinRequest,
+	request catalog.PinRequest,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	request.Data = append(json.RawMessage(nil), request.Data...)
 	return a.components.Artifacts.Pin(ctx, request)
 }
@@ -268,9 +213,6 @@ func (a *API) SetArtifactEnabled(
 	expectedRevision uint64,
 	enabled bool,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	return a.components.Artifacts.SetEnabled(
 		ctx,
 		ref,
@@ -285,9 +227,6 @@ func (a *API) SetArtifactName(
 	expectedRevision uint64,
 	name string,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	return a.components.Artifacts.SetName(
 		ctx,
 		ref,
@@ -302,9 +241,6 @@ func (a *API) UpdateArtifactData(
 	expectedRevision uint64,
 	data json.RawMessage,
 ) (artifact.Artifact, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Artifact{}, err
-	}
 	return a.components.Artifacts.UpdateData(
 		ctx,
 		ref,
@@ -319,9 +255,6 @@ func (a *API) UnadoptArtifact(
 	expectedRevision uint64,
 	suppress bool,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.Artifacts.Unadopt(
 		ctx,
 		ref,
@@ -335,9 +268,6 @@ func (a *API) PurgeArtifact(
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.Artifacts.Purge(
 		ctx,
 		ref,
@@ -350,9 +280,6 @@ func (a *API) PurgeAndSuppressArtifact(
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.Artifacts.PurgeAndSuppress(
 		ctx,
 		ref,
@@ -364,19 +291,13 @@ func (a *API) ListCollectionSuppressions(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]artifact.Suppression, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return nil, err
-	}
 	return a.components.Artifacts.ListSuppressions(ctx, ref)
 }
 
 func (a *API) SuppressBinding(
 	ctx context.Context,
-	request artifactConsumerAPIartifact.SuppressRequest,
+	request catalog.SuppressRequest,
 ) (artifact.Suppression, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return artifact.Suppression{}, err
-	}
 	return a.components.Artifacts.Suppress(ctx, request)
 }
 
@@ -386,9 +307,6 @@ func (a *API) UnsuppressBinding(
 	binding artifact.SourceBinding,
 	expectedRevision uint64,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.Artifacts.Unsuppress(
 		ctx,
 		ref,
@@ -400,10 +318,7 @@ func (a *API) UnsuppressBinding(
 func (a *API) RefreshCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.RefreshCollectionResult, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return refresh.RefreshCollectionResult{}, err
-	}
+) (catalog.RefreshCollectionResult, error) {
 	return a.components.Refresh.RefreshCollection(ctx, ref)
 }
 
@@ -411,19 +326,13 @@ func (a *API) CurrentCollectionCatalog(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (catalog.Snapshot, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return catalog.Snapshot{}, err
-	}
 	return a.components.Refresh.CurrentCatalog(ctx, ref)
 }
 
 func (a *API) InspectCollectionCatalog(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.CatalogInspection, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return refresh.CatalogInspection{}, err
-	}
+) (catalog.CatalogInspection, error) {
 	return a.components.Refresh.InspectCollectionCatalog(ctx, ref)
 }
 
@@ -432,9 +341,6 @@ func (a *API) CanonicalizeExpected(
 	expected schema.Key,
 	raw []byte,
 ) (schema.ParsedDocument, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return schema.ParsedDocument{}, err
-	}
 	if a.components.ShareableSchemas == nil {
 		return schema.ParsedDocument{}, basespec.ErrClosed
 	}
@@ -447,49 +353,23 @@ func (a *API) CanonicalizeExpected(
 
 func (a *API) PublishManagedArtifact(
 	ctx context.Context,
-	request managedartifact.PublishRequest,
-) (managedartifact.PublishResult, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return managedartifact.PublishResult{}, err
-	}
+	request artifact.PublishArtifactRequest,
+) (artifact.PublishArtifactResult, error) {
 	return a.components.ManagedArtifacts.Publish(ctx, request)
 }
 
 func (a *API) PublishManagedCollection(
 	ctx context.Context,
-	request managedartifact.PublishCollectionRequest,
-) (managedartifact.PublishCollectionResult, error) {
-	if err := a.requireStore(ctx); err != nil {
-		return managedartifact.PublishCollectionResult{}, err
-	}
+	request collection.PublishCollectionRequest,
+) (collection.PublishCollectionResult, error) {
 	return a.components.ManagedArtifacts.PublishCollection(ctx, request)
 }
 
 func (a *API) RemoveManagedArtifact(
 	ctx context.Context,
-	request managedartifact.RemoveRequest,
+	request artifact.RemoveArtifactRequest,
 ) error {
-	if err := a.requireStore(ctx); err != nil {
-		return err
-	}
 	return a.components.ManagedArtifacts.Remove(ctx, request)
-}
-
-func (a *API) requireStore(ctx context.Context) error {
-	if err := a.check(ctx); err != nil {
-		return err
-	}
-	if a.components.Collections == nil ||
-		a.components.Artifacts == nil ||
-		a.components.Refresh == nil ||
-		a.components.ManagedArtifacts == nil ||
-		a.components.ShareableSchemas == nil {
-		return fmt.Errorf(
-			"%w: Artifact Store command services are unavailable",
-			basespec.ErrClosed,
-		)
-	}
-	return nil
 }
 
 func cloneAttachmentDrafts(

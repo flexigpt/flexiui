@@ -2,6 +2,8 @@ package collection
 
 import (
 	"encoding/json"
+
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
 type Draft struct {
@@ -19,4 +21,18 @@ type Update struct {
 	Description      string          `json:"description,omitempty"`
 	Enabled          bool            `json:"enabled"`
 	Data             json.RawMessage `json:"data"`
+}
+
+type PublishCollectionRequest struct {
+	Collection     CollectionRef                    `json:"collection"`
+	SourceID       source.SourceID                  `json:"sourceID"`
+	Package        source.ManagedPackagePublication `json:"package"`
+	AllowProtected bool                             `json:"allowProtected"`
+	ForceRefresh   bool                             `json:"forceRefresh"`
+}
+
+type PublishCollectionResult struct {
+	Source     source.Summary `json:"source"`
+	Generation string         `json:"generation"`
+	Refreshed  bool           `json:"refreshed"`
 }

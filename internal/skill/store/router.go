@@ -35,13 +35,13 @@ type ArtifactSkillLoader interface {
 }
 
 type ArtifactRouter struct {
-	store   artifactConsumerAPI.ConsumerAPI
+	store   *artifactConsumerAPI.API
 	mu      sync.RWMutex
 	loaders map[collection.CollectionKind]ArtifactSkillLoader
 }
 
 func NewArtifactRouter(
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 ) (*ArtifactRouter, error) {
 	if store == nil {
 		return nil, fmt.Errorf(

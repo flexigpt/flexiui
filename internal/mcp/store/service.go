@@ -26,7 +26,7 @@ import (
 )
 
 type Dependencies struct {
-	Store artifactConsumerAPI.ConsumerAPI
+	Store *artifactConsumerAPI.API
 
 	UserRootID     root.RootID
 	Overlays       mcpOverlay.OverlayRepository

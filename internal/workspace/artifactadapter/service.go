@@ -18,12 +18,12 @@ import (
 )
 
 type Service struct {
-	store           artifactConsumerAPI.ConsumerAPI
+	store           *artifactConsumerAPI.API
 	workspaceRootID root.RootID
 }
 
 func NewService(
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 	workspaceRootID root.RootID,
 ) (*Service, error) {
 	if store == nil {

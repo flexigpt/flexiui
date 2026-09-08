@@ -91,47 +91,6 @@ func (w *MCPAggregateWrapper) ReplaceMCPBundleDocument(
 	})
 }
 
-func (w *MCPAggregateWrapper) RefreshMCPBundle(
-	ref collection.CollectionRef,
-) (mcpStore.Bundle, error) {
-	return withMCPAggregate(w, func(service *mcpAggregate.Service) (mcpStore.Bundle, error) {
-		return service.RefreshBundle(context.Background(), ref, false)
-	})
-}
-
-func (w *MCPAggregateWrapper) UpdateMCPBundleEnabled(
-	ref collection.CollectionRef,
-	expectedRevision uint64,
-	enabled bool,
-) (mcpStore.Bundle, error) {
-	return withMCPAggregate(w, func(service *mcpAggregate.Service) (mcpStore.Bundle, error) {
-		return service.UpdateBundleEnabled(
-			context.Background(),
-			ref,
-			expectedRevision,
-			enabled,
-		)
-	})
-}
-
-func (w *MCPAggregateWrapper) RetireMCPBundle(
-	ref collection.CollectionRef,
-	expectedRevision uint64,
-) (collection.Collection, error) {
-	return withMCPAggregate(w, func(service *mcpAggregate.Service) (collection.Collection, error) {
-		return service.RetireBundle(context.Background(), ref, expectedRevision)
-	})
-}
-
-func (w *MCPAggregateWrapper) PurgeMCPBundle(
-	ref collection.CollectionRef,
-	expectedRevision uint64,
-) error {
-	return withMCPAggregateError(w, func(service *mcpAggregate.Service) error {
-		return service.PurgeBundle(context.Background(), ref, expectedRevision)
-	})
-}
-
 func (w *MCPAggregateWrapper) UpdateMCPServerInstallation(
 	ref artifact.ArtifactRef,
 	expectedArtifactRevision uint64,

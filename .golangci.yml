@@ -425,24 +425,10 @@ linters:
           alias: agentskillsRuntimeSpec
         - pkg: github.com/flexigpt/flexigpt-app/frontend
           alias: assets
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact
-          alias: artifactimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog
-          alias: catalogimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection
-          alias: collectionimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/managedartifact
-          alias: managedartifactimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/refresh
-          alias: refreshimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/root
-          alias: rootimpl
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source
-          alias: sourceimpl
+        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/(\w+)
+          alias: ${1}impl
         - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi
           alias: artifactConsumerAPI
-        - pkg: github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/(\w+)
-          alias: artifactConsumerAPI${1}
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/consts
           alias: ${1}Consts
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/spec

@@ -9,30 +9,23 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
-// ResolveOptions controls Store-owned source verification.
-//
-// Catalog and definition verification always occur. VerifySourceContent also
-// confirms the exact current source bytes before a resolved resource is
-// returned.
 type ResolveOptions struct {
-	VerifySourceContent bool
+	VerifySourceContent bool `json:"verifySourceContent"`
 }
 
-// ResolvedArtifact is the consumer-facing Store-verified resource chain:
-//
-// Artifact -> Collection -> current Catalog -> Definition -> Source.
-//
-// Source configuration and source snapshots remain private to Artifact Store.
+// ResolvedArtifact contains the Store-verified resource chain for an
+// available Artifact.
 type ResolvedArtifact struct {
-	Artifact         artifact.Artifact
-	Collection       collection.Collection
-	Definition       definition.Definition
-	Occurrence       catalog.Occurrence
-	Source           source.Summary
-	CatalogRevision  uint64
-	SourceGeneration string
+	Artifact         artifact.Artifact     `json:"artifact"`
+	Collection       collection.Collection `json:"collection"`
+	Definition       definition.Definition `json:"definition"`
+	Occurrence       catalog.Occurrence    `json:"occurrence"`
+	Source           source.Summary        `json:"source"`
+	CatalogRevision  uint64                `json:"catalogRevision"`
+	SourceGeneration string                `json:"sourceGeneration"`
 }
 
 func (r ResolvedArtifact) Validate() error {
@@ -60,7 +53,6 @@ func (r ResolvedArtifact) Validate() error {
 	if err := basespec.ValidateSourceGeneration(r.SourceGeneration); err != nil {
 		return err
 	}
-
 	if r.Artifact.RootID != r.Collection.RootID ||
 		r.Artifact.CollectionID != r.Collection.ID {
 		return fmt.Errorf(
@@ -71,7 +63,7 @@ func (r ResolvedArtifact) Validate() error {
 	if r.Source.RootID != r.Collection.RootID ||
 		r.Source.ID != r.Artifact.Binding.SourceID {
 		return fmt.Errorf(
-			"%w: resolved Source does not match the Artifact binding",
+			"%w: resolved Source does not match Artifact binding",
 			basespec.ErrInvalid,
 		)
 	}
@@ -80,10 +72,9 @@ func (r ResolvedArtifact) Validate() error {
 		r.Occurrence.Key.CollectionID != r.Artifact.CollectionID ||
 		r.Occurrence.Key.SourceID != r.Artifact.Binding.SourceID ||
 		r.Occurrence.Key.Locator != r.Artifact.Binding.Locator ||
-		r.Occurrence.Key.SubresourceLocator !=
-			r.Artifact.Binding.SubresourceLocator {
+		r.Occurrence.Key.SubresourceLocator != r.Artifact.Binding.SubresourceLocator {
 		return fmt.Errorf(
-			"%w: resolved occurrence does not match the Artifact binding",
+			"%w: resolved occurrence does not match Artifact binding",
 			basespec.ErrInvalid,
 		)
 	}
@@ -101,7 +92,7 @@ func (r ResolvedArtifact) Validate() error {
 		r.Definition.Digest != *r.Artifact.ResolvedDefinition ||
 		r.Definition.Digest != *r.Occurrence.DefinitionDigest {
 		return fmt.Errorf(
-			"%w: resolved definition does not match Artifact state",
+			"%w: resolved Definition does not match Artifact state",
 			basespec.ErrDigestMismatch,
 		)
 	}
@@ -115,5 +106,49 @@ func (r ResolvedArtifact) Clone() ResolvedArtifact {
 	output.Definition = r.Definition.Clone()
 	output.Occurrence = r.Occurrence.Clone()
 	output.Source = r.Source.Clone()
+	return output
+}
+
+type VerifiedEntry struct {
+	Collection       collection.CollectionRef `json:"collection"`
+	SourceID         source.SourceID          `json:"sourceID"`
+	CatalogRevision  uint64                   `json:"catalogRevision"`
+	SourceRevision   uint64                   `json:"sourceRevision"`
+	SourceGeneration string                   `json:"sourceGeneration"`
+	Content          []byte                   `json:"content"`
+	Digest           cryptoutil.Digest        `json:"digest"`
+}
+
+func (e VerifiedEntry) Validate() error {
+	if err := e.Collection.Validate(); err != nil {
+		return err
+	}
+	if err := e.SourceID.Validate(); err != nil {
+		return err
+	}
+	if e.CatalogRevision == 0 || e.SourceRevision == 0 {
+		return fmt.Errorf(
+			"%w: verified entry revisions are required",
+			basespec.ErrInvalid,
+		)
+	}
+	if err := basespec.ValidateSourceGeneration(e.SourceGeneration); err != nil {
+		return err
+	}
+	if err := cryptoutil.ValidateDigest(e.Digest); err != nil {
+		return err
+	}
+	if cryptoutil.DigestBytes(e.Content) != e.Digest {
+		return fmt.Errorf(
+			"%w: verified entry content does not match digest",
+			basespec.ErrDigestMismatch,
+		)
+	}
+	return nil
+}
+
+func (e VerifiedEntry) Clone() VerifiedEntry {
+	output := e
+	output.Content = append([]byte(nil), e.Content...)
 	return output
 }

@@ -10,10 +10,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
@@ -281,7 +280,7 @@ func (a *API) InstallBuiltInCollection(
 
 	if _, err := a.dependencies.Store.PublishManagedCollection(
 		ctx,
-		managedartifact.PublishCollectionRequest{
+		collection.PublishCollectionRequest{
 			Collection:     request.Bundle,
 			SourceID:       sourceValue.ID,
 			Package:        publication,
@@ -379,7 +378,7 @@ func (a *API) ensurePinnedManagedSkill(
 		if err != nil {
 			return artifact.Artifact{}, err
 		}
-		value, pinErr := a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
+		value, pinErr := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
 			ArtifactID:                 artifactID,
 			Collection:                 bundle,
 			ExpectedCollectionRevision: expectedCollectionRevision,

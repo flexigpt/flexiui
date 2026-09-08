@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi"
@@ -21,8 +20,8 @@ import (
 // operations and Close remain on this composition owner.
 type Store struct {
 	mu         sync.RWMutex
-	consumer   *artifactstore.API
 	components *system.Components
+	consumer   *consumerapi.API
 }
 
 // Open constructs Artifact Store from already initialized provider plugins.
@@ -79,7 +78,7 @@ func Open(
 		return nil, err
 	}
 
-	consumer, err := artifactstore.NewAPI(components)
+	consumer, err := consumerapi.New(components)
 	if err != nil {
 		_ = components.Close()
 		return nil, err
@@ -102,8 +101,8 @@ func Open(
 	return output, nil
 }
 
-// Consumer returns the transport-independent consumer contract.
-func (s *Store) Consumer() consumerapi.ConsumerAPI {
+// Consumer returns the direct Artifact Store consumer implementation.
+func (s *Store) Consumer() *consumerapi.API {
 	if s == nil {
 		return nil
 	}

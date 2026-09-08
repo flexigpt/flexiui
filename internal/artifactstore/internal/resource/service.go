@@ -8,9 +8,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIresource "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/resource"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	collectionimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/collection"
 	sourceimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/source"
@@ -60,29 +60,29 @@ func NewService(
 func (s *Service) ResolveArtifact(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-	options artifactConsumerAPIresource.ResolveOptions,
-) (artifactConsumerAPIresource.ResolvedArtifact, error) {
+	options resource.ResolveOptions,
+) (resource.ResolvedArtifact, error) {
 	if err := validateContext(ctx, "Artifact resolution"); err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	if s == nil ||
 		s.artifacts == nil ||
 		s.collections == nil ||
 		s.catalogs == nil ||
 		s.sources == nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, basespec.ErrClosed
+		return resource.ResolvedArtifact{}, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 
 	record, err := s.artifacts.Get(ctx, ref)
 	if err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	if record.State != artifact.StateAvailable ||
 		record.ResolvedDefinition == nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Artifact %q is not currently available",
 			basespec.ErrReferenceUnresolved,
 			ref.ArtifactID,
@@ -95,10 +95,10 @@ func (s *Service) ResolveArtifact(
 	}
 	collectionValue, err := s.collections.Get(ctx, collectionRef)
 	if err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	if collectionValue.Ref() != collectionRef {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Collection reader returned another Collection",
 			basespec.ErrInvalid,
 		)
@@ -106,7 +106,7 @@ func (s *Service) ResolveArtifact(
 
 	snapshot, err := s.catalogs.CurrentCatalog(ctx, collectionRef)
 	if err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 
 	var occurrence *catalog.Occurrence
@@ -128,7 +128,7 @@ func (s *Service) ResolveArtifact(
 		occurrence.DefinitionDigest == nil ||
 		occurrence.SourceContentDigest == nil ||
 		*occurrence.DefinitionDigest != *record.ResolvedDefinition {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Artifact %q does not match its current Catalog occurrence",
 			basespec.ErrCatalogStale,
 			record.ID,
@@ -139,11 +139,11 @@ func (s *Service) ResolveArtifact(
 		occurrence.Key,
 	)
 	if err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	if definitionValue.Kind != record.Kind ||
 		definitionValue.Digest != *record.ResolvedDefinition {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Artifact %q definition does not match current state",
 			basespec.ErrDigestMismatch,
 			record.ID,
@@ -153,7 +153,7 @@ func (s *Service) ResolveArtifact(
 	sourceRevision := snapshot.SourceRevisions[record.Binding.SourceID]
 	sourceGeneration := snapshot.SourceGenerations[record.Binding.SourceID]
 	if sourceRevision == 0 || sourceGeneration == "" {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Artifact Source has no current Catalog state",
 			basespec.ErrCatalogStale,
 		)
@@ -165,10 +165,10 @@ func (s *Service) ResolveArtifact(
 		record.Binding.SourceID,
 	)
 	if err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	if sourceValue.Revision != sourceRevision {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, fmt.Errorf(
+		return resource.ResolvedArtifact{}, fmt.Errorf(
 			"%w: Artifact Source changed after Catalog publication",
 			basespec.ErrCatalogStale,
 		)
@@ -184,11 +184,11 @@ func (s *Service) ResolveArtifact(
 			*occurrence.SourceContentDigest,
 			basespec.MaxCandidateBytes,
 		); err != nil {
-			return artifactConsumerAPIresource.ResolvedArtifact{}, err
+			return resource.ResolvedArtifact{}, err
 		}
 	}
 
-	output := artifactConsumerAPIresource.ResolvedArtifact{
+	output := resource.ResolvedArtifact{
 		Artifact:         record.Clone(),
 		Collection:       collectionValue.Clone(),
 		Definition:       definitionValue.Clone(),
@@ -198,7 +198,7 @@ func (s *Service) ResolveArtifact(
 		SourceGeneration: sourceGeneration,
 	}
 	if err := output.Validate(); err != nil {
-		return artifactConsumerAPIresource.ResolvedArtifact{}, err
+		return resource.ResolvedArtifact{}, err
 	}
 	return output.Clone(), nil
 }
@@ -207,7 +207,7 @@ func (s *Service) ResolveArtifact(
 // resolves a native path through the selected Source adapter.
 func (s *Service) ResolveVerifiedLocalPath(
 	ctx context.Context,
-	resolved artifactConsumerAPIresource.ResolvedArtifact,
+	resolved resource.ResolvedArtifact,
 	localLocator basespec.Locator,
 ) (string, error) {
 	if err := validateContext(ctx, "verified local-path resolution"); err != nil {
@@ -260,31 +260,31 @@ func (s *Service) ReadCollectionEntry(
 	sourceID source.SourceID,
 	locator basespec.Locator,
 	maximumBytes int64,
-) (artifactConsumerAPIresource.VerifiedEntry, error) {
+) (resource.VerifiedEntry, error) {
 	if err := validateContext(ctx, "Collection source read"); err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	if s == nil || s.catalogs == nil || s.sources == nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, basespec.ErrClosed
+		return resource.VerifiedEntry{}, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	if err := sourceID.Validate(); err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	if err := locator.Validate(false); err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 
 	snapshot, err := s.catalogs.CurrentCatalog(ctx, ref)
 	if err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	sourceRevision := snapshot.SourceRevisions[sourceID]
 	sourceGeneration := snapshot.SourceGenerations[sourceID]
 	if sourceRevision == 0 || sourceGeneration == "" {
-		return artifactConsumerAPIresource.VerifiedEntry{}, fmt.Errorf(
+		return resource.VerifiedEntry{}, fmt.Errorf(
 			"%w: Source %q has no current Collection Catalog state",
 			basespec.ErrCatalogStale,
 			sourceID,
@@ -293,10 +293,10 @@ func (s *Service) ReadCollectionEntry(
 
 	sourceValue, err := s.sources.Get(ctx, ref.RootID, sourceID)
 	if err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	if sourceValue.Revision != sourceRevision {
-		return artifactConsumerAPIresource.VerifiedEntry{}, fmt.Errorf(
+		return resource.VerifiedEntry{}, fmt.Errorf(
 			"%w: Collection Source changed after Catalog publication",
 			basespec.ErrCatalogStale,
 		)
@@ -311,10 +311,10 @@ func (s *Service) ReadCollectionEntry(
 		maximumBytes,
 	)
 	if err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 
-	output := artifactConsumerAPIresource.VerifiedEntry{
+	output := resource.VerifiedEntry{
 		Collection:       ref,
 		SourceID:         sourceID,
 		CatalogRevision:  snapshot.Revision,
@@ -324,7 +324,7 @@ func (s *Service) ReadCollectionEntry(
 		Digest:           digest,
 	}
 	if err := output.Validate(); err != nil {
-		return artifactConsumerAPIresource.VerifiedEntry{}, err
+		return resource.VerifiedEntry{}, err
 	}
 	return output.Clone(), nil
 }

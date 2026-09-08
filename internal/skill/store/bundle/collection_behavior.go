@@ -27,6 +27,32 @@ func (skillCollectionBehavior) Revision() string {
 	return DiscoveryPolicyRevision
 }
 
+func (b skillCollectionBehavior) ValidateLifecycle(
+	ctx context.Context,
+	command providerapi.LifecycleCommand,
+) error {
+	if ctx == nil {
+		return fmt.Errorf(
+			"%w: Skill lifecycle context is nil",
+			basespec.ErrInvalid,
+		)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := command.Validate(); err != nil {
+		return err
+	}
+	if command.CollectionKind != b.CollectionKind() {
+		return fmt.Errorf(
+			"%w: Skill lifecycle received collection kind %q",
+			basespec.ErrInvalid,
+			command.CollectionKind,
+		)
+	}
+	return nil
+}
+
 func (b skillCollectionBehavior) BuildDiscoveryPlan(
 	ctx context.Context,
 	collectionValue providerapi.Collection,

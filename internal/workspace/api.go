@@ -15,7 +15,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
@@ -544,7 +543,7 @@ func (a *API) AdoptWorkspaceOccurrence(
 	if err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.AdoptArtifact(ctx, artifactConsumerAPIartifact.AdoptRequest{
+	value, err := a.dependencies.Store.AdoptArtifact(ctx, catalog.AdoptRequest{
 		ArtifactID:              request.Body.ArtifactID,
 		Collection:              request.Workspace,
 		Occurrence:              key,
@@ -585,7 +584,7 @@ func (a *API) PinWorkspaceArtifact(
 	if err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.PinArtifact(ctx, artifactConsumerAPIartifact.PinRequest{
+	value, err := a.dependencies.Store.PinArtifact(ctx, catalog.PinRequest{
 		ArtifactID:                 request.Body.ArtifactID,
 		Collection:                 request.Workspace,
 		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
@@ -651,7 +650,7 @@ func (a *API) SuppressWorkspaceBinding(
 	); err != nil {
 		return nil, err
 	}
-	value, err := a.dependencies.Store.SuppressBinding(ctx, artifactConsumerAPIartifact.SuppressRequest{
+	value, err := a.dependencies.Store.SuppressBinding(ctx, catalog.SuppressRequest{
 		Collection:                 request.Workspace,
 		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
 		Binding:                    request.Body.Binding,

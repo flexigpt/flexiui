@@ -15,7 +15,7 @@ type WorkspaceWrapper struct {
 
 func InitWorkspaceWrapper(
 	wrapper *WorkspaceWrapper,
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 ) error {
 	if wrapper == nil {
 		return errors.New("workspace wrapper is nil")
@@ -35,22 +35,6 @@ func InitWorkspaceWrapper(
 	return nil
 }
 
-func (w *WorkspaceWrapper) CreateFilesystemWorkspace(
-	request *workspace.CreateFilesystemWorkspaceRequest,
-) (*workspace.CreateFilesystemWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.CreateFilesystemWorkspaceResponse, error) {
-		return w.api.CreateFilesystemWorkspace(context.Background(), request)
-	})
-}
-
-func (w *WorkspaceWrapper) CreateEmptyWorkspace(
-	request *workspace.CreateEmptyWorkspaceRequest,
-) (*workspace.CreateEmptyWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.CreateEmptyWorkspaceResponse, error) {
-		return w.api.CreateEmptyWorkspace(context.Background(), request)
-	})
-}
-
 func (w *WorkspaceWrapper) GetWorkspace(
 	request *workspace.GetWorkspaceRequest,
 ) (*workspace.GetWorkspaceResponse, error) {
@@ -64,118 +48,6 @@ func (w *WorkspaceWrapper) ListWorkspaces(
 ) (*workspace.ListWorkspacesResponse, error) {
 	return middleware.WithRecoveryResp(func() (*workspace.ListWorkspacesResponse, error) {
 		return w.api.ListWorkspaces(context.Background(), request)
-	})
-}
-
-func (w *WorkspaceWrapper) UpdateWorkspace(
-	request *workspace.UpdateWorkspaceRequest,
-) (*workspace.UpdateWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.UpdateWorkspaceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.UpdateWorkspace(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) SetWorkspacePrimarySource(
-	request *workspace.SetWorkspacePrimarySourceRequest,
-) (*workspace.SetWorkspacePrimarySourceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.SetWorkspacePrimarySourceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.SetWorkspacePrimarySource(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) RetireWorkspace(
-	request *workspace.RetireWorkspaceRequest,
-) (*workspace.RetireWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.RetireWorkspaceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.RetireWorkspace(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) PurgeWorkspace(
-	request *workspace.PurgeWorkspaceRequest,
-) (*workspace.PurgeWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.PurgeWorkspaceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.PurgeWorkspace(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) AttachWorkspaceSource(
-	request *workspace.AttachWorkspaceSourceRequest,
-) (*workspace.AttachWorkspaceSourceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.AttachWorkspaceSourceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.AttachWorkspaceSource(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) UpdateWorkspaceAttachment(
-	request *workspace.UpdateWorkspaceAttachmentRequest,
-) (*workspace.UpdateWorkspaceAttachmentResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.UpdateWorkspaceAttachmentResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.UpdateWorkspaceAttachment(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) DetachWorkspaceSource(
-	request *workspace.DetachWorkspaceSourceRequest,
-) (*workspace.DetachWorkspaceSourceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.DetachWorkspaceSourceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.DetachWorkspaceSource(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) RefreshWorkspace(
-	request *workspace.RefreshWorkspaceRequest,
-) (*workspace.RefreshWorkspaceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.RefreshWorkspaceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.RefreshWorkspace(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
 	})
 }
 
@@ -200,70 +72,6 @@ func (w *WorkspaceWrapper) ListWorkspaceArtifacts(
 ) (*workspace.ListWorkspaceArtifactsResponse, error) {
 	return middleware.WithRecoveryResp(func() (*workspace.ListWorkspaceArtifactsResponse, error) {
 		return w.api.ListWorkspaceArtifacts(context.Background(), request)
-	})
-}
-
-func (w *WorkspaceWrapper) AdoptWorkspaceOccurrence(
-	request *workspace.AdoptWorkspaceOccurrenceRequest,
-) (*workspace.AdoptWorkspaceOccurrenceResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.AdoptWorkspaceOccurrenceResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.AdoptWorkspaceOccurrence(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) PinWorkspaceArtifact(
-	request *workspace.PinWorkspaceArtifactRequest,
-) (*workspace.PinWorkspaceArtifactResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.PinWorkspaceArtifactResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.PinWorkspaceArtifact(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) ListWorkspaceSuppressions(
-	request *workspace.ListWorkspaceSuppressionsRequest,
-) (*workspace.ListWorkspaceSuppressionsResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.ListWorkspaceSuppressionsResponse, error) {
-		return w.api.ListWorkspaceSuppressions(context.Background(), request)
-	})
-}
-
-func (w *WorkspaceWrapper) SuppressWorkspaceBinding(
-	request *workspace.SuppressWorkspaceBindingRequest,
-) (*workspace.SuppressWorkspaceBindingResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.SuppressWorkspaceBindingResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.SuppressWorkspaceBinding(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) UnsuppressWorkspaceBinding(
-	request *workspace.UnsuppressWorkspaceBindingRequest,
-) (*workspace.UnsuppressWorkspaceBindingResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.UnsuppressWorkspaceBindingResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.UnsuppressWorkspaceBinding(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
 	})
 }
 
@@ -304,48 +112,6 @@ func (w *WorkspaceWrapper) LoadWorkspaceSkills(
 ) (*workspace.LoadWorkspaceSkillsResponse, error) {
 	return middleware.WithRecoveryResp(func() (*workspace.LoadWorkspaceSkillsResponse, error) {
 		return w.api.LoadWorkspaceSkills(context.Background(), request)
-	})
-}
-
-func (w *WorkspaceWrapper) SetWorkspaceArtifactEnabled(
-	request *workspace.SetWorkspaceArtifactEnabledRequest,
-) (*workspace.SetWorkspaceArtifactEnabledResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.SetWorkspaceArtifactEnabledResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.SetWorkspaceArtifactEnabled(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) UnadoptWorkspaceArtifact(
-	request *workspace.UnadoptWorkspaceArtifactRequest,
-) (*workspace.UnadoptWorkspaceArtifactResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.UnadoptWorkspaceArtifactResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.UnadoptWorkspaceArtifact(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
-}
-
-func (w *WorkspaceWrapper) PurgeWorkspaceArtifact(
-	request *workspace.PurgeWorkspaceArtifactRequest,
-) (*workspace.PurgeWorkspaceArtifactResponse, error) {
-	return middleware.WithRecoveryResp(func() (*workspace.PurgeWorkspaceArtifactResponse, error) {
-		ctx := context.Background()
-		response, err := w.api.PurgeWorkspaceArtifact(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
 	})
 }
 

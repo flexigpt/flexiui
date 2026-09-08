@@ -13,7 +13,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/refresh"
 	artifactimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/artifactid"
 	catalogimpl "github.com/flexigpt/flexigpt-app/internal/artifactstore/internal/catalog"
@@ -40,37 +39,37 @@ type providerRefreshInput struct {
 func (s *Service) RefreshCollection(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.RefreshCollectionResult, error) {
+) (catalog.RefreshCollectionResult, error) {
 	if s == nil || s.providers == nil || s.artifactIDs == nil {
-		return refresh.RefreshCollectionResult{}, basespec.ErrClosed
+		return catalog.RefreshCollectionResult{}, basespec.ErrClosed
 	}
 	if ctx == nil {
-		return refresh.RefreshCollectionResult{}, fmt.Errorf(
+		return catalog.RefreshCollectionResult{}, fmt.Errorf(
 			"%w: collection refresh context is nil",
 			basespec.ErrInvalid,
 		)
 	}
 	if err := ctx.Err(); err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 	if err := ref.Validate(); err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 	if err := rootimpl.RequireMutableRoot(
 		ctx,
 		s.policy,
 		ref.RootID,
 	); err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 
 	input, err := s.loadProviderRefreshInput(ctx, ref)
 	if err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 	plan, err := s.buildProviderPlan(ctx, input)
 	if err != nil {
-		return refresh.RefreshCollectionResult{}, err
+		return catalog.RefreshCollectionResult{}, err
 	}
 
 	return s.refresh(
@@ -112,50 +111,50 @@ func (s *Service) CurrentCatalog(
 func (s *Service) InspectCollectionCatalog(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (refresh.CatalogInspection, error) {
+) (catalog.CatalogInspection, error) {
 	if s == nil ||
 		s.providers == nil ||
 		s.catalogs == nil ||
 		s.discovery == nil {
-		return refresh.CatalogInspection{}, basespec.ErrClosed
+		return catalog.CatalogInspection{}, basespec.ErrClosed
 	}
 	if ctx == nil {
-		return refresh.CatalogInspection{}, fmt.Errorf(
+		return catalog.CatalogInspection{}, fmt.Errorf(
 			"%w: collection catalog inspection context is nil",
 			basespec.ErrInvalid,
 		)
 	}
 	if err := ctx.Err(); err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 	if err := ref.Validate(); err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 
 	input, err := s.loadProviderRefreshInput(ctx, ref)
 	if err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 	plan, err := s.buildProviderPlan(ctx, input)
 	if err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 	snapshot, catalogErr := catalogimpl.ReadCurrent(ctx, s.catalogs, ref)
 	if catalogErr != nil &&
 		!errors.Is(catalogErr, basespec.ErrCatalogStale) {
-		return refresh.CatalogInspection{}, catalogErr
+		return catalog.CatalogInspection{}, catalogErr
 	}
 
 	planFingerprint, err := plan.Fingerprint()
 	if err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 	decoderFingerprint, err := s.discovery.DecoderFingerprint()
 	if err != nil {
-		return refresh.CatalogInspection{}, err
+		return catalog.CatalogInspection{}, err
 	}
 
-	return refresh.CatalogInspection{
+	return catalog.CatalogInspection{
 		Catalog:         snapshot.Clone(),
 		MetadataChanged: errors.Is(catalogErr, basespec.ErrCatalogStale),
 		PlanChanged:     snapshot.PlanFingerprint != planFingerprint,

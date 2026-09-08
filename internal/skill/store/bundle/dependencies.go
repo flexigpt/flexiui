@@ -8,7 +8,7 @@ import (
 )
 
 type Dependencies struct {
-	Store artifactConsumerAPI.ConsumerAPI
+	Store *artifactConsumerAPI.API
 }
 
 func (d Dependencies) Validate() error {

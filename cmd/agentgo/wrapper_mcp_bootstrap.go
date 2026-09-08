@@ -32,7 +32,7 @@ func InitMCPWrappers(
 	storeWrapper *MCPStoreWrapper,
 	runtimeWrapper *MCPRuntimeWrapper,
 	aggregateWrapper *MCPAggregateWrapper,
-	store artifactConsumerAPI.ConsumerAPI,
+	store *artifactConsumerAPI.API,
 	settingsStore mcpAuthKeyStore,
 ) error {
 	if storeWrapper == nil ||

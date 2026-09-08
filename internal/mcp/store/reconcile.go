@@ -9,13 +9,12 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	artifactConsumerAPIartifact "github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/consumerapi/reqresp/managedartifact"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
@@ -154,7 +153,7 @@ func (a *API) replaceCanonicalDocument(
 
 	if _, err := a.dependencies.Store.PublishManagedCollection(
 		ctx,
-		managedartifact.PublishCollectionRequest{
+		collection.PublishCollectionRequest{
 			Collection: plan.bundle.Collection.Ref(),
 			SourceID:   plan.bundle.Source.ID,
 			Package: source.ManagedPackagePublication{
@@ -288,7 +287,7 @@ func (a *API) pinRegisteredArtifact(
 
 	return a.dependencies.Store.PinArtifact(
 		ctx,
-		artifactConsumerAPIartifact.PinRequest{
+		catalog.PinRequest{
 			ArtifactID:                 registration.ArtifactID,
 			Collection:                 bundle.Collection.Ref(),
 			ExpectedCollectionRevision: bundle.Collection.Revision,
