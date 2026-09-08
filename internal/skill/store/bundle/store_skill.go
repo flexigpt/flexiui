@@ -36,9 +36,6 @@ func (a *API) ListResolvedSkills(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 ) ([]ResolvedSkill, error) {
-	if err := a.Ready(); err != nil {
-		return nil, err
-	}
 	if err := bundle.Validate(); err != nil {
 		return nil, err
 	}
@@ -110,9 +107,6 @@ func (a *API) ResolveSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ResolvedSkill, error) {
-	if err := a.Ready(); err != nil {
-		return ResolvedSkill{}, err
-	}
 	if err := ref.Validate(); err != nil {
 		return ResolvedSkill{}, err
 	}

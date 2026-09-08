@@ -2,128 +2,140 @@ package main
 
 import (
 	"context"
-	"errors"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
-	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 )
 
-// MCPStoreWrapper exposes only pure Store operations. Runtime-affecting
-// mutations intentionally live on MCPAggregateWrapper so they cannot bypass
-// runtime invalidation.
+// MCPStoreWrapper exposes only pure MCP Store operations.
+//
+// Runtime-affecting MCP changes belong to MCPAggregateWrapper. Runtime
+// connection operations belong to MCPRuntimeWrapper.
 type MCPStoreWrapper struct {
-	api *mcpStore.API
+	api *mcpStore.StoreAPI
 
 	builtInInstaller artifactbuiltin.HydrationInstaller
 }
 
-func withMCPStore[T any](
-	w *MCPStoreWrapper,
-	fn func(*mcpStore.API) (T, error),
-) (T, error) {
-	return middleware.WithRecoveryResp(func() (T, error) {
-		var zero T
-		if err := w.ready(); err != nil {
-			return zero, err
-		}
-		return fn(w.api)
-	})
-}
-
 func (w *MCPStoreWrapper) CreateMCPBundle(
-	request *mcpStore.CreateRequest,
-) (mcpStore.Bundle, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.Bundle, error) {
-		if request == nil {
-			return mcpStore.Bundle{}, errors.New("MCP Bundle create request is required")
-		}
-		return api.Create(context.Background(), *request)
-	})
+	request *mcpStore.CreateMCPBundleRequest,
+) (*mcpStore.CreateMCPBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.CreateMCPBundleResponse, error) {
+			return w.api.CreateMCPBundle(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundle(
-	ref collection.CollectionRef,
-) (mcpStore.Bundle, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.Bundle, error) {
-		return api.Get(context.Background(), ref)
-	})
+	request *mcpStore.GetMCPBundleRequest,
+) (*mcpStore.GetMCPBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.GetMCPBundleResponse, error) {
+			return w.api.GetMCPBundle(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundles(
-	rootID root.RootID,
-) ([]mcpStore.Bundle, error) {
-	return withMCPStore(w, func(api *mcpStore.API) ([]mcpStore.Bundle, error) {
-		return api.List(context.Background(), rootID)
-	})
+	request *mcpStore.ListMCPBundlesRequest,
+) (*mcpStore.ListMCPBundlesResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.ListMCPBundlesResponse, error) {
+			return w.api.ListMCPBundles(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundleDocument(
-	ref collection.CollectionRef,
-) (mcpStore.BundleDocument, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.BundleDocument, error) {
-		return api.GetDocument(context.Background(), ref)
-	})
+	request *mcpStore.GetMCPBundleDocumentRequest,
+) (*mcpStore.GetMCPBundleDocumentResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.GetMCPBundleDocumentResponse, error) {
+			return w.api.GetMCPBundleDocument(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundleServers(
-	ref collection.CollectionRef,
-) ([]artifact.Artifact, error) {
-	return withMCPStore(w, func(api *mcpStore.API) ([]artifact.Artifact, error) {
-		return api.ListServers(context.Background(), ref)
-	})
+	request *mcpStore.ListMCPBundleServersRequest,
+) (*mcpStore.ListMCPBundleServersResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.ListMCPBundleServersResponse, error) {
+			return w.api.ListMCPBundleServers(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) ListMCPBundlePolicies(
-	ref collection.CollectionRef,
-) ([]artifact.Artifact, error) {
-	return withMCPStore(w, func(api *mcpStore.API) ([]artifact.Artifact, error) {
-		return api.ListPolicies(context.Background(), ref)
-	})
+	request *mcpStore.ListMCPBundlePoliciesRequest,
+) (*mcpStore.ListMCPBundlePoliciesResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.ListMCPBundlePoliciesResponse, error) {
+			return w.api.ListMCPBundlePolicies(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) GetMCPServerInstallation(
-	ref artifact.ArtifactRef,
-) (mcpStore.ServerInstallationView, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.ServerInstallationView, error) {
-		return api.GetServerInstallation(context.Background(), ref)
-	})
+	request *mcpStore.GetMCPServerInstallationRequest,
+) (*mcpStore.GetMCPServerInstallationResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.GetMCPServerInstallationResponse, error) {
+			return w.api.GetMCPServerInstallation(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) InspectMCPServer(
-	ref artifact.ArtifactRef,
-) (mcpStoreServer.Resolved, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStoreServer.Resolved, error) {
-		return api.InspectMCPServer(context.Background(), ref)
-	})
+	request *mcpStore.InspectMCPServerRequest,
+) (*mcpStore.InspectMCPServerResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.InspectMCPServerResponse, error) {
+			return w.api.InspectMCPServer(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) InspectMCPPolicy(
-	ref artifact.ArtifactRef,
-) (mcpStore.PolicyView, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.PolicyView, error) {
-		return api.InspectMCPPolicy(context.Background(), ref)
-	})
+	request *mcpStore.InspectMCPPolicyRequest,
+) (*mcpStore.InspectMCPPolicyResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.InspectMCPPolicyResponse, error) {
+			return w.api.InspectMCPPolicy(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) GetMCPBundleInstallation(
-	ref collection.CollectionRef,
-) (mcpStore.BundleInstallationView, error) {
-	return withMCPStore(w, func(api *mcpStore.API) (mcpStore.BundleInstallationView, error) {
-		return api.GetBundleInstallation(context.Background(), ref)
-	})
-}
+	request *mcpStore.GetMCPBundleInstallationRequest,
+) (*mcpStore.GetMCPBundleInstallationResponse, error) {
+	ctx := context.Background()
 
-func (w *MCPStoreWrapper) ready() error {
-	if w == nil || w.api == nil {
-		return basespec.ErrClosed
-	}
-	return nil
+	return middleware.WithRecoveryResp(
+		func() (*mcpStore.GetMCPBundleInstallationResponse, error) {
+			return w.api.GetMCPBundleInstallation(ctx, request)
+		},
+	)
 }
 
 func (w *MCPStoreWrapper) close() {

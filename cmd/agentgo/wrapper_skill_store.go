@@ -6,8 +6,6 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -16,7 +14,7 @@ import (
 )
 
 type SkillStoreWrapper struct {
-	api    *skillBundle.API
+	api    *skillBundle.StoreAPI
 	router *skillStore.ArtifactRouter
 
 	builtInInstaller artifactbuiltin.HydrationInstaller
@@ -34,9 +32,11 @@ func InitSkillStoreWrapper(
 		return err
 	}
 
-	api, err := skillBundle.New(
-		dependencies,
-	)
+	service, err := skillBundle.New(dependencies)
+	if err != nil {
+		return err
+	}
+	api, err := skillBundle.NewStoreAPI(service)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func InitSkillStoreWrapper(
 	if err != nil {
 		return err
 	}
-	bundleResolver, err := skillBundle.NewStoreLoader(api)
+	bundleResolver, err := skillBundle.NewStoreLoader(service)
 	if err != nil {
 		return err
 	}
@@ -70,106 +70,247 @@ func InitSkillStoreWrapper(
 		return err
 	}
 
-	wrapper.api = api
-	wrapper.router = router
-
 	skillRegistry, err := schemaadapter.LoadRegistry()
 	if err != nil {
-		wrapper.close()
 		return err
 	}
-
 	packages, err := artifactbuiltin.EmbeddedSkillPackages()
 	if err != nil {
-		wrapper.close()
 		return err
 	}
 	builtIns, err := schemaadapter.NewInstaller(
 		schemaadapter.InstallerDependencies{
-			Skills:                 api,
+			Skills:                 service,
 			SkillRegistry:          skillRegistry,
 			Packages:               packages,
 			ShareableCanonicalizer: dependencies.Schemas,
 		},
 	)
 	if err != nil {
-		wrapper.close()
 		return err
 	}
-	wrapper.builtInInstaller = builtIns
 
+	wrapper.api = api
+	wrapper.router = router
+	wrapper.builtInInstaller = builtIns
 	return nil
 }
 
-// AttachSkillSource attaches a Source already created through Artifact Store
-// administration. It intentionally accepts only Source identity and typed
-// Skill Bundle role data, never a filesystem path or Source configuration.
+func (w *SkillStoreWrapper) CreateSkillBundle(
+	request *skillBundle.CreateSkillBundleRequest,
+) (*skillBundle.CreateSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.CreateSkillBundleResponse, error) {
+			return w.api.CreateSkillBundle(ctx, request)
+		},
+	)
+}
 
 func (w *SkillStoreWrapper) GetSkillBundle(
-	ref collection.CollectionRef,
-) (skillBundle.Bundle, error) {
-	return middleware.WithRecoveryResp(func() (skillBundle.Bundle, error) {
-		return w.api.GetBundle(context.Background(), ref)
-	})
+	request *skillBundle.GetSkillBundleRequest,
+) (*skillBundle.GetSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.GetSkillBundleResponse, error) {
+			return w.api.GetSkillBundle(ctx, request)
+		},
+	)
 }
 
 func (w *SkillStoreWrapper) ListSkillBundles(
-	rootID root.RootID,
-) ([]skillBundle.Bundle, error) {
-	return middleware.WithRecoveryResp(func() ([]skillBundle.Bundle, error) {
-		return w.api.ListBundles(context.Background(), rootID)
-	})
+	request *skillBundle.ListSkillBundlesRequest,
+) (*skillBundle.ListSkillBundlesResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.ListSkillBundlesResponse, error) {
+			return w.api.ListSkillBundles(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) UpdateSkillBundle(
+	request *skillBundle.UpdateSkillBundleRequest,
+) (*skillBundle.UpdateSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.UpdateSkillBundleResponse, error) {
+			return w.api.UpdateSkillBundle(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) RetireSkillBundle(
+	request *skillBundle.RetireSkillBundleRequest,
+) (*skillBundle.RetireSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.RetireSkillBundleResponse, error) {
+			return w.api.RetireSkillBundle(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) PurgeSkillBundle(
+	request *skillBundle.PurgeSkillBundleRequest,
+) (*skillBundle.PurgeSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.PurgeSkillBundleResponse, error) {
+			return w.api.PurgeSkillBundle(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) AttachSkillBundleSource(
+	request *skillBundle.AttachSkillBundleSourceRequest,
+) (*skillBundle.AttachSkillBundleSourceResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.AttachSkillBundleSourceResponse, error) {
+			return w.api.AttachSkillBundleSource(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) RefreshSkillBundle(
+	request *skillBundle.RefreshSkillBundleRequest,
+) (*skillBundle.RefreshSkillBundleResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.RefreshSkillBundleResponse, error) {
+			return w.api.RefreshSkillBundle(ctx, request)
+		},
+	)
 }
 
 func (w *SkillStoreWrapper) CreateManagedSkill(
-	request *skillBundle.CreateManagedSkillRequest,
-) (skillBundle.CreateManagedSkillResponse, error) {
-	return middleware.WithRecoveryResp(
-		func() (skillBundle.CreateManagedSkillResponse, error) {
-			if request == nil {
-				return skillBundle.CreateManagedSkillResponse{},
-					errors.New("managed skill request is required")
-			}
-			value, err := w.api.CreateManagedSkill(context.Background(), *request)
-			if err != nil {
-				return value, err
-			}
+	request *skillBundle.CreateManagedSkillStoreRequest,
+) (*skillBundle.CreateManagedSkillStoreResponse, error) {
+	ctx := context.Background()
 
-			return value, nil
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.CreateManagedSkillStoreResponse, error) {
+			return w.api.CreateManagedSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) GetManagedSkillDocument(
-	ref artifact.ArtifactRef,
-) (skillBundle.ManagedSkillDocument, error) {
+	request *skillBundle.GetManagedSkillDocumentRequest,
+) (*skillBundle.GetManagedSkillDocumentResponse, error) {
+	ctx := context.Background()
+
 	return middleware.WithRecoveryResp(
-		func() (skillBundle.ManagedSkillDocument, error) {
-			return w.api.GetManagedSkillDocument(context.Background(), ref)
+		func() (*skillBundle.GetManagedSkillDocumentResponse, error) {
+			return w.api.GetManagedSkillDocument(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) AdoptSkill(
+	request *skillBundle.AdoptSkillStoreRequest,
+) (*skillBundle.AdoptSkillStoreResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.AdoptSkillStoreResponse, error) {
+			return w.api.AdoptSkill(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) PinSkill(
+	request *skillBundle.PinSkillStoreRequest,
+) (*skillBundle.PinSkillStoreResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.PinSkillStoreResponse, error) {
+			return w.api.PinSkill(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) GetSkill(
+	request *skillBundle.GetSkillRequest,
+) (*skillBundle.GetSkillResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.GetSkillResponse, error) {
+			return w.api.GetSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) ListBundleSkills(
-	ref collection.CollectionRef,
-) ([]artifact.Artifact, error) {
-	return middleware.WithRecoveryResp(func() ([]artifact.Artifact, error) {
-		return w.api.ListSkills(context.Background(), ref)
-	})
+	request *skillBundle.ListBundleSkillsRequest,
+) (*skillBundle.ListBundleSkillsResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.ListBundleSkillsResponse, error) {
+			return w.api.ListBundleSkills(ctx, request)
+		},
+	)
 }
 
-// ResolveArtifactSkill performs the Store-owned ArtifactRef to Agent Skills
-// translation. The returned Collection identifies the catalog that must be
-// synchronized before Definition is used in a runtime session.
+func (w *SkillStoreWrapper) SetSkillEnabled(
+	request *skillBundle.SetSkillEnabledRequest,
+) (*skillBundle.SetSkillEnabledResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.SetSkillEnabledResponse, error) {
+			return w.api.SetSkillEnabled(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) UnadoptSkill(
+	request *skillBundle.UnadoptSkillRequest,
+) (*skillBundle.UnadoptSkillResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.UnadoptSkillResponse, error) {
+			return w.api.UnadoptSkill(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) PurgeSkill(
+	request *skillBundle.PurgeSkillRequest,
+) (*skillBundle.PurgeSkillResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillBundle.PurgeSkillResponse, error) {
+			return w.api.PurgeSkill(ctx, request)
+		},
+	)
+}
+
+// ResolveArtifactSkill is a Skill aggregate bridge, not a generic Artifact
+// Store API. Runtime-facing migration is handled by the later aggregate
+// checkpoint.
 func (w *SkillStoreWrapper) ResolveArtifactSkill(
 	ref artifact.ArtifactRef,
 ) (skillStore.ResolvedArtifactSkill, error) {
+	ctx := context.Background()
+
 	return middleware.WithRecoveryResp(
 		func() (skillStore.ResolvedArtifactSkill, error) {
-			return w.router.ResolveArtifactSkill(
-				context.Background(),
-				ref,
-			)
+			return w.router.ResolveArtifactSkill(ctx, ref)
 		},
 	)
 }
@@ -178,9 +319,7 @@ func (w *SkillStoreWrapper) close() {
 	if w == nil {
 		return
 	}
-
 	w.builtInInstaller = nil
-
 	w.router = nil
 	w.api = nil
 }

@@ -9,7 +9,6 @@ import (
 	"io"
 	"maps"
 	"sort"
-	"sync/atomic"
 
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
@@ -28,22 +27,13 @@ import (
 
 type API struct {
 	dependencies Dependencies
-	closed       atomic.Bool
 }
 
 func New(dependencies Dependencies) (*API, error) {
 	if err := dependencies.Validate(); err != nil {
 		return nil, err
 	}
-
 	return &API{dependencies: dependencies}, nil
-}
-
-func (a *API) Close() error {
-	if a != nil {
-		a.closed.Store(true)
-	}
-	return nil
 }
 
 func (a *API) CreateBundle(
@@ -57,9 +47,6 @@ func (a *API) ListBundles(
 	ctx context.Context,
 	rootID root.RootID,
 ) ([]Bundle, error) {
-	if err := a.Ready(); err != nil {
-		return nil, err
-	}
 	values, err := a.dependencies.Collections.ListByRoot(ctx, rootID)
 	if err != nil {
 		return nil, err
@@ -159,9 +146,6 @@ func (a *API) PurgeBundle(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) error {
-	if err := a.Ready(); err != nil {
-		return err
-	}
 	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
 		return err
 	}
@@ -336,10 +320,6 @@ func (a *API) GetManagedSkillDocument(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ManagedSkillDocument, error) {
-	if err := a.Ready(); err != nil {
-		return ManagedSkillDocument{}, err
-	}
-
 	value, err := a.GetSkill(ctx, ref)
 	if err != nil {
 		return ManagedSkillDocument{}, err
@@ -657,9 +637,6 @@ func (a *API) GetSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (artifact.Artifact, error) {
-	if err := a.Ready(); err != nil {
-		return artifact.Artifact{}, err
-	}
 	value, err := a.dependencies.Artifacts.Get(ctx, ref)
 	if err != nil {
 		return artifact.Artifact{}, err
@@ -794,9 +771,6 @@ func (a *API) GetBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (Bundle, error) {
-	if err := a.Ready(); err != nil {
-		return Bundle{}, err
-	}
 	if err := ref.Validate(); err != nil {
 		return Bundle{}, err
 	}
@@ -855,13 +829,6 @@ func (a *API) GetBundle(
 	}, nil
 }
 
-func (a *API) Ready() error {
-	if a == nil || a.closed.Load() {
-		return basespec.ErrClosed
-	}
-	return a.dependencies.Validate()
-}
-
 func (a *API) currentBundleCatalog(
 	ctx context.Context,
 	bundle Bundle,
@@ -908,9 +875,6 @@ func (a *API) createBundle(
 	request CreateBundleRequest,
 	allowBuiltInAttachment bool,
 ) (Bundle, error) {
-	if err := a.Ready(); err != nil {
-		return Bundle{}, err
-	}
 	if err := request.CollectionID.Validate(); err != nil {
 		return Bundle{}, err
 	}
@@ -1276,9 +1240,6 @@ func (a *API) createManagedSkill(
 	request CreateManagedSkillRequest,
 	allowBuiltInAttachment bool,
 ) (CreateManagedSkillResponse, error) {
-	if err := a.Ready(); err != nil {
-		return CreateManagedSkillResponse{}, err
-	}
 	if err := request.Bundle.Validate(); err != nil {
 		return CreateManagedSkillResponse{}, err
 	}

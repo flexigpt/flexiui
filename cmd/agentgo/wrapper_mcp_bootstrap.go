@@ -57,6 +57,11 @@ func InitMCPWrappers(
 	if err != nil {
 		return err
 	}
+	storeFacade, err := mcpStore.NewStoreAPI(storeAPI)
+	if err != nil {
+		return err
+	}
+
 	if err := ensureDefaultMCPBundle(ctx, storeAPI); err != nil {
 		return err
 	}
@@ -158,7 +163,7 @@ func InitMCPWrappers(
 		return cleanup(err)
 	}
 
-	storeWrapper.api = storeAPI
+	storeWrapper.api = storeFacade
 	storeWrapper.builtInInstaller = builtIns
 
 	runtimeWrapper.runtime = runtimeManager

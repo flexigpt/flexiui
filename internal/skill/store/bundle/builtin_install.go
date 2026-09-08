@@ -49,9 +49,7 @@ func (a *API) InstallBuiltInCollection(
 	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return nil, err
 	}
-	if err := a.Ready(); err != nil {
-		return nil, err
-	}
+
 	if err := request.Bundle.Validate(); err != nil {
 		return nil, err
 	}

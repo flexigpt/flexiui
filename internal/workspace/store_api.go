@@ -1036,9 +1036,6 @@ func (a *API) requireWorkspaceArtifactKind(
 	if err := kind.Validate(); err != nil {
 		return err
 	}
-	if a.workspace == nil {
-		return invalidAPIRequest("workspace components are unavailable")
-	}
 	if _, supported := a.workspace.supportedKinds[kind]; !supported {
 		return fmt.Errorf(
 			"%w: Artifact kind %q is not supported by Workspace",
@@ -1061,10 +1058,6 @@ func artifactRefsOf(
 		})
 	}
 	return output
-}
-
-func invalidAPIRequest(message string) error {
-	return fmt.Errorf("%w: %s", spec.ErrInvalidWorkspace, message)
 }
 
 func (a *API) workspaceViewForAPI(
