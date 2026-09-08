@@ -26,8 +26,8 @@ import (
 	settingStore "github.com/flexigpt/flexigpt-app/internal/setting/store"
 	skillAggregate "github.com/flexigpt/flexigpt-app/internal/skill/aggregate"
 	toolStore "github.com/flexigpt/flexigpt-app/internal/tool/store"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 )
 
 var appSlogLevelVar slog.LevelVar
@@ -58,7 +58,7 @@ func InitAggregrateWrapper(
 	ts *toolStore.ToolStore,
 	artifactSkills *skillAggregate.Service,
 	mr *mcpConnection.MCPRuntimeManager,
-	workspaceAPI workspace.ConversationSource,
+	workspaceAPI workspaceAggregate.ConversationSource,
 ) error {
 	if agg == nil || ts == nil || mps == nil || ss == nil || artifactSkills == nil || workspaceAPI == nil {
 		panic("initializing aggregate store wrapper on nil receivers")
@@ -76,7 +76,7 @@ func InitAggregrateWrapper(
 		bridge = inferencewrapper.NewMCPInferenceBridge(mr)
 	}
 
-	cr, err := selection.NewConversationResolver(workspaceAPI)
+	cr, err := workspaceConversation.NewConversationResolver(workspaceAPI)
 	if err != nil {
 		panic("no workspace api provided")
 	}

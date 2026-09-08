@@ -285,7 +285,7 @@ func (a *App) initManagers() {
 		)
 		panic("failed to initialize managers: workspace initialization failed\n" + err.Error())
 	}
-	slog.Info("workspace Store, Runtime, and Aggregate APIs initialized")
+	slog.Info("workspace consumer, runtime engine, and aggregate APIs initialized")
 
 	err = InitSkillStoreWrapper(
 		a.skillStoreAPI,

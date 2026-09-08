@@ -17,8 +17,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
+	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
+	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/artifactadapter"
 )
 
 type SkillArgument struct {
@@ -75,23 +75,23 @@ type WorkspaceDataSource interface {
 	Catalog(
 		ctx context.Context,
 		workspace collection.CollectionRef,
-	) (spec.CatalogView, error)
+	) (workspaceDomain.CatalogView, error)
 
 	ResolveArtifact(
 		ctx context.Context,
 		ref artifact.ArtifactRef,
-	) (spec.Workspace, spec.Resource, error)
+	) (workspaceDomain.Workspace, workspaceDomain.Resource, error)
 
 	ComposeLoadPlan(
 		ctx context.Context,
 		workspace collection.CollectionRef,
 		artifactRefs []artifact.ArtifactRef,
-	) (spec.LoadPlan, error)
+	) (workspaceDomain.LoadPlan, error)
 
 	GetWorkspace(
 		ctx context.Context,
 		workspace collection.CollectionRef,
-	) (spec.Workspace, error)
+	) (workspaceDomain.Workspace, error)
 }
 
 type ArtifactResourceReader interface {
@@ -126,7 +126,7 @@ func NewAdapter(
 	if query == nil || runtimePolicy == nil || resourceAPI == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace Skill adapter dependencies are incomplete",
-			spec.ErrInvalidWorkspace,
+			workspaceDomain.ErrInvalidWorkspace,
 		)
 	}
 
@@ -186,7 +186,7 @@ func (f *Adapter) LoadArtifact(
 		resourceValue.Definition.SchemaID != artifactbuiltin.AgentSkillSchemaID {
 		return WorkspaceSkill{}, fmt.Errorf(
 			"%w: Artifact %q is not an Agent Skill",
-			spec.ErrReferenceUnresolved,
+			workspaceDomain.ErrReferenceUnresolved,
 			ref.ArtifactID,
 		)
 	}
@@ -197,7 +197,7 @@ func (f *Adapter) LoadArtifact(
 	if len(plan.Skills) != 1 {
 		return WorkspaceSkill{}, fmt.Errorf(
 			"%w: Artifact %q is unavailable for runtime loading",
-			spec.ErrReferenceUnresolved,
+			workspaceDomain.ErrReferenceUnresolved,
 			ref.ArtifactID,
 		)
 	}
@@ -217,13 +217,13 @@ func (f *Adapter) Load(
 		if ref.RootID != workspace.RootID {
 			return SkillLoadPlan{}, fmt.Errorf(
 				"%w: Workspace Skill belongs to another Root",
-				spec.ErrReferenceUnresolved,
+				workspaceDomain.ErrReferenceUnresolved,
 			)
 		}
 		if _, duplicate := seen[ref]; duplicate {
 			return SkillLoadPlan{}, fmt.Errorf(
 				"%w: duplicate Workspace Skill Artifact %q",
-				spec.ErrInvalidWorkspace,
+				workspaceDomain.ErrInvalidWorkspace,
 				ref.ArtifactID,
 			)
 		}
@@ -260,7 +260,7 @@ func (f *Adapter) loadLocal(
 	}
 
 	for _, item := range loadPlan.Items {
-		resourceValue := spec.Resource{
+		resourceValue := workspaceDomain.Resource{
 			Artifact:        item.Artifact,
 			Definition:      item.Definition,
 			Source:          item.Source,
@@ -362,7 +362,7 @@ func (f *Adapter) loadLocal(
 
 func projectWorkspaceSkill(
 	workspace collection.CollectionRef,
-	resourceValue spec.Resource,
+	resourceValue workspaceDomain.Resource,
 	workspaceEnabled bool,
 	includeMarkdown bool,
 	runtimePathBacked bool,

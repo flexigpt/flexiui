@@ -8,7 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	mcpProviderAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/providerapi"
 	skillProviderAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
+	workspaceProviderAPI "github.com/flexigpt/flexigpt-app/internal/workspace/store/providerapi"
 )
 
 func composeArtifactStore(
@@ -19,9 +19,8 @@ func composeArtifactStore(
 		return nil, err
 	}
 
-	workspaceConfig := workspace.DefaultConfig()
-	workspaceProvider, err := workspace.NewProvider(
-		workspaceConfig.ProviderConfig(),
+	workspaceProvider, err := workspaceProviderAPI.NewProvider(
+		workspaceProviderAPI.DefaultProviderConfig(),
 	)
 	if err != nil {
 		return nil, err

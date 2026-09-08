@@ -8,7 +8,7 @@ import (
 
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	toolSpec "github.com/flexigpt/flexigpt-app/internal/tool/spec"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 )
 
 type AddProviderRequestBody struct {
@@ -90,7 +90,7 @@ type CompletionResponseBody struct {
 	// InvokeMappedMCPTool. Conversation storage validates the mappings against
 	// that turn's MCPContext.
 	MCPToolMappings []mcpConversation.MCPProviderToolMapping `json:"mcpToolMappings,omitempty"`
-	WorkspaceUsage  *selection.ConversationUsage             `json:"workspaceUsage,omitempty"`
+	WorkspaceUsage  *workspaceConversation.ConversationUsage `json:"workspaceUsage,omitempty"`
 }
 
 type CompletionResponse struct {

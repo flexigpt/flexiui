@@ -25,7 +25,7 @@ import (
 	skillAggregate "github.com/flexigpt/flexigpt-app/internal/skill/aggregate"
 	toolStore "github.com/flexigpt/flexigpt-app/internal/tool/store"
 	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 )
 
 const (
@@ -294,7 +294,7 @@ func (ps *ProviderSetAPI) FetchCompletion(
 		}, nil
 	}
 
-	var workspaceUsage *selection.ConversationUsage
+	var workspaceUsage *workspaceConversation.ConversationUsage
 	if body.Current.WorkspaceSelection != nil {
 		hydrated, workspaceErr := ps.workspaceBridge.HydrateCompletion(
 			ctx,
@@ -380,7 +380,7 @@ func (ps *ProviderSetAPI) FetchCompletion(
 			nil,
 			false,
 		)
-		if workspaceUsage.Status == selection.ConversationSelectionUnavailable {
+		if workspaceUsage.Status == workspaceConversation.ConversationSelectionUnavailable {
 			return workspaceUnavailableCompletionResponse(
 				currentInputs,
 				workspaceUsage,
@@ -494,7 +494,7 @@ func (ps *ProviderSetAPI) FetchCompletion(
 		)
 
 		if workspaceUsage != nil &&
-			workspaceUsage.Status == selection.ConversationSelectionUnavailable {
+			workspaceUsage.Status == workspaceConversation.ConversationSelectionUnavailable {
 			return workspaceUnavailableCompletionResponse(
 				currentInputs,
 				workspaceUsage,
@@ -602,7 +602,7 @@ func (ps *ProviderSetAPI) FetchCompletion(
 
 func workspaceUnavailableCompletionResponse(
 	currentInputs []inferenceSpec.InputUnion,
-	workspaceUsage *selection.ConversationUsage,
+	workspaceUsage *workspaceConversation.ConversationUsage,
 	message string,
 ) *spec.CompletionResponse {
 	return &spec.CompletionResponse{

@@ -6,11 +6,12 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
+	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
+	workspaceConsumerAPI "github.com/flexigpt/flexigpt-app/internal/workspace/store/consumerapi"
 )
 
 type WorkspaceStoreWrapper struct {
-	api *workspace.StoreAPI
+	api *workspaceConsumerAPI.StoreAPI
 }
 
 func InitWorkspaceWrappers(
@@ -29,27 +30,27 @@ func InitWorkspaceWrappers(
 		return errors.New("workspace wrapper dependencies are incomplete")
 	}
 
-	storeAPI, err := workspace.NewStoreAPI(
+	storeAPI, err := workspaceConsumerAPI.NewStoreAPI(
 		sources,
 		collections,
 		artifacts,
 		catalogs,
 		resources,
-		workspace.DefaultConfig(),
+		workspaceConsumerAPI.DefaultConfig(),
 	)
 	if err != nil {
 		return err
 	}
 
-	runtimeAPI, err := workspace.NewRuntimeAPI(
-		storeAPI.ContextRuntime(),
+	runtimeAPI, err := workspaceAggregate.NewRuntimeAPI(
+		storeAPI.ContextAdapter(),
 		storeAPI.SkillAdapter(),
 	)
 	if err != nil {
 		return err
 	}
 
-	aggregateAPI, err := workspace.NewAggregateAPI(
+	aggregateAPI, err := workspaceAggregate.NewAggregateAPI(
 		storeAPI,
 		runtimeAPI,
 		storeAPI,
@@ -65,60 +66,60 @@ func InitWorkspaceWrappers(
 }
 
 func (w *WorkspaceStoreWrapper) GetWorkspace(
-	request *workspace.GetWorkspaceRequest,
-) (*workspace.GetWorkspaceResponse, error) {
+	request *workspaceConsumerAPI.GetWorkspaceRequest,
+) (*workspaceConsumerAPI.GetWorkspaceResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.GetWorkspaceResponse, error) {
+		func() (*workspaceConsumerAPI.GetWorkspaceResponse, error) {
 			return w.api.GetWorkspace(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceStoreWrapper) ListWorkspaces(
-	request *workspace.ListWorkspacesRequest,
-) (*workspace.ListWorkspacesResponse, error) {
+	request *workspaceConsumerAPI.ListWorkspacesRequest,
+) (*workspaceConsumerAPI.ListWorkspacesResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.ListWorkspacesResponse, error) {
+		func() (*workspaceConsumerAPI.ListWorkspacesResponse, error) {
 			return w.api.ListWorkspaces(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceStoreWrapper) GetWorkspaceCatalog(
-	request *workspace.GetWorkspaceCatalogRequest,
-) (*workspace.GetWorkspaceCatalogResponse, error) {
+	request *workspaceConsumerAPI.GetWorkspaceCatalogRequest,
+) (*workspaceConsumerAPI.GetWorkspaceCatalogResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.GetWorkspaceCatalogResponse, error) {
+		func() (*workspaceConsumerAPI.GetWorkspaceCatalogResponse, error) {
 			return w.api.GetWorkspaceCatalog(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceStoreWrapper) GetWorkspaceArtifact(
-	request *workspace.GetWorkspaceArtifactRequest,
-) (*workspace.GetWorkspaceArtifactResponse, error) {
+	request *workspaceConsumerAPI.GetWorkspaceArtifactRequest,
+) (*workspaceConsumerAPI.GetWorkspaceArtifactResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.GetWorkspaceArtifactResponse, error) {
+		func() (*workspaceConsumerAPI.GetWorkspaceArtifactResponse, error) {
 			return w.api.GetWorkspaceArtifact(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceStoreWrapper) ListWorkspaceArtifacts(
-	request *workspace.ListWorkspaceArtifactsRequest,
-) (*workspace.ListWorkspaceArtifactsResponse, error) {
+	request *workspaceConsumerAPI.ListWorkspaceArtifactsRequest,
+) (*workspaceConsumerAPI.ListWorkspaceArtifactsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.ListWorkspaceArtifactsResponse, error) {
+		func() (*workspaceConsumerAPI.ListWorkspaceArtifactsResponse, error) {
 			return w.api.ListWorkspaceArtifacts(ctx, request)
 		},
 	)

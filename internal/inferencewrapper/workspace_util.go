@@ -11,7 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 )
 
 const workspaceContextInputIDPrefix = "workspace-context:"
@@ -19,8 +19,8 @@ const workspaceContextInputIDPrefix = "workspace-context:"
 type WorkspaceConversationResolver interface {
 	ResolveConversationSelection(
 		ctx context.Context,
-		selection selection.ConversationSelection,
-	) (selection.ConversationResolution, error)
+		selection workspaceConversation.ConversationSelection,
+	) (workspaceConversation.ConversationResolution, error)
 }
 
 type WorkspaceInferenceBridge struct {
@@ -29,7 +29,7 @@ type WorkspaceInferenceBridge struct {
 
 type WorkspaceCompletionHydrationResult struct {
 	CurrentInputs []inferenceSpec.InputUnion
-	Usage         *selection.ConversationUsage
+	Usage         *workspaceConversation.ConversationUsage
 	DebugDetails  map[string]any
 }
 
@@ -43,7 +43,7 @@ func NewWorkspaceInferenceBridge(
 // identities. Artifact membership and owning Collection kind are resolved by
 // the internal Artifact Skill bridge, never inferred from reference shape.
 func validateArtifactSkillRefsForSelection(
-	sel *selection.ConversationSelection,
+	sel *workspaceConversation.ConversationSelection,
 	refs []artifact.ArtifactRef,
 ) error {
 	if sel != nil {
@@ -88,7 +88,7 @@ func validateArtifactSkillRefsForSelection(
 
 func (b *WorkspaceInferenceBridge) HydrateCompletion(
 	ctx context.Context,
-	sel *selection.ConversationSelection,
+	sel *workspaceConversation.ConversationSelection,
 ) (*WorkspaceCompletionHydrationResult, error) {
 	output := &WorkspaceCompletionHydrationResult{}
 
@@ -223,7 +223,7 @@ func isGeneratedCurrentContextInput(input inferenceSpec.InputUnion) bool {
 // the caller's explicit runtime allow-list and are resolved by ArtifactRouter.
 func filterWorkspaceSkillRefsToResolvedSelection(
 	refs []artifact.ArtifactRef,
-	usage *selection.ConversationUsage,
+	usage *workspaceConversation.ConversationUsage,
 ) []artifact.ArtifactRef {
 	if usage == nil || len(refs) == 0 {
 		return refs
@@ -233,7 +233,7 @@ func filterWorkspaceSkillRefsToResolvedSelection(
 	available := make(map[string]struct{}, len(usage.Skills))
 	for _, skill := range usage.Skills {
 		selected[workspaceArtifactRefKey(skill.Artifact)] = struct{}{}
-		if skill.Status != selection.ConversationSkillUsageAvailable {
+		if skill.Status != workspaceConversation.ConversationSkillUsageAvailable {
 			continue
 		}
 		available[workspaceArtifactRefKey(skill.Artifact)] = struct{}{}
@@ -254,7 +254,7 @@ func filterWorkspaceSkillRefsToResolvedSelection(
 }
 
 func markWorkspaceSkillSessionUsage(
-	usage *selection.ConversationUsage,
+	usage *workspaceConversation.ConversationUsage,
 	enabledSkillRefs []artifact.ArtifactRef,
 	sessionSkillRefs []artifact.ArtifactRef,
 	activeSkillRefs []artifact.ArtifactRef,
@@ -281,12 +281,12 @@ func markWorkspaceSkillSessionUsage(
 
 	for index := range usage.Skills {
 		current := &usage.Skills[index]
-		if current.Status != selection.ConversationSkillUsageAvailable {
+		if current.Status != workspaceConversation.ConversationSkillUsageAvailable {
 			continue
 		}
 
 		if !advertised {
-			current.Status = selection.ConversationSkillUsageUnavailable
+			current.Status = workspaceConversation.ConversationSkillUsageUnavailable
 			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
 				diagnostic.Diagnostic{
@@ -300,7 +300,7 @@ func markWorkspaceSkillSessionUsage(
 
 		key := workspaceArtifactRefKey(current.Artifact)
 		if _, selectedForSession := enabled[key]; !selectedForSession {
-			current.Status = selection.ConversationSkillUsageUnavailable
+			current.Status = workspaceConversation.ConversationSkillUsageUnavailable
 			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
 				diagnostic.Diagnostic{
@@ -313,7 +313,7 @@ func markWorkspaceSkillSessionUsage(
 		}
 
 		if _, resolved := available[key]; !resolved {
-			current.Status = selection.ConversationSkillUsageUnavailable
+			current.Status = workspaceConversation.ConversationSkillUsageUnavailable
 			current.Diagnostics = diagnostic.Append(
 				current.Diagnostics,
 				diagnostic.Diagnostic{
@@ -330,7 +330,7 @@ func markWorkspaceSkillSessionUsage(
 		current.Advertised = advertised
 	}
 
-	selection.ResolveConversationUsageStatus(usage)
+	workspaceConversation.ResolveConversationUsageStatus(usage)
 }
 
 func workspaceArtifactRefKey(ref artifact.ArtifactRef) string {

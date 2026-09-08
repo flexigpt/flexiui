@@ -1,0 +1,155 @@
+package domain
+
+import (
+	"fmt"
+
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
+	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
+)
+
+type Mode string
+
+const (
+	ModeEmpty      Mode = "empty"
+	ModeFilesystem Mode = "filesystem"
+)
+
+// DirectoryRoot is the generic source-discovery scope type.
+type DirectoryRoot = providerapi.DirectoryRoot
+
+// DiscoveryProfile defines discovery rules for one attachment class.
+//
+// Artifact adapters contribute their own conventions through this type.
+type DiscoveryProfile struct {
+	ExplicitLocators []basespec.Locator
+	ReadmeLocator    basespec.Locator
+	DirectoryRoots   []DirectoryRoot
+}
+
+type DiscoveryProfiles struct {
+	Primary  DiscoveryProfile
+	Attached DiscoveryProfile
+}
+
+// DiscoveryRoot is retained as the Workspace preference name.
+type DiscoveryRoot = providerapi.DirectoryRoot
+
+type DiscoveryPreferences struct {
+	AdditionalLocators []basespec.Locator `json:"additionalLocators,omitempty"`
+	AdditionalRoots    []DiscoveryRoot    `json:"additionalRoots,omitempty"`
+	IncludeReadme      bool               `json:"includeReadme,omitempty"`
+}
+
+// CollectionData contains persisted Workspace preferences only. Workspace mode
+// and primary Source are derived from current collection attachments. Provider
+// behavior revision is Artifact Store capability input and is intentionally not
+// persisted in Collection local data.
+type CollectionData struct {
+	Discovery DiscoveryPreferences `json:"discovery"`
+}
+
+type AttachmentData struct {
+	Recursive     *bool `json:"recursive,omitempty"`
+	Authoritative *bool `json:"authoritative,omitempty"`
+}
+
+type ArtifactData struct {
+	RuntimeDisabled bool `json:"runtimeDisabled,omitempty"`
+}
+
+type WorkspaceRef = collection.CollectionRef
+
+// Workspace is an internal privileged aggregate. API packages project it into
+// explicit view models and must not serialize collection local data, attachment
+// local data, or Source configuration.
+type Workspace struct {
+	Collection      collection.Collection   `json:"-"`
+	Data            CollectionData          `json:"-"`
+	Mode            Mode                    `json:"-"`
+	PrimarySourceID source.SourceID         `json:"-"`
+	Attachments     []collection.Attachment `json:"-"`
+	Sources         []source.Summary        `json:"-"`
+}
+
+type Resource struct {
+	Artifact        artifact.Artifact       `json:"-"`
+	Definition      definition.Definition   `json:"-"`
+	Occurrence      *catalog.Occurrence     `json:"-"`
+	Source          source.Summary          `json:"-"`
+	CatalogCurrent  bool                    `json:"-"`
+	ProjectionValid bool                    `json:"-"`
+	Diagnostics     []diagnostic.Diagnostic `json:"-"`
+}
+
+type ResourceGroup struct {
+	Kind       artifact.ArtifactKind `json:"-"`
+	Resources  []Resource            `json:"-"`
+	Unrecorded []catalog.Occurrence  `json:"-"`
+}
+
+type CatalogView struct {
+	Workspace            Workspace               `json:"-"`
+	Catalog              catalog.Snapshot        `json:"-"`
+	Resources            []Resource              `json:"-"`
+	Unrecorded           []catalog.Occurrence    `json:"-"`
+	UnresolvedArtifacts  []artifact.Artifact     `json:"-"`
+	Groups               []ResourceGroup         `json:"-"`
+	CatalogCurrent       bool                    `json:"-"`
+	FreshnessDiagnostics []diagnostic.Diagnostic `json:"-"`
+}
+
+// LoadPlanItem contains privileged materialized source state. It must be
+// projected into an explicit adapter response before crossing an API boundary.
+type LoadPlanItem struct {
+	Artifact                   artifact.Artifact     `json:"-"`
+	Definition                 definition.Definition `json:"-"`
+	Source                     source.Summary        `json:"-"`
+	CatalogCurrent             bool                  `json:"-"`
+	OccurrenceDefinitionDigest cryptoutil.Digest     `json:"-"`
+	SourceContentDigest        cryptoutil.Digest     `json:"-"`
+	SourceGeneration           string                `json:"-"`
+}
+
+type LoadPlan struct {
+	Workspace       WorkspaceRef            `json:"-"`
+	CatalogRevision uint64                  `json:"-"`
+	Items           []LoadPlanItem          `json:"-"`
+	Diagnostics     []diagnostic.Diagnostic `json:"-"`
+}
+
+type DefinitionValidator func(definition.Definition) error
+
+type ArtifactSupport struct {
+	Kind      artifact.ArtifactKind
+	SchemaID  schema.SchemaID
+	DecoderID basespec.DecoderID
+	Validator DefinitionValidator
+}
+
+func (s ArtifactSupport) Validate() error {
+	if err := s.Kind.Validate(); err != nil {
+		return err
+	}
+	if err := s.SchemaID.Validate(); err != nil {
+		return err
+	}
+	if err := s.DecoderID.Validate(); err != nil {
+		return err
+	}
+	if s.Validator == nil {
+		return fmt.Errorf(
+			"%w: Workspace artifact support %q has no semantic validator",
+			ErrInvalidWorkspace,
+			s.Kind,
+		)
+	}
+	return nil
+}

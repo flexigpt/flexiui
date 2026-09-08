@@ -8,7 +8,7 @@ import (
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	modelpresetSpec "github.com/flexigpt/flexigpt-app/internal/modelpreset/spec"
 	toolSpec "github.com/flexigpt/flexigpt-app/internal/tool/spec"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 	inferenceSpec "github.com/flexigpt/inference-go/spec"
 )
 
@@ -55,8 +55,8 @@ type ConversationMessage struct {
 	MCPToolMappings      []mcpConversation.MCPProviderToolMapping   `json:"mcpToolMappings,omitempty"`
 	MCPAppContextUpdates []mcpConversation.MCPAppModelContextUpdate `json:"mcpAppContextUpdates,omitempty"`
 
-	WorkspaceSelection *selection.ConversationSelection `json:"workspaceSelection,omitempty"`
-	WorkspaceUsage     *selection.ConversationUsage     `json:"workspaceUsage,omitempty"`
+	WorkspaceSelection *workspaceConversation.ConversationSelection `json:"workspaceSelection,omitempty"`
+	WorkspaceUsage     *workspaceConversation.ConversationUsage     `json:"workspaceUsage,omitempty"`
 
 	// Attachments that backed this turn's user input (files, URLs, etc).
 	// These are ref attachments; ContentBlock may or may not be hydrated.

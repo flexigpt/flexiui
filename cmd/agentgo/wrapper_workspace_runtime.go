@@ -4,68 +4,68 @@ import (
 	"context"
 
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
+	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
 )
 
 type WorkspaceRuntimeWrapper struct {
-	api *workspace.RuntimeAPI
+	api *workspaceAggregate.RuntimeAPI
 }
 
 func (w *WorkspaceRuntimeWrapper) ListWorkspaceContexts(
-	request *workspace.ListWorkspaceContextsRequest,
-) (*workspace.ListWorkspaceContextsResponse, error) {
+	request *workspaceAggregate.ListWorkspaceContextsRequest,
+) (*workspaceAggregate.ListWorkspaceContextsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.ListWorkspaceContextsResponse, error) {
+		func() (*workspaceAggregate.ListWorkspaceContextsResponse, error) {
 			return w.api.ListWorkspaceContexts(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceRuntimeWrapper) LoadWorkspaceContexts(
-	request *workspace.LoadWorkspaceContextsRequest,
-) (*workspace.LoadWorkspaceContextsResponse, error) {
+	request *workspaceAggregate.LoadWorkspaceContextsRequest,
+) (*workspaceAggregate.LoadWorkspaceContextsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.LoadWorkspaceContextsResponse, error) {
+		func() (*workspaceAggregate.LoadWorkspaceContextsResponse, error) {
 			return w.api.LoadWorkspaceContexts(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceRuntimeWrapper) ComposeWorkspaceContext(
-	request *workspace.ComposeWorkspaceContextRequest,
-) (*workspace.ComposeWorkspaceContextResponse, error) {
+	request *workspaceAggregate.ComposeWorkspaceContextRequest,
+) (*workspaceAggregate.ComposeWorkspaceContextResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.ComposeWorkspaceContextResponse, error) {
+		func() (*workspaceAggregate.ComposeWorkspaceContextResponse, error) {
 			return w.api.ComposeWorkspaceContext(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceRuntimeWrapper) ListWorkspaceSkills(
-	request *workspace.ListWorkspaceSkillsRequest,
-) (*workspace.ListWorkspaceSkillsResponse, error) {
+	request *workspaceAggregate.ListWorkspaceSkillsRequest,
+) (*workspaceAggregate.ListWorkspaceSkillsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.ListWorkspaceSkillsResponse, error) {
+		func() (*workspaceAggregate.ListWorkspaceSkillsResponse, error) {
 			return w.api.ListWorkspaceSkills(ctx, request)
 		},
 	)
 }
 
 func (w *WorkspaceRuntimeWrapper) LoadWorkspaceSkills(
-	request *workspace.LoadWorkspaceSkillsRequest,
-) (*workspace.LoadWorkspaceSkillsResponse, error) {
+	request *workspaceAggregate.LoadWorkspaceSkillsRequest,
+) (*workspaceAggregate.LoadWorkspaceSkillsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.LoadWorkspaceSkillsResponse, error) {
+		func() (*workspaceAggregate.LoadWorkspaceSkillsResponse, error) {
 			return w.api.LoadWorkspaceSkills(ctx, request)
 		},
 	)

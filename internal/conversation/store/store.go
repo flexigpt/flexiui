@@ -13,7 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/conversation/spec"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/selection"
+	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 	"github.com/flexigpt/mapstore-go"
 	"github.com/flexigpt/mapstore-go/dirpartition"
 	"github.com/flexigpt/mapstore-go/ftsengine"
@@ -531,7 +531,7 @@ func validateConversationArtifactRefs(
 
 func validateConversationSelectionRefs(
 	field string,
-	refs []selection.ConversationResourceSelectionRef,
+	refs []workspaceConversation.ConversationResourceSelectionRef,
 	rootID root.RootID,
 ) error {
 	seen := make(map[string]struct{}, len(refs))

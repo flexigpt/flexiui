@@ -4,20 +4,20 @@ import (
 	"context"
 
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
+	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
 )
 
 type WorkspaceAggregateWrapper struct {
-	api *workspace.AggregateAPI
+	api *workspaceAggregate.AggregateAPI
 }
 
 func (w *WorkspaceAggregateWrapper) SetWorkspaceArtifactRuntimeDisabled(
-	request *workspace.SetWorkspaceArtifactRuntimeDisabledRequest,
-) (*workspace.SetWorkspaceArtifactRuntimeDisabledResponse, error) {
+	request *workspaceAggregate.SetWorkspaceArtifactRuntimeDisabledRequest,
+) (*workspaceAggregate.SetWorkspaceArtifactRuntimeDisabledResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*workspace.SetWorkspaceArtifactRuntimeDisabledResponse, error) {
+		func() (*workspaceAggregate.SetWorkspaceArtifactRuntimeDisabledResponse, error) {
 			return w.api.SetWorkspaceArtifactRuntimeDisabled(ctx, request)
 		},
 	)
