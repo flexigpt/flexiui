@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
@@ -31,5 +31,5 @@ type BundleDocument struct {
 }
 
 func (value BundleDocument) Validate() error {
-	return validateBundleDocument(value)
+	return validateDocument(value)
 }

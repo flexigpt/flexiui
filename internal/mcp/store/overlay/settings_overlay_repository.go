@@ -54,7 +54,7 @@ func (r *SettingsOverlayRepository) GetServerOverlay(
 	if err := decodeOverlay(raw, &value); err != nil {
 		return ServerOverlay{}, false, err
 	}
-	if err := ValidateServerOverlay(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return ServerOverlay{}, false, err
 	}
 	return cloneServerOverlay(value), true, nil
@@ -79,7 +79,7 @@ func (r *SettingsOverlayRepository) GetBundleOverlay(
 	if err := decodeOverlay(raw, &value); err != nil {
 		return BundleOverlay{}, false, err
 	}
-	if err := ValidateBundleOverlay(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return BundleOverlay{}, false, err
 	}
 	return value, true, nil
@@ -101,7 +101,7 @@ func (r *SettingsOverlayRepository) PutServerOverlay(
 	); err != nil {
 		return err
 	}
-	if err := ValidateServerOverlay(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return err
 	}
 
@@ -134,7 +134,7 @@ func (r *SettingsOverlayRepository) PutBundleOverlay(
 	); err != nil {
 		return err
 	}
-	if err := ValidateBundleOverlay(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return err
 	}
 
@@ -219,7 +219,7 @@ func (r *SettingsOverlayRepository) PurgeRoot(
 	)
 }
 
-func ValidateServerOverlay(value ServerOverlay) error {
+func (value ServerOverlay) Validate() error {
 	if value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
 		return fmt.Errorf(
 			"%w: unsupported MCP server overlay schema %q",
@@ -236,7 +236,7 @@ func ValidateServerOverlay(value ServerOverlay) error {
 	return value.ServerData.Validate()
 }
 
-func ValidateBundleOverlay(value BundleOverlay) error {
+func (value BundleOverlay) Validate() error {
 	if value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
 		return fmt.Errorf(
 			"%w: unsupported MCP bundle overlay schema %q",

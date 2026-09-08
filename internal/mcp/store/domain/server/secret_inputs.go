@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	mcpDomainSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/secret"
 )
 
@@ -28,37 +29,32 @@ type SecretInputTarget struct {
 	Slot string
 }
 
-// SecretInputTargets validates and returns the allowed target for every
-// secret installation input used by a canonical ServerDocument.
-//
-// Secret values may only materialize into stdio environment values or HTTP
-// header values. They are prohibited in commands, args, URLs, OAuth metadata
-// URLs, and all other scalar connection fields.
-func SecretInputTargets(
-	document ServerDocument,
-) (map[string]SecretInputTarget, error) {
-	if err := document.Validate(); err != nil {
+func (value ServerDocument) SecretInputTargets() (
+	map[string]SecretInputTarget,
+	error,
+) {
+	if err := value.Validate(); err != nil {
 		return nil, err
 	}
-	return secretInputTargets(document.MCPServer, document.Extension)
+	return secretInputTargets(value.MCPServer, value.Extension)
 }
 
-func ValidateSecretInputTarget(
-	document ServerDocument,
+func (value ServerDocument) AcceptsSecretTarget(
 	kind mcpDomainSecret.MCPSecretKind,
 	slot string,
 ) error {
-	if err := document.Validate(); err != nil {
+	if err := value.Validate(); err != nil {
 		return err
 	}
-	if err := mcpDomainSecret.ValidateSecretSlot(kind, slot); err != nil {
+	normalizedSlot, err := kind.NormalizeSlot(slot)
+	if err != nil {
 		return err
 	}
 
 	switch kind {
 	case mcpDomainSecret.MCPSecretKindOAuthClientCredentials:
-		input := document.Extension.Auth.ClientCredentialsInput
-		declaration, found := document.Extension.Install.Inputs[input]
+		input := value.Extension.Auth.ClientCredentialsInput
+		declaration, found := value.Extension.Install.Inputs[input]
 		if input == "" ||
 			!found ||
 			declaration.Kind != InputOAuthClientCredentials {
@@ -70,7 +66,7 @@ func ValidateSecretInputTarget(
 		return nil
 
 	case mcpDomainSecret.MCPSecretKindStdioEnv, mcpDomainSecret.MCPSecretKindHTTPHeader:
-		targets, err := SecretInputTargets(document)
+		targets, err := value.SecretInputTargets()
 		if err != nil {
 			return err
 		}
@@ -80,7 +76,7 @@ func ValidateSecretInputTarget(
 				expectedKind = mcpDomainSecret.MCPSecretKindHTTPHeader
 			}
 			if expectedKind == kind &&
-				strings.EqualFold(target.Slot, strings.TrimSpace(slot)) {
+				strings.EqualFold(target.Slot, normalizedSlot) {
 				return nil
 			}
 		}
@@ -94,6 +90,29 @@ func ValidateSecretInputTarget(
 			"%w: unsupported MCP secret kind %q",
 			basespec.ErrInvalid,
 			kind,
+		)
+	}
+}
+
+func (target SecretInputTarget) matches(
+	server artifact.ArtifactRef,
+	raw string,
+) error {
+	ref, err := mcpDomainSecret.ParseMCPSecretRef(raw)
+	if err != nil {
+		return err
+	}
+
+	switch target.Kind {
+	case SecretInputTargetStdioEnv:
+		return ref.Matches(server, mcpDomainSecret.MCPSecretKindStdioEnv, target.Slot)
+	case SecretInputTargetHTTPHeader:
+		return ref.Matches(server, mcpDomainSecret.MCPSecretKindHTTPHeader, target.Slot)
+	default:
+		return fmt.Errorf(
+			"%w: unsupported MCP secret input target %q",
+			basespec.ErrInvalid,
+			target.Kind,
 		)
 	}
 }

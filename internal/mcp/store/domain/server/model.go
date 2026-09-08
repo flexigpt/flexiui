@@ -100,10 +100,6 @@ func DecodeServerData(
 	return value, nil
 }
 
-func ValidateServerData(value ServerData) error {
-	return value.Validate()
-}
-
 func (value ServerData) Validate() error {
 	if value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
 		return fmt.Errorf(
@@ -171,12 +167,8 @@ func (value ServerData) Validate() error {
 			if _, err := mcpDomainSecret.ParseMCPSecretRef(binding.SecretRef); err != nil {
 				return fmt.Errorf("MCP input %q: %w", name, err)
 			}
-			if err := basespec.ValidateRequiredText(
-				"MCP installation secret reference",
-				binding.SecretRef,
-				basespec.MaxURIBytes,
-			); err != nil {
-				return fmt.Errorf("MCP input %q: %w", name, err)
+			if len(binding.SecretRef) > basespec.MaxURIBytes {
+				return fmt.Errorf("large size MCP ref:  %q", name)
 			}
 		}
 	}

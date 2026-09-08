@@ -20,79 +20,6 @@ type SecretCleaner interface {
 	DeleteSecret(ctx context.Context, ref string) error
 }
 
-// CleanupRemovedServerSecrets removes every local secret binding and OAuth
-// token after source reconciliation has confirmed that the server Artifact is
-// missing and before its local metadata is purged.
-func CleanupRemovedServerSecrets(
-	ctx context.Context,
-	server artifact.ArtifactRef,
-	data ServerData,
-	cleaner SecretCleaner,
-) error {
-	return CleanupReplacedServerSecrets(
-		ctx,
-		server,
-		data,
-		DefaultServerData(),
-		cleaner,
-	)
-}
-
-// CleanupReplacedServerSecrets removes secret bindings no longer referenced by
-// a server installation update. OAuth token state is removed whenever the
-// installation data changes because profile, credential, and endpoint changes
-// invalidate prior authorization state.
-func CleanupReplacedServerSecrets(
-	ctx context.Context,
-	server artifact.ArtifactRef,
-	before ServerData,
-	after ServerData,
-	cleaner SecretCleaner,
-) error {
-	if err := server.Validate(); err != nil {
-		return err
-	}
-	if cleaner == nil {
-		return fmt.Errorf(
-			"%w: MCP secret cleaner is unavailable",
-			basespec.ErrInvalid,
-		)
-	}
-
-	beforeRefs, err := SecretReferences(before)
-	if err != nil {
-		return err
-	}
-	afterRefs, err := SecretReferences(after)
-	if err != nil {
-		return err
-	}
-
-	retained := make(map[string]struct{}, len(afterRefs))
-	for _, ref := range afterRefs {
-		retained[ref] = struct{}{}
-	}
-
-	var output error
-	for _, ref := range beforeRefs {
-		if _, keep := retained[ref]; keep {
-			continue
-		}
-		output = errors.Join(output, cleaner.DeleteSecret(ctx, ref))
-	}
-
-	tokenRef, err := mcpDomainSecret.NewMCPSecretRefString(
-		server,
-		mcpDomainSecret.MCPSecretKindOAuthToken,
-		"token",
-	)
-	if err != nil {
-		return errors.Join(output, err)
-	}
-	output = errors.Join(output, cleaner.DeleteSecret(ctx, tokenRef))
-	return output
-}
-
 // CleanupUnboundServerSecrets removes every deterministic secret slot
 // declared by the current canonical server document but not retained by the
 // current installation data.
@@ -117,15 +44,14 @@ func CleanupUnboundServerSecrets(
 			basespec.ErrInvalid,
 		)
 	}
-	if err := ValidateServerDataForDocument(
+	if err := data.ValidateFor(
 		server,
 		document,
-		data,
 	); err != nil {
 		return err
 	}
 
-	retainedValues, err := SecretReferences(data)
+	retainedValues, err := data.SecretReferences()
 	if err != nil {
 		return err
 	}
@@ -134,7 +60,7 @@ func CleanupUnboundServerSecrets(
 		retained[value] = struct{}{}
 	}
 
-	targets, err := SecretInputTargets(document)
+	targets, err := document.SecretInputTargets()
 	if err != nil {
 		return err
 	}
@@ -205,7 +131,7 @@ func CleanupUnboundServerSecrets(
 
 // SecretReferences returns the unique opaque secret references held by local
 // server installation data. It never resolves or returns secret values.
-func SecretReferences(data ServerData) ([]string, error) {
+func (data ServerData) SecretReferences() ([]string, error) {
 	if err := data.Validate(); err != nil {
 		return nil, err
 	}

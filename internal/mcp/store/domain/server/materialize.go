@@ -12,43 +12,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 )
 
-// MaterializeValidated is for the internal resolver-to-runtime path. Callers
-// must have already established that server, document, and data are valid.
-//
-// It intentionally validates only values created by profile selection and
-// substitution. Those values are not known until this function runs.
-func MaterializeValidated(
-	ctx context.Context,
-	server artifact.ArtifactRef,
-	document ServerDocument,
-	data ServerData,
-	secrets SecretResolver,
-	environment EnvironmentResolver,
-) (MaterializedServer, error) {
-	return materializeValidated(
-		ctx,
-		server,
-		document,
-		data,
-		secrets,
-		environment,
-		true,
-	)
-}
-
-// MaterializeInspectionValidated creates a sanitized materialization for
-// health and setup inspection. It validates installation shape and resolves
-// non-secret values, but it never loads a secret value from Setting Store.
-func MaterializeInspectionValidated(
-	ctx context.Context,
-	server artifact.ArtifactRef,
-	document ServerDocument,
-	data ServerData,
-	environment EnvironmentResolver,
-) (MaterializedServer, error) {
-	return materializeValidated(ctx, server, document, data, nil, environment, false)
-}
-
 func materializeValidated(
 	ctx context.Context,
 	server artifact.ArtifactRef,
@@ -228,25 +191,25 @@ func materializeValidated(
 			basespec.ErrReferenceUnresolved,
 		)
 	}
-
-	if err := ValidateMaterializedServer(core, auth); err != nil {
-		return MaterializedServer{}, err
-	}
-
 	sensitive := make([]string, 0, len(secretValues))
 	for value := range secretValues {
 		sensitive = append(sensitive, value)
 	}
 	slices.Sort(sensitive)
 
-	return MaterializedServer{
+	output := MaterializedServer{
 		Core:                           core,
 		Auth:                           auth,
 		ClientCredentialRef:            clientCredentialRef,
 		ClientCredentialSecretRequired: document.OAuthClientSecretRequired(),
 		TimeoutMS:                      timeoutMS,
 		SensitiveValues:                sensitive,
-	}, nil
+	}
+	if err := output.Validate(); err != nil {
+		return MaterializedServer{}, err
+	}
+
+	return output, nil
 }
 
 func selectProfile(

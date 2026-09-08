@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"encoding/json"
@@ -57,11 +57,7 @@ func ServerFromCanonicalBundle(
 	})
 }
 
-func ValidateBundle(value BundleDocument) error {
-	return value.Validate()
-}
-
-func validateBundleDocument(value BundleDocument) error {
+func validateDocument(value BundleDocument) error {
 	if value.Kind != artifactbuiltin.BundleKind ||
 		value.SchemaID != artifactbuiltin.BundleSchemaID ||
 		value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
@@ -103,11 +99,12 @@ func validateBundleDocument(value BundleDocument) error {
 	}
 
 	for name, core := range value.MCPServers {
-		if err := basespec.ValidatePortableName("MCP server name", name); err != nil {
+		document, err := ServerFromCanonicalBundle(value, name)
+		if err != nil {
 			return err
 		}
-		extension := value.BundleExtension.Servers[name]
-		if err := mcpDomainServer.ValidateServerParts(name, core, extension); err != nil {
+		document.MCPServer = core
+		if err := document.Validate(); err != nil {
 			return fmt.Errorf("MCP server %q: %w", name, err)
 		}
 	}
@@ -128,14 +125,14 @@ func validateBundleDocument(value BundleDocument) error {
 			return fmt.Errorf("MCP policy %q: %w", name, err)
 		}
 	}
-	if err := ValidateRequiredBundlePolicyReferences(value); err != nil {
+	if err := requiredPolicyReferences(value); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func ValidateRequiredBundlePolicyReferences(
+func requiredPolicyReferences(
 	value BundleDocument,
 ) error {
 	for name, extension := range value.BundleExtension.Servers {

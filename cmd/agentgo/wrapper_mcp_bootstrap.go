@@ -18,11 +18,12 @@ import (
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpConnection "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/connection"
 	"github.com/flexigpt/flexigpt-app/internal/mcp/runtime/invocation"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	"github.com/flexigpt/flexigpt-app/internal/mcp/runtime/sdkclient"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
 	mcpBuiltin "github.com/flexigpt/flexigpt-app/internal/mcp/store/builtin"
 	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
@@ -71,7 +72,7 @@ func InitMCPWrappers(
 		userRootID,
 		overlays,
 		secrets,
-		mcpDomainPolicy.Baseline(),
+		mcpPolicy.Baseline(),
 	)
 	if err != nil {
 		return nil, err
@@ -262,8 +263,8 @@ func ensureDefaultMCPBundle(
 	return nil
 }
 
-func defaultMCPBundleDocument() mcpDomain.BundleDocument {
-	return mcpDomain.BundleDocument{
+func defaultMCPBundleDocument() mcpDomainBundle.BundleDocument {
+	return mcpDomainBundle.BundleDocument{
 		Kind:          artifactbuiltin.BundleKind,
 		SchemaID:      artifactbuiltin.BundleSchemaID,
 		SchemaVersion: artifactbuiltin.MCPSchemaVersion,
@@ -271,7 +272,7 @@ func defaultMCPBundleDocument() mcpDomain.BundleDocument {
 		DisplayName:   artifactbuiltin.DefaultMCPBundleDisplayName,
 		Description:   artifactbuiltin.DefaultMCPBundleDescription,
 		MCPServers:    map[string]mcpDomainServer.CoreServer{},
-		BundleExtension: mcpDomain.BundleExtension{
+		BundleExtension: mcpDomainBundle.BundleExtension{
 			Servers:  map[string]mcpDomainServer.ServerExtension{},
 			Policies: map[string]mcpDomainPolicy.PolicyDocument{},
 		},

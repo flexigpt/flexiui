@@ -30,20 +30,6 @@ type Resolver interface {
 	) (Resolved, error)
 }
 
-func (r Resolved) Materialize(
-	ctx context.Context,
-	secrets SecretResolver,
-	environment EnvironmentResolver,
-) (MaterializedServer, error) {
-	if err := r.Validate(); err != nil {
-		return MaterializedServer{}, err
-	}
-	return r.MaterializeTrusted(ctx, secrets, environment)
-}
-
-// MaterializeForInspection resolves local installation inputs without
-// requiring RuntimeEnabled. It is used only for sanitized auth-health
-// projection and never resolves or exposes a secret value.
 func (r Resolved) MaterializeForInspection(
 	ctx context.Context,
 	environment EnvironmentResolver,
@@ -51,12 +37,14 @@ func (r Resolved) MaterializeForInspection(
 	if err := r.Validate(); err != nil {
 		return MaterializedServer{}, err
 	}
-	return MaterializeInspectionValidated(
+	return materializeValidated(
 		ctx,
 		r.Server,
 		r.Document,
 		r.Installation,
+		nil,
 		environment,
+		false,
 	)
 }
 
@@ -75,14 +63,7 @@ func (r Resolved) MaterializeTrusted(
 			basespec.ErrReferenceUnresolved,
 		)
 	}
-	return MaterializeValidated(
-		ctx,
-		r.Server,
-		r.Document,
-		r.Installation,
-		secrets,
-		environment,
-	)
+	return materializeValidated(ctx, r.Server, r.Document, r.Installation, secrets, environment, true)
 }
 
 func (r Resolved) Validate() error {

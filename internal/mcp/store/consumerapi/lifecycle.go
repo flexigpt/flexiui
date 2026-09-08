@@ -8,7 +8,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 )
 
@@ -112,7 +112,7 @@ func (a *API) Purge(
 			ref.CollectionID,
 		)
 	}
-	data, err := mcpDomain.DecodeCollectionData(retired.Data)
+	data, err := mcpDomainBundle.DecodeCollectionData(retired.Data)
 	if err != nil {
 		return err
 	}

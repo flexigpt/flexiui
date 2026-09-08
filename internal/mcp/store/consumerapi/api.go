@@ -20,7 +20,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
@@ -39,7 +40,7 @@ type API struct {
 	userRootID     root.RootID
 	overlays       mcpOverlay.OverlayRepository
 	secretCleaner  mcpDomainServer.SecretCleaner
-	baselinePolicy mcpDomainPolicy.MCPPolicy
+	baselinePolicy mcpPolicy.MCPPolicy
 }
 
 func New(
@@ -54,7 +55,7 @@ func New(
 	userRootID root.RootID,
 	overlays mcpOverlay.OverlayRepository,
 	secretCleaner mcpDomainServer.SecretCleaner,
-	baselinePolicy mcpDomainPolicy.MCPPolicy,
+	baselinePolicy mcpPolicy.MCPPolicy,
 ) (*API, error) {
 	if sources == nil ||
 		collections == nil ||
@@ -93,12 +94,12 @@ func New(
 }
 
 type Bundle struct {
-	Collection      collection.Collection        `json:"collection"`
-	Data            mcpDomain.CollectionData     `json:"data"`
-	Attachment      collection.Attachment        `json:"attachment"`
-	Source          source.Summary               `json:"source"`
-	PackageAddress  source.ManagedPackageAddress `json:"packageAddress"`
-	DocumentLocator basespec.Locator             `json:"documentLocator"`
+	Collection      collection.Collection          `json:"collection"`
+	Data            mcpDomainBundle.CollectionData `json:"data"`
+	Attachment      collection.Attachment          `json:"attachment"`
+	Source          source.Summary                 `json:"source"`
+	PackageAddress  source.ManagedPackageAddress   `json:"packageAddress"`
+	DocumentLocator basespec.Locator               `json:"documentLocator"`
 }
 
 type Registration struct {
@@ -153,7 +154,7 @@ func (a *API) Create(
 		return Bundle{}, err
 	}
 
-	packageAddress, err := mcpDomain.PackageAddressForBundle(
+	packageAddress, err := mcpDomainBundle.PackageAddressForBundle(
 		document.LogicalName,
 		document.LogicalVersion,
 	)
@@ -190,7 +191,7 @@ func (a *API) Create(
 		)
 	}
 
-	collectionData, err := mcpDomain.EncodeCollectionData(mcpDomain.CollectionData{
+	collectionData, err := mcpDomainBundle.EncodeCollectionData(mcpDomainBundle.CollectionData{
 		SchemaVersion:           artifactbuiltin.MCPSchemaVersion,
 		DiscoveryPolicyRevision: artifactbuiltin.DecoderRevision,
 		LogicalName:             document.LogicalName,
@@ -201,7 +202,7 @@ func (a *API) Create(
 	if err != nil {
 		return Bundle{}, cleanupSource(err)
 	}
-	attachmentData, err := mcpDomain.EncodeAttachmentData(mcpDomain.AttachmentData{
+	attachmentData, err := mcpDomainBundle.EncodeAttachmentData(mcpDomainBundle.AttachmentData{
 		SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
 		PackageAddress: packageAddress,
 	})
@@ -387,7 +388,7 @@ func (a *API) Get(
 		)
 	}
 
-	data, err := mcpDomain.DecodeCollectionData(value.Data)
+	data, err := mcpDomainBundle.DecodeCollectionData(value.Data)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -413,15 +414,12 @@ func (a *API) Get(
 			attachment.Role,
 		)
 	}
-	attachmentData, err := mcpDomain.DecodeAttachmentData(attachment.Data)
+	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(attachment.Data)
 	if err != nil {
 		return Bundle{}, err
 	}
 	documentLocator, err := attachmentData.DocumentLocator()
 	if err != nil {
-		return Bundle{}, err
-	}
-	if err := mcpDomain.ValidateBundlePackageAddress(attachmentData.PackageAddress); err != nil {
 		return Bundle{}, err
 	}
 
@@ -673,9 +671,9 @@ func (a *API) GetMCPBundleInstallation(
 func (a *API) canonicalizeBundleBytes(
 	ctx context.Context,
 	raw []byte,
-) (mcpDomain.BundleDocument, schema.ParsedDocument, error) {
+) (mcpDomainBundle.BundleDocument, schema.ParsedDocument, error) {
 	if len(raw) == 0 {
-		return mcpDomain.BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
+		return mcpDomainBundle.BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
 			"%w: MCP Bundle document is required",
 			basespec.ErrInvalid,
 		)
@@ -686,14 +684,14 @@ func (a *API) canonicalizeBundleBytes(
 		raw,
 	)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
+		return mcpDomainBundle.BundleDocument{}, schema.ParsedDocument{}, fmt.Errorf(
 			"canonicalize MCP Bundle through Artifact Store schema registry: %w",
 			err,
 		)
 	}
-	document, err := mcpDomain.BundleFromParsedDocument(parsed)
+	document, err := mcpDomainBundle.BundleFromParsedDocument(parsed)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, schema.ParsedDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, schema.ParsedDocument{}, err
 	}
 	return document, parsed.Clone(), nil
 }
@@ -834,60 +832,14 @@ func (a *API) cleanupRemovedServerInstallation(
 		return nil
 	}
 
-	data, err := a.serverInstallationDataForCleanup(ctx, record)
-	if err != nil {
-		return err
-	}
-	if err := mcpDomainServer.CleanupRemovedServerSecrets(
-		ctx,
-		record.Ref(),
-		data,
-		a.secretCleaner,
-	); err != nil {
-		return fmt.Errorf(
-			"MCP server removal secret cleanup remains pending: %w",
-			err,
-		)
-	}
 	return nil
-}
-
-func (a *API) serverInstallationDataForCleanup(
-	ctx context.Context,
-	record artifact.Artifact,
-) (mcpDomainServer.ServerData, error) {
-	if record.Kind != artifactbuiltin.ServerKind {
-		return mcpDomainServer.DefaultServerData(), nil
-	}
-
-	if !a.protection.IsProtectedRoot(record.RootID) {
-		return mcpDomainServer.DecodeServerData(record.Data)
-	}
-	if a.overlays == nil {
-		return mcpDomainServer.ServerData{}, fmt.Errorf(
-			"%w: protected MCP overlay store is unavailable",
-			basespec.ErrReferenceUnresolved,
-		)
-	}
-
-	ovr, found, err := a.overlays.GetServerOverlay(
-		ctx,
-		record.Ref(),
-	)
-	if err != nil {
-		return mcpDomainServer.ServerData{}, err
-	}
-	if !found {
-		return mcpDomainServer.DefaultServerData(), nil
-	}
-	return ovr.ServerData, nil
 }
 
 // validateCreateRegistrations establishes all request-derived valid state
 // before source or Collection mutation begins.
 func validateCreateRegistrations(
 	rootID root.RootID,
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 	registrations []Registration,
 ) error {
 	definitions, err := definitionsForDocument(document)
@@ -925,13 +877,12 @@ func validateCreateRegistrations(
 		if err != nil {
 			return err
 		}
-		if err := mcpDomainServer.ValidateServerDataForDocument(
+		if err := serverData.ValidateFor(
 			artifact.ArtifactRef{
 				RootID:     rootID,
 				ArtifactID: registration.ArtifactID,
 			},
 			serverDefinition,
-			serverData,
 		); err != nil {
 			return err
 		}
@@ -940,7 +891,7 @@ func validateCreateRegistrations(
 }
 
 func definitionsForDocument(
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 ) (
 	map[basespec.SubresourceLocator]definition.Definition,
 	error,
@@ -950,7 +901,7 @@ func definitionsForDocument(
 		len(document.MCPServers)+len(document.BundleExtension.Policies),
 	)
 	for name := range document.MCPServers {
-		serverDocument, err := mcpDomain.ServerFromCanonicalBundle(document, name)
+		serverDocument, err := mcpDomainBundle.ServerFromCanonicalBundle(document, name)
 		if err != nil {
 			return nil, err
 		}
@@ -977,7 +928,7 @@ func definitionsForDocument(
 func validateCreateBundleIntent(
 	value Bundle,
 	request CreateMCPBundleBody,
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 	packageAddress source.ManagedPackageAddress,
 ) error {
 	if value.Collection.RootID != request.RootID ||
@@ -997,7 +948,7 @@ func validateCreateBundleIntent(
 	return nil
 }
 
-func displayName(document mcpDomain.BundleDocument) string {
+func displayName(document mcpDomainBundle.BundleDocument) string {
 	if document.DisplayName != "" {
 		return document.DisplayName
 	}

@@ -20,7 +20,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
 	mcpDomainSecret "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/secret"
-	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 	settingSpec "github.com/flexigpt/flexigpt-app/internal/setting/spec"
 )
@@ -448,7 +447,7 @@ func (s *mcpSettingsAdapter) deleteOverlaySecretsLocked(
 		return err
 	}
 
-	refs, err := mcpDomainServer.SecretReferences(ovr.ServerData)
+	refs, err := ovr.ServerData.SecretReferences()
 	if err != nil {
 		return err
 	}

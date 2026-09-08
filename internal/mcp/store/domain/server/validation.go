@@ -23,12 +23,9 @@ var installationInputNamePattern = regexp.MustCompile(
 	`^[A-Za-z_][A-Za-z0-9_]*$`,
 )
 
-// ValidateServerDataForDocument validates local installation data against the
-// immutable canonical server semantics that own the input declarations.
-func ValidateServerDataForDocument(
+func (value ServerData) ValidateFor(
 	server artifact.ArtifactRef,
 	document ServerDocument,
-	data ServerData,
 ) error {
 	if err := server.Validate(); err != nil {
 		return err
@@ -36,26 +33,26 @@ func ValidateServerDataForDocument(
 	if err := document.Validate(); err != nil {
 		return err
 	}
-	if err := data.Validate(); err != nil {
+	if err := value.Validate(); err != nil {
 		return err
 	}
 
-	secretTargets, err := SecretInputTargets(document)
+	secretTargets, err := document.SecretInputTargets()
 	if err != nil {
 		return err
 	}
 
-	if data.SelectedConnectionProfile != "" {
-		if _, found := document.Extension.ConnectionProfiles[data.SelectedConnectionProfile]; !found {
+	if value.SelectedConnectionProfile != "" {
+		if _, found := document.Extension.ConnectionProfiles[value.SelectedConnectionProfile]; !found {
 			return fmt.Errorf(
 				"%w: selected MCP connection profile %q does not exist",
 				basespec.ErrReferenceUnresolved,
-				data.SelectedConnectionProfile,
+				value.SelectedConnectionProfile,
 			)
 		}
 	}
 
-	for name, binding := range data.Inputs {
+	for name, binding := range value.Inputs {
 		if !installationInputNamePattern.MatchString(name) {
 			return fmt.Errorf(
 				"%w: invalid MCP installation input name %q",
@@ -106,11 +103,7 @@ func ValidateServerDataForDocument(
 					name,
 				)
 			}
-			if err := validateSecretBinding(
-				server,
-				binding.SecretRef,
-				target,
-			); err != nil {
+			if err := target.matches(server, binding.SecretRef); err != nil {
 				return fmt.Errorf("MCP secret input %q: %w", name, err)
 			}
 
@@ -122,8 +115,11 @@ func ValidateServerDataForDocument(
 					name,
 				)
 			}
-			if err := mcpDomainSecret.ValidateMCPSecretRef(
-				binding.SecretRef,
+			ref, err := mcpDomainSecret.ParseMCPSecretRef(binding.SecretRef)
+			if err != nil {
+				return fmt.Errorf("MCP OAuth client input %q: %w", name, err)
+			}
+			if err := ref.Matches(
 				server,
 				mcpDomainSecret.MCPSecretKindOAuthClientCredentials,
 				"clientCredentials",
@@ -141,8 +137,8 @@ func ValidateServerDataForDocument(
 		}
 	}
 
-	seen := make(map[artifact.ArtifactRef]struct{}, len(data.AdditionalPolicies))
-	for _, ref := range data.AdditionalPolicies {
+	seen := make(map[artifact.ArtifactRef]struct{}, len(value.AdditionalPolicies))
+	for _, ref := range value.AdditionalPolicies {
 		if err := ref.Validate(); err != nil {
 			return err
 		}
@@ -164,10 +160,9 @@ func ValidateServerDataForDocument(
 	return nil
 }
 
-func ValidateMaterializedServer(
-	core CoreServer,
-	auth AuthenticationDeclaration,
-) error {
+func (value MaterializedServer) Validate() error {
+	core := value.Core
+	auth := value.Auth
 	if len(placeholdersInServer(core, auth, nil)) != 0 {
 		return fmt.Errorf(
 			"%w: materialized MCP server still contains placeholders",
@@ -282,14 +277,10 @@ func (value ServerDocument) Validate() error {
 	); err != nil {
 		return err
 	}
-	return ValidateServerParts(
-		string(value.LogicalName),
-		value.MCPServer,
-		value.Extension,
-	)
+	return validateParts(string(value.LogicalName), value.MCPServer, value.Extension)
 }
 
-func ValidateServerParts(
+func validateParts(
 	name string,
 	core CoreServer,
 	extension ServerExtension,
@@ -565,35 +556,6 @@ func validateInputDeclaration(
 		)
 	}
 	return nil
-}
-
-func validateSecretBinding(
-	server artifact.ArtifactRef,
-	raw string,
-	target SecretInputTarget,
-) error {
-	switch target.Kind {
-	case SecretInputTargetStdioEnv:
-		return mcpDomainSecret.ValidateMCPSecretRef(
-			raw,
-			server,
-			mcpDomainSecret.MCPSecretKindStdioEnv,
-			target.Slot,
-		)
-	case SecretInputTargetHTTPHeader:
-		return mcpDomainSecret.ValidateMCPSecretRef(
-			raw,
-			server,
-			mcpDomainSecret.MCPSecretKindHTTPHeader,
-			target.Slot,
-		)
-	default:
-		return fmt.Errorf(
-			"%w: unsupported MCP secret input target %q",
-			basespec.ErrInvalid,
-			target.Kind,
-		)
-	}
 }
 
 func validateConnectionProfile(

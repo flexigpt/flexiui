@@ -8,7 +8,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
+	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
 )
 
 var placeholderPattern = regexp.MustCompile(
@@ -27,13 +28,13 @@ const (
 	ServerTypeHTTP  ServerType = "http"
 )
 
-type MCPHTTPAuthMode string
+type MCPHTTPAuthMode = mcpServer.MCPHTTPAuthMode
 
 const (
-	MCPHTTPAuthNone              MCPHTTPAuthMode = "none"
-	MCPHTTPAuthAPIKey            MCPHTTPAuthMode = "apiKey"
-	MCPHTTPAuthOAuth             MCPHTTPAuthMode = "oauth"
-	MCPHTTPAuthClientCredentials MCPHTTPAuthMode = "clientCredentials"
+	MCPHTTPAuthNone              = mcpServer.MCPHTTPAuthNone
+	MCPHTTPAuthAPIKey            = mcpServer.MCPHTTPAuthAPIKey
+	MCPHTTPAuthOAuth             = mcpServer.MCPHTTPAuthOAuth
+	MCPHTTPAuthClientCredentials = mcpServer.MCPHTTPAuthClientCredentials
 )
 
 type CoreServer struct {
@@ -164,18 +165,18 @@ type MaterializedServer struct {
 }
 
 type Resolved struct {
-	Server               artifact.ArtifactRef      `json:"server"`
-	Collection           collection.CollectionRef  `json:"collection"`
-	ArtifactRevision     uint64                    `json:"artifactRevision"`
-	CatalogRevision      uint64                    `json:"catalogRevision"`
-	DefinitionDigest     cryptoutil.Digest         `json:"definitionDigest"`
-	SourceContentDigest  cryptoutil.Digest         `json:"sourceContentDigest"`
-	SourceGeneration     string                    `json:"sourceGeneration"`
-	Document             ServerDocument            `json:"document"`
-	Installation         ServerData                `json:"installation"`
-	Policy               mcpDomainPolicy.Effective `json:"policy"`
-	InstallationRevision uint64                    `json:"installationRevision"`
-	RuntimeEnabled       bool                      `json:"runtimeEnabled"`
-	BuiltIn              bool                      `json:"builtIn"`
-	Version              cryptoutil.Digest         `json:"version"`
+	Server               artifact.ArtifactRef     `json:"server"`
+	Collection           collection.CollectionRef `json:"collection"`
+	ArtifactRevision     uint64                   `json:"artifactRevision"`
+	CatalogRevision      uint64                   `json:"catalogRevision"`
+	DefinitionDigest     cryptoutil.Digest        `json:"definitionDigest"`
+	SourceContentDigest  cryptoutil.Digest        `json:"sourceContentDigest"`
+	SourceGeneration     string                   `json:"sourceGeneration"`
+	Document             ServerDocument           `json:"document"`
+	Installation         ServerData               `json:"installation"`
+	Policy               mcpPolicy.Effective      `json:"policy"`
+	InstallationRevision uint64                   `json:"installationRevision"`
+	RuntimeEnabled       bool                     `json:"runtimeEnabled"`
+	BuiltIn              bool                     `json:"builtIn"`
+	Version              cryptoutil.Digest        `json:"version"`
 }

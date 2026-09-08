@@ -15,7 +15,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 )
@@ -66,7 +66,7 @@ func (a *API) replaceCanonicalDocument(
 	if err != nil {
 		return Bundle{}, err
 	}
-	packageAddress, err := mcpDomain.PackageAddressForBundle(
+	packageAddress, err := mcpDomainBundle.PackageAddressForBundle(
 		plan.document.LogicalName,
 		plan.document.LogicalVersion,
 	)
@@ -145,10 +145,6 @@ func (a *API) replaceCanonicalDocument(
 		}
 
 		plan.existingBySubresource[subresource] = current
-	}
-
-	if err := mcpDomain.ValidateDocumentLocator(plan.bundle.DocumentLocator); err != nil {
-		return Bundle{}, err
 	}
 
 	if _, err := a.managedArtifacts.PublishCollection(
@@ -578,10 +574,9 @@ func (a *API) UpdateServerInstallation(
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
-	if err := mcpDomainServer.ValidateServerDataForDocument(
+	if err := data.ValidateFor(
 		ref,
 		document,
-		data,
 	); err != nil {
 		return artifact.Artifact{}, err
 	}
@@ -664,10 +659,9 @@ func (a *API) UpdateProtectedServerInstallation(
 	if err != nil {
 		return err
 	}
-	if err := mcpDomainServer.ValidateServerDataForDocument(
+	if err := data.ValidateFor(
 		ref,
 		document,
-		data,
 	); err != nil {
 		return err
 	}
@@ -734,5 +728,5 @@ func (a *API) currentDefinitionForArtifact(
 	if err != nil {
 		return definition.Definition{}, err
 	}
-	return mcpDomain.DefinitionForArtifact(snapshot, record)
+	return mcpDomainBundle.DefinitionForArtifact(snapshot, record)
 }

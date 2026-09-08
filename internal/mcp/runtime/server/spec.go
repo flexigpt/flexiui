@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 )
 
 var (
@@ -60,18 +60,22 @@ func validateOpaqueID(subject, value string) error {
 	return nil
 }
 
-func ValidateRequiredText(subject, value string, maximum int) error {
+func requiredText(subject, value string, maximum int) error {
 	if strings.TrimSpace(value) == "" {
 		return fmt.Errorf("%w: %s is required", ErrInvalid, subject)
 	}
-	return ValidateOptionalText(subject, value, maximum)
+	return optionalText(subject, value, maximum)
 }
 
-func ValidateOptionalText(subject, value string, maximum int) error {
+func optionalText(subject, value string, maximum int) error {
 	if !utf8.ValidString(value) || len(value) > maximum {
 		return fmt.Errorf("%w: %s is invalid", ErrInvalid, subject)
 	}
 	return nil
+}
+
+func (value Digest) Validate() error {
+	return validateDigest(value)
 }
 
 func DigestBytes(value []byte) Digest {
@@ -79,7 +83,7 @@ func DigestBytes(value []byte) Digest {
 	return Digest("sha256:" + hex.EncodeToString(sum[:]))
 }
 
-func ValidateDigest(value Digest) error {
+func validateDigest(value Digest) error {
 	raw, found := strings.CutPrefix(string(value), "sha256:")
 	if !found || len(raw) != sha256.Size*2 {
 		return fmt.Errorf("%w: invalid digest", ErrInvalid)
@@ -96,14 +100,14 @@ type ClientInfo struct {
 }
 
 func (value ClientInfo) Validate() error {
-	if err := ValidateRequiredText(
+	if err := requiredText(
 		"MCP client name",
 		value.Name,
 		MaxDisplayNameBytes,
 	); err != nil {
 		return err
 	}
-	return ValidateRequiredText(
+	return requiredText(
 		"MCP client version",
 		value.Version,
 		MaxDisplayNameBytes,
@@ -156,7 +160,7 @@ type RuntimeConfig struct {
 	StreamableHTTP            *MCPRuntimeStreamableHTTPConfig
 	OAuthClientSecretRequired bool
 
-	Policy mcpDomainPolicy.MCPPolicy
+	Policy mcpPolicy.MCPPolicy
 
 	SensitiveValues []string
 }
@@ -168,14 +172,14 @@ func (config RuntimeConfig) Validate() error {
 	if err := config.Catalog.Validate(); err != nil {
 		return err
 	}
-	if err := ValidateRequiredText(
+	if err := requiredText(
 		"MCP logical name",
 		config.LogicalName,
 		MaxDisplayNameBytes,
 	); err != nil {
 		return err
 	}
-	if err := ValidateOptionalText(
+	if err := optionalText(
 		"MCP display name",
 		config.DisplayName,
 		MaxDisplayNameBytes,
@@ -215,7 +219,7 @@ func (config RuntimeConfig) Validate() error {
 }
 
 func validatePolicy(config RuntimeConfig) error {
-	if err := mcpDomainPolicy.ValidateMCPPolicy(config.Policy); err != nil {
+	if err := config.Policy.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid MCP runtime policy: %w", ErrInvalid, err)
 	}
 	return nil
@@ -225,7 +229,7 @@ func validateStdio(config *MCPRuntimeStdioConfig) error {
 	if config == nil {
 		return fmt.Errorf("%w: nil stdio config", ErrInvalid)
 	}
-	if err := ValidateRequiredText(
+	if err := requiredText(
 		"MCP stdio command",
 		config.Command,
 		MaxLocatorBytes,
@@ -405,7 +409,7 @@ func (value ResolvedServer) Validate() error {
 			ErrInvalid,
 		)
 	}
-	if err := ValidateDigest(value.Version); err != nil {
+	if err := value.Version.Validate(); err != nil {
 		return err
 	}
 	return value.Config.Validate()

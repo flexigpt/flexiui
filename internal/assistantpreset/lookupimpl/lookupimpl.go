@@ -11,8 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/bundleitemutils"
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	modelpresetSpec "github.com/flexigpt/flexigpt-app/internal/modelpreset/spec"
 	modelpresetStore "github.com/flexigpt/flexigpt-app/internal/modelpreset/store"
@@ -315,9 +315,9 @@ func (a *mcpContextLookupAdapter) validateSelectedMCPTools(
 				)
 			}
 			if selected.ApprovalRule != nil &&
-				mcpDomainPolicy.ApprovalRuleRank(
+				mcpPolicy.ApprovalRuleRank(
 					*selected.ApprovalRule,
-				) < mcpDomainPolicy.ApprovalRuleRank(
+				) < mcpPolicy.ApprovalRuleRank(
 					current.ApprovalRule,
 				) {
 				return fmt.Errorf(
@@ -327,8 +327,8 @@ func (a *mcpContextLookupAdapter) validateSelectedMCPTools(
 				)
 			}
 			if selected.ExecutionMode != nil &&
-				current.ExecutionMode == mcpDomainPolicy.MCPExecutionModeManual &&
-				*selected.ExecutionMode == mcpDomainPolicy.MCPExecutionModeAuto {
+				current.ExecutionMode == mcpPolicy.MCPExecutionModeManual &&
+				*selected.ExecutionMode == mcpPolicy.MCPExecutionModeAuto {
 				return fmt.Errorf(
 					"servers[%d].selectedTools[%d]: execution override weakens policy",
 					i,

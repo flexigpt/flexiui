@@ -5,6 +5,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 )
 
 // Published JSON Schema resources carry $schema and $id metadata. MCP document
@@ -26,9 +27,9 @@ type PolicyDocument struct {
 	Description    string                  `json:"description,omitempty"`
 	Labels         map[string]string       `json:"labels,omitempty"`
 
-	Body MCPPolicy `json:"body"`
+	Body mcpPolicy.MCPPolicy `json:"body"`
 }
 
 func (value PolicyDocument) Validate() error {
-	return ValidatePolicy(value)
+	return validateDocument(value)
 }

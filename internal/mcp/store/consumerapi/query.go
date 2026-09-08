@@ -12,7 +12,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
@@ -38,13 +39,13 @@ type ServerInstallationView struct {
 }
 
 type PolicyView struct {
-	Artifact         artifact.Artifact         `json:"artifact"`
-	Collection       collection.CollectionRef  `json:"collection"`
-	CatalogRevision  uint64                    `json:"catalogRevision"`
-	Definition       definition.Definition     `json:"definition"`
-	Body             mcpDomainPolicy.MCPPolicy `json:"body"`
-	EffectiveEnabled bool                      `json:"effectiveEnabled"`
-	BuiltIn          bool                      `json:"builtIn"`
+	Artifact         artifact.Artifact        `json:"artifact"`
+	Collection       collection.CollectionRef `json:"collection"`
+	CatalogRevision  uint64                   `json:"catalogRevision"`
+	Definition       definition.Definition    `json:"definition"`
+	Body             mcpPolicy.MCPPolicy      `json:"body"`
+	EffectiveEnabled bool                     `json:"effectiveEnabled"`
+	BuiltIn          bool                     `json:"builtIn"`
 }
 
 // GetDocument returns the current canonical source-owned MCP Bundle document.
@@ -56,18 +57,18 @@ type PolicyView struct {
 func (a *API) GetDocument(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (mcpDomain.BundleDocument, error) {
+) (mcpDomainBundle.BundleDocument, error) {
 	if a == nil {
-		return mcpDomain.BundleDocument{}, basespec.ErrClosed
+		return mcpDomainBundle.BundleDocument{}, basespec.ErrClosed
 	}
 
 	bundle, err := a.Get(ctx, ref)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, err
 	}
 	snapshot, err := a.currentCatalog(ctx, bundle)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, err
 	}
 
 	entry, err := a.resources.ReadCollectionEntry(
@@ -78,10 +79,10 @@ func (a *API) GetDocument(
 		basespec.MaxCandidateBytes,
 	)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, err
 	}
 	if entry.CatalogRevision != snapshot.Revision {
-		return mcpDomain.BundleDocument{}, fmt.Errorf(
+		return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
 			"%w: MCP Bundle Catalog changed during document resolution",
 			basespec.ErrCatalogStale,
 		)
@@ -89,22 +90,22 @@ func (a *API) GetDocument(
 
 	document, _, err := a.canonicalizeBundleBytes(ctx, entry.Content)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, err
 	}
 	if document.LogicalName != bundle.Data.LogicalName ||
 		document.LogicalVersion != bundle.Data.LogicalVersion ||
 		!maps.Equal(document.Labels, bundle.Data.Labels) ||
 		displayName(document) != bundle.Collection.DisplayName ||
 		document.Description != bundle.Collection.Description {
-		return mcpDomain.BundleDocument{}, fmt.Errorf(
+		return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
 			"%w: MCP Bundle document and Collection metadata differ",
 			basespec.ErrCatalogStale,
 		)
 	}
 
-	expected, err := mcpDomain.DefinitionsForDocument(document)
+	expected, err := mcpDomainBundle.DefinitionsForDocument(document)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, err
+		return mcpDomainBundle.BundleDocument{}, err
 	}
 	seen := make(map[basespec.SubresourceLocator]struct{}, len(expected))
 
@@ -117,7 +118,7 @@ func (a *API) GetDocument(
 
 		expectedDefinition, wanted := expected[occurrence.Key.SubresourceLocator]
 		if !wanted {
-			return mcpDomain.BundleDocument{}, fmt.Errorf(
+			return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
 				"%w: Catalog contains an unexpected valid MCP subresource %q",
 				basespec.ErrCatalogStale,
 				occurrence.Key.SubresourceLocator,
@@ -128,7 +129,7 @@ func (a *API) GetDocument(
 			*occurrence.DefinitionDigest != expectedDefinition.Digest ||
 			occurrence.SourceContentDigest == nil ||
 			*occurrence.SourceContentDigest != entry.Digest {
-			return mcpDomain.BundleDocument{}, fmt.Errorf(
+			return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
 				"%w: MCP subresource %q differs from the current document",
 				basespec.ErrCatalogStale,
 				occurrence.Key.SubresourceLocator,
@@ -138,7 +139,7 @@ func (a *API) GetDocument(
 	}
 
 	if len(seen) != len(expected) {
-		return mcpDomain.BundleDocument{}, fmt.Errorf(
+		return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
 			"%w: Catalog does not cover every current MCP document subresource",
 			basespec.ErrCatalogStale,
 		)
@@ -199,7 +200,7 @@ func (a *API) GetServerInstallation(
 		return ServerInstallationView{}, err
 	}
 
-	definitionValue, err := mcpDomain.DefinitionForArtifact(snapshot, record)
+	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
 	if err != nil {
 		return ServerInstallationView{}, err
 	}
@@ -272,11 +273,11 @@ func (a *API) InspectMCPPolicyForRuntime(
 		return PolicyView{}, err
 	}
 
-	definitionValue, err := mcpDomain.DefinitionForArtifact(snapshot, record)
+	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
 	if err != nil {
 		return PolicyView{}, err
 	}
-	body, err := mcpDomainPolicy.PolicyBodyFromDefinition(definitionValue)
+	body, err := mcpDomainPolicy.BodyFromDefinition(definitionValue)
 	if err != nil {
 		return PolicyView{}, err
 	}

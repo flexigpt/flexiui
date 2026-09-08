@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 const (
@@ -45,7 +45,7 @@ func ToolVisibleToModel(info *mcpServer.MCPToolAppInfo) bool {
 // authorization check. It is the target API used by the Artifact Store MCP
 // runtime.
 func ValidateAppToolInvocation(
-	p mcpDomainPolicy.MCPAppsPolicy,
+	p mcpPolicy.MCPAppsPolicy,
 	tool mcpServer.MCPToolCapability,
 	appServer mcpServer.ServerID,
 ) error {

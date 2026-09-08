@@ -14,7 +14,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
@@ -80,7 +81,7 @@ func (a *API) resolveMCPServer(
 		return mcpDomainServer.Resolved{}, err
 	}
 
-	definitionValue, err := mcpDomain.DefinitionForArtifact(snapshot, record)
+	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
 	if err != nil {
 		return mcpDomainServer.Resolved{}, err
 	}
@@ -249,7 +250,7 @@ func (a *API) effectiveInstallation(
 		if err != nil {
 			return mcpDomainServer.ServerData{}, 0, false, false, err
 		}
-		if err := mcpDomainServer.ValidateServerDataForDocument(record.Ref(), document, data); err != nil {
+		if err := data.ValidateFor(record.Ref(), document); err != nil {
 			return mcpDomainServer.ServerData{}, 0, false, false, err
 		}
 		return data,
@@ -280,10 +281,9 @@ func (a *API) effectiveInstallation(
 	if !found {
 		return mcpDomainServer.DefaultServerData(), 0, false, false, nil
 	}
-	if err := mcpDomainServer.ValidateServerDataForDocument(
+	if err := serverOverlay.ServerData.ValidateFor(
 		record.Ref(),
 		document,
-		serverOverlay.ServerData,
 	); err != nil {
 		return mcpDomainServer.ServerData{}, 0, false, false, err
 	}
@@ -317,8 +317,8 @@ func (a *API) effectivePolicy(
 	bundle Bundle,
 	serverDocument mcpDomainServer.ServerDocument,
 	additional []artifact.ArtifactRef,
-) (mcpDomainPolicy.Effective, error) {
-	values := make([]mcpDomainPolicy.MCPPolicy, 0, 1+len(additional))
+) (mcpPolicy.Effective, error) {
+	values := make([]mcpPolicy.MCPPolicy, 0, 1+len(additional))
 
 	if reference := serverDocument.Extension.Policy; reference != nil {
 		matches, err := a.policyBodiesByLogicalName(
@@ -327,12 +327,12 @@ func (a *API) effectivePolicy(
 			reference.Ref,
 		)
 		if err != nil {
-			return mcpDomainPolicy.Effective{}, err
+			return mcpPolicy.Effective{}, err
 		}
 		switch len(matches) {
 		case 0:
 			if reference.Required {
-				return mcpDomainPolicy.Effective{}, fmt.Errorf(
+				return mcpPolicy.Effective{}, fmt.Errorf(
 					"%w: required MCP policy %q is unavailable",
 					basespec.ErrReferenceUnresolved,
 					reference.Ref,
@@ -341,7 +341,7 @@ func (a *API) effectivePolicy(
 		case 1:
 			values = append(values, matches[0])
 		default:
-			return mcpDomainPolicy.Effective{}, fmt.Errorf(
+			return mcpPolicy.Effective{}, fmt.Errorf(
 				"%w: MCP policy %q is ambiguous",
 				basespec.ErrConflict,
 				reference.Ref,
@@ -351,21 +351,21 @@ func (a *API) effectivePolicy(
 
 	for _, ref := range sortedArtifactRefs(additional) {
 		if ref.RootID != bundle.Collection.RootID {
-			return mcpDomainPolicy.Effective{}, fmt.Errorf(
+			return mcpPolicy.Effective{}, fmt.Errorf(
 				"%w: additional MCP policy belongs to another Root",
 				basespec.ErrInvalid,
 			)
 		}
 		record, err := a.artifacts.Get(ctx, ref)
 		if err != nil {
-			return mcpDomainPolicy.Effective{}, err
+			return mcpPolicy.Effective{}, err
 		}
 		if record.Kind != artifactbuiltin.PolicyKind ||
 			record.CollectionID != bundle.Collection.ID ||
 			!record.Enabled ||
 			record.State != artifact.StateAvailable ||
 			record.ResolvedDefinition == nil {
-			return mcpDomainPolicy.Effective{}, fmt.Errorf(
+			return mcpPolicy.Effective{}, fmt.Errorf(
 				"%w: additional MCP policy %q is unavailable",
 				basespec.ErrReferenceUnresolved,
 				ref.ArtifactID,
@@ -373,13 +373,13 @@ func (a *API) effectivePolicy(
 		}
 		definitionValue, err := a.currentDefinitionForArtifact(ctx, record)
 		if err != nil {
-			return mcpDomainPolicy.Effective{}, err
+			return mcpPolicy.Effective{}, err
 		}
-		body, err := mcpDomainPolicy.PolicyBodyFromDefinition(
+		body, err := mcpDomainPolicy.BodyFromDefinition(
 			definitionValue,
 		)
 		if err != nil {
-			return mcpDomainPolicy.Effective{}, err
+			return mcpPolicy.Effective{}, err
 		}
 		values = append(values, body)
 	}
@@ -393,19 +393,19 @@ func (a *API) effectivePolicy(
 		baseline = values[0]
 		values = values[1:]
 	}
-	return mcpDomainPolicy.Compose(baseline, values...)
+	return mcpPolicy.Compose(baseline, values...)
 }
 
 func (a *API) policyBodiesByLogicalName(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	name basespec.LogicalName,
-) ([]mcpDomainPolicy.MCPPolicy, error) {
+) ([]mcpPolicy.MCPPolicy, error) {
 	records, err := a.artifacts.ListByCollection(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
-	output := make([]mcpDomainPolicy.MCPPolicy, 0)
+	output := make([]mcpPolicy.MCPPolicy, 0)
 	for _, record := range records {
 		if record.Kind != artifactbuiltin.PolicyKind ||
 			!record.Enabled ||
@@ -420,7 +420,7 @@ func (a *API) policyBodiesByLogicalName(
 		if definitionValue.LogicalName != name {
 			continue
 		}
-		body, err := mcpDomainPolicy.PolicyBodyFromDefinition(
+		body, err := mcpDomainPolicy.BodyFromDefinition(
 			definitionValue,
 		)
 		if err != nil {

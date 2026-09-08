@@ -20,7 +20,7 @@ func CanonicalizePolicy(
 	}
 	value.Labels = maps.Clone(value.Labels)
 
-	if err := ValidatePolicy(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return PolicyDocument{}, nil, err
 	}
 
@@ -47,7 +47,7 @@ func CanonicalizePolicy(
 	return value, raw, nil
 }
 
-func ValidatePolicy(value PolicyDocument) error {
+func validateDocument(value PolicyDocument) error {
 	if value.Kind != artifactbuiltin.PolicyKind ||
 		value.SchemaID != artifactbuiltin.PolicySchemaID ||
 		value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
@@ -65,24 +65,8 @@ func ValidatePolicy(value PolicyDocument) error {
 	); err != nil {
 		return err
 	}
-	return ValidatePolicyBody(value.Body)
-}
-
-func ValidatePolicyBody(body MCPPolicy) error {
-	if err := body.Validate(); err != nil {
+	if err := value.Body.Validate(); err != nil {
 		return fmt.Errorf("%w: invalid MCP policy body: %w", basespec.ErrInvalid, err)
 	}
-	for name, override := range body.ToolPolicies {
-		if override.ToolName != name {
-			return fmt.Errorf(
-				"%w: MCP tool policy key and toolName differ",
-				basespec.ErrInvalid,
-			)
-		}
-	}
 	return nil
-}
-
-func (value MCPPolicy) Validate() error {
-	return ValidateMCPPolicy(value)
 }

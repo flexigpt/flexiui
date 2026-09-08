@@ -10,7 +10,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 )
 
 type ArtifactRegistration struct {
@@ -57,10 +57,8 @@ func (r Registry) Validate() error {
 		if err := registered.EmbeddedPackageRoot.ValidatePortable(false); err != nil {
 			return fmt.Errorf("bundles[%d]: %w", index, err)
 		}
-		if err := mcpDomain.ValidateDocumentLocator(
-			registered.EmbeddedDocumentLocator,
-		); err != nil {
-			return fmt.Errorf("bundles[%d]: %w", index, err)
+		if !mcpDomainBundle.IsBundleDocumentLocator(registered.EmbeddedDocumentLocator) {
+			return fmt.Errorf("%w: invalid MCP built-in document locator", basespec.ErrInvalid)
 		}
 		if path.Dir(string(registered.EmbeddedDocumentLocator)) !=
 			string(registered.EmbeddedPackageRoot) {

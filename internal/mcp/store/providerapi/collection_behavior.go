@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 )
 
 type mcpCollectionBehavior struct{}
@@ -49,7 +49,7 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 		)
 	}
 
-	data, err := mcpDomain.DecodeCollectionData(collectionValue.Data)
+	data, err := mcpDomainBundle.DecodeCollectionData(collectionValue.Data)
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
@@ -77,13 +77,11 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 		)
 	}
 
-	attachmentData, err := mcpDomain.DecodeAttachmentData(attachment.Data)
+	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(attachment.Data)
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
-	if err := mcpDomain.ValidateBundlePackageAddress(
-		attachmentData.PackageAddress,
-	); err != nil {
+	if err := attachmentData.Validate(); err != nil {
 		return providerapi.Plan{}, err
 	}
 	documentLocator, err := attachmentData.DocumentLocator()

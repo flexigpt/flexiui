@@ -2,8 +2,8 @@ package conversation
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 type MCPAppModelContextUpdate struct {
@@ -25,8 +25,8 @@ type MCPToolSelection struct {
 	ChoiceID         string             `json:"choiceID,omitempty"`
 	Digest           string             `json:"digest,omitempty"`
 
-	ApprovalRule  *mcpDomainPolicy.MCPApprovalRule  `json:"approvalRule,omitempty"`
-	ExecutionMode *mcpDomainPolicy.MCPExecutionMode `json:"executionMode,omitempty"`
+	ApprovalRule  *mcpPolicy.MCPApprovalRule  `json:"approvalRule,omitempty"`
+	ExecutionMode *mcpPolicy.MCPExecutionMode `json:"executionMode,omitempty"`
 
 	AppResourceURI string   `json:"appResourceUri,omitempty"`
 	Visibility     []string `json:"visibility,omitempty"`
@@ -41,10 +41,10 @@ type MCPProviderToolMapping struct {
 	ToolName   string `json:"toolName"`
 	ToolDigest string `json:"toolDigest"`
 
-	ApprovalRule   mcpDomainPolicy.MCPApprovalRule  `json:"approvalRule,omitempty"`
-	ExecutionMode  mcpDomainPolicy.MCPExecutionMode `json:"executionMode,omitempty"`
-	AppResourceURI string                           `json:"appResourceUri,omitempty"`
-	Visibility     []string                         `json:"visibility,omitempty"`
+	ApprovalRule   mcpPolicy.MCPApprovalRule  `json:"approvalRule,omitempty"`
+	ExecutionMode  mcpPolicy.MCPExecutionMode `json:"executionMode,omitempty"`
+	AppResourceURI string                     `json:"appResourceUri,omitempty"`
+	Visibility     []string                   `json:"visibility,omitempty"`
 }
 
 type MCPToolExposure string

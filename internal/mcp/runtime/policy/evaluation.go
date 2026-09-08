@@ -71,7 +71,7 @@ func EffectiveToolPolicy(
 	MCPToolPolicyOverride,
 	bool,
 ) {
-	value = NormalizeMCPPolicy(value)
+	value = Normalize(value)
 
 	approvalRule := value.DefaultPolicy.DefaultApprovalRule
 	executionMode := value.DefaultPolicy.DefaultExecutionMode
@@ -114,7 +114,7 @@ func EvaluateTool(
 	value MCPPolicy,
 	input ToolEvaluationInput,
 ) ToolEvaluation {
-	value = NormalizeMCPPolicy(value)
+	value = Normalize(value)
 
 	if !input.Enabled || input.TaskSupportRequired {
 		return ToolEvaluation{
@@ -212,10 +212,10 @@ func TightenToolPolicy(
 	mappedApproval MCPApprovalRule,
 	mappedExecution MCPExecutionMode,
 ) (MCPPolicy, error) {
-	if err := ValidateMCPApprovalRule(mappedApproval); err != nil {
+	if err := mappedApproval.Validate(); err != nil {
 		return MCPPolicy{}, err
 	}
-	if err := ValidateMCPExecutionMode(mappedExecution); err != nil {
+	if err := mappedExecution.Validate(); err != nil {
 		return MCPPolicy{}, err
 	}
 
@@ -235,7 +235,7 @@ func TightenToolPolicy(
 		)
 	}
 
-	output := CloneMCPPolicy(value)
+	output := Clone(value)
 	override := output.ToolPolicies[toolName]
 	override.ToolName = toolName
 
@@ -245,5 +245,8 @@ func TightenToolPolicy(
 	override.ExecutionMode = &execution
 
 	output.ToolPolicies[toolName] = override
+	if err := output.Validate(); err != nil {
+		return MCPPolicy{}, err
+	}
 	return output, nil
 }

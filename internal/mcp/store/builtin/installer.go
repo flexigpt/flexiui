@@ -25,7 +25,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpConsumerAPI "github.com/flexigpt/flexigpt-app/internal/mcp/store/consumerapi"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 )
 
@@ -95,7 +95,7 @@ type Installer struct {
 
 type preparedBundle struct {
 	registration   BundleRegistration
-	document       mcpDomain.BundleDocument
+	document       mcpDomainBundle.BundleDocument
 	parsed         schema.ParsedDocument
 	packageAddress source.ManagedPackageAddress
 	packageFiles   []source.ManagedPackageFile
@@ -351,7 +351,7 @@ func (i *Installer) verifyCurrentBundle(
 	if err != nil {
 		return err
 	}
-	documentLocator, err := mcpDomain.DocumentLocatorForPackage(
+	documentLocator, err := mcpDomainBundle.DocumentLocatorForPackage(
 		expected.packageAddress,
 	)
 	if err != nil {
@@ -513,7 +513,7 @@ func (i *Installer) prepareBundles(
 			)
 		}
 
-		document, err := mcpDomain.BundleFromParsedDocument(parsed)
+		document, err := mcpDomainBundle.BundleFromParsedDocument(parsed)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"project canonical built-in MCP document %q: %w",
@@ -528,7 +528,7 @@ func (i *Installer) prepareBundles(
 				registered.EmbeddedDocumentLocator,
 			)
 		}
-		packageAddress, err := mcpDomain.PackageAddressForBundle(
+		packageAddress, err := mcpDomainBundle.PackageAddressForBundle(
 			document.LogicalName,
 			document.LogicalVersion,
 		)
@@ -711,9 +711,9 @@ func (i *Installer) hydrationFingerprint(
 }
 
 func bundleDefinitions(
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 ) (map[basespec.SubresourceLocator]artifact.ArtifactKind, error) {
-	definitions, err := mcpDomain.DefinitionsForDocument(document)
+	definitions, err := mcpDomainBundle.DefinitionsForDocument(document)
 	if err != nil {
 		return nil, err
 	}

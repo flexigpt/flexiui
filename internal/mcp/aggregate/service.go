@@ -260,8 +260,7 @@ func (s *Service) PutServerSecret(
 	if err != nil {
 		return SecretWriteResult{}, err
 	}
-	if err := mcpDomainServer.ValidateSecretInputTarget(
-		installation.Document,
+	if err := installation.Document.AcceptsSecretTarget(
 		kind,
 		slot,
 	); err != nil {
@@ -330,7 +329,13 @@ func (s *Service) DeleteServerSecret(
 	if _, err := s.bundles.GetServerInstallation(ctx, ref); err != nil {
 		return err
 	}
-
+	installation, err := s.bundles.GetServerInstallation(ctx, ref)
+	if err != nil {
+		return err
+	}
+	if err := installation.Document.AcceptsSecretTarget(kind, slot); err != nil {
+		return err
+	}
 	if err := s.lifecycle.InvalidateServer(ctx, ref); err != nil {
 		return err
 	}
@@ -367,7 +372,7 @@ func (s *Service) GetServerAuthHealth(
 	}
 	return mcpAuth.MCPAuthHealth{
 		Server:     serverID,
-		AuthMode:   mcpServer.MCPHTTPAuthMode(resolved.Document.Extension.Auth.Mode),
+		AuthMode:   resolved.Document.Extension.Auth.Mode,
 		State:      mcpAuth.MCPAuthHealthStateNotConfigured,
 		Configured: false,
 		LastError:  "required MCP installation input is not configured",

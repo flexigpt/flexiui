@@ -5,8 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 // ValidateMCPProviderToolMappingsForContext validates durable provider-tool
@@ -185,9 +185,9 @@ func mappingMatchesSelection(
 		)
 	}
 	if selection.ApprovalRule != nil &&
-		mcpDomainPolicy.ApprovalRuleRank(
+		mcpPolicy.ApprovalRuleRank(
 			mapping.ApprovalRule,
-		) < mcpDomainPolicy.ApprovalRuleRank(
+		) < mcpPolicy.ApprovalRuleRank(
 			*selection.ApprovalRule,
 		) {
 		return fmt.Errorf(
@@ -196,9 +196,9 @@ func mappingMatchesSelection(
 		)
 	}
 	if selection.ExecutionMode != nil &&
-		mcpDomainPolicy.ExecutionModeRank(
+		mcpPolicy.ExecutionModeRank(
 			mapping.ExecutionMode,
-		) < mcpDomainPolicy.ExecutionModeRank(
+		) < mcpPolicy.ExecutionModeRank(
 			*selection.ExecutionMode,
 		) {
 		return fmt.Errorf(
@@ -350,20 +350,6 @@ func ValidateMCPAppContextUpdates(
 		if err := value.Server.Validate(); err != nil {
 			return fmt.Errorf("MCP App context updates[%d]: %w", index, err)
 		}
-		if err := mcpServer.ValidateOptionalText(
-			"MCP App instance ID",
-			value.InstanceID,
-			mcpServer.MaxDisplayNameBytes,
-		); err != nil {
-			return fmt.Errorf("MCP App context updates[%d]: %w", index, err)
-		}
-		if err := mcpServer.ValidateOptionalText(
-			"MCP App resource URI",
-			value.ResourceURI,
-			mcpServer.MaxURIBytes,
-		); err != nil {
-			return fmt.Errorf("MCP App context updates[%d]: %w", index, err)
-		}
 	}
 	return nil
 }
@@ -375,59 +361,18 @@ func ValidateMCPProviderToolMapping(m MCPProviderToolMapping) error {
 	if err := m.Server.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP provider tool name",
-		m.ProviderToolName,
-		mcpServer.MaxLocatorBytes,
-	); err != nil {
+	if err := m.ApprovalRule.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP provider choice ID",
-		m.ChoiceID,
-		mcpServer.MaxLocatorBytes,
-	); err != nil {
+	if err := m.ExecutionMode.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP tool name",
-		m.ToolName,
-		mcpServer.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP tool digest",
-		m.ToolDigest,
-		mcpServer.MaxFingerprintBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpDomainPolicy.ValidateMCPApprovalRule(m.ApprovalRule); err != nil {
-		return err
-	}
-	if err := mcpDomainPolicy.ValidateMCPExecutionMode(m.ExecutionMode); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP App resource URI",
-		m.AppResourceURI,
-		mcpServer.MaxURIBytes,
-	); err != nil {
-		return err
-	}
+
 	return validateMCPVisibility(m.Visibility)
 }
 
 func validateMCPServerSelection(value MCPServerSelection) error {
 	if err := value.Server.Validate(); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP snapshot digest",
-		value.SnapshotDigest,
-		mcpServer.MaxFingerprintBytes,
-	); err != nil {
 		return err
 	}
 
@@ -486,51 +431,18 @@ func validateMCPToolSelection(value MCPToolSelection) error {
 	if err := value.Server.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP tool name",
-		value.ToolName,
-		mcpServer.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP provider tool name",
-		value.ProviderToolName,
-		mcpServer.MaxLocatorBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP tool choice ID",
-		value.ChoiceID,
-		mcpServer.MaxLocatorBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP tool digest",
-		value.Digest,
-		mcpServer.MaxFingerprintBytes,
-	); err != nil {
-		return err
-	}
+
 	if value.ApprovalRule != nil {
-		if err := mcpDomainPolicy.ValidateMCPApprovalRule(*value.ApprovalRule); err != nil {
+		if err := value.ApprovalRule.Validate(); err != nil {
 			return err
 		}
 	}
 	if value.ExecutionMode != nil {
-		if err := mcpDomainPolicy.ValidateMCPExecutionMode(*value.ExecutionMode); err != nil {
+		if err := value.ExecutionMode.Validate(); err != nil {
 			return err
 		}
 	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP App resource URI",
-		value.AppResourceURI,
-		mcpServer.MaxURIBytes,
-	); err != nil {
-		return err
-	}
+
 	return validateMCPVisibility(value.Visibility)
 }
 
@@ -538,18 +450,7 @@ func validateMCPResourceRef(value mcpServer.MCPResourceRef) error {
 	if err := value.Server.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP resource URI",
-		value.URI,
-		mcpServer.MaxURIBytes,
-	); err != nil {
-		return err
-	}
-	return mcpServer.ValidateOptionalText(
-		"MCP resource digest",
-		value.Digest,
-		mcpServer.MaxFingerprintBytes,
-	)
+	return nil
 }
 
 func validateMCPResourceTemplateSelection(
@@ -557,20 +458,6 @@ func validateMCPResourceTemplateSelection(
 ) error {
 	ref := value.MCPResourceTemplateRef
 	if err := ref.Server.Validate(); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP resource URI template",
-		ref.URITemplate,
-		mcpServer.MaxURIBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP resource template digest",
-		ref.Digest,
-		mcpServer.MaxFingerprintBytes,
-	); err != nil {
 		return err
 	}
 	if err := validateMCPArgumentValues(value.ArgumentValues); err != nil {
@@ -583,20 +470,6 @@ func validateMCPPromptSelection(value MCPPromptSelection) error {
 	if err := value.Server.Validate(); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP prompt name",
-		value.PromptName,
-		mcpServer.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP prompt digest",
-		value.Digest,
-		mcpServer.MaxFingerprintBytes,
-	); err != nil {
-		return err
-	}
 	if err := validateMCPArgumentValues(value.ArgumentValues); err != nil {
 		return err
 	}
@@ -607,13 +480,6 @@ func validateMCPArgumentDefinitions(
 	values map[string]mcpServer.MCPArgumentDefinition,
 ) error {
 	for name, value := range values {
-		if err := mcpServer.ValidateRequiredText(
-			"MCP argument name",
-			name,
-			mcpServer.MaxKindBytes,
-		); err != nil {
-			return err
-		}
 		if value.Name != "" && value.Name != name {
 			return fmt.Errorf(
 				"%w: MCP argument definition key %q differs from name %q",
@@ -628,13 +494,6 @@ func validateMCPArgumentDefinitions(
 
 func validateMCPArgumentValues(values map[string]string) error {
 	for name, value := range values {
-		if err := mcpServer.ValidateRequiredText(
-			"MCP argument value name",
-			name,
-			mcpServer.MaxKindBytes,
-		); err != nil {
-			return err
-		}
 		if !utf8.ValidString(value) ||
 			len(value) > mcpServer.MaxDescriptionBytes {
 			return fmt.Errorf(

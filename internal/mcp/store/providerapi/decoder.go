@@ -11,7 +11,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
@@ -67,7 +67,7 @@ func (d *Decoder) Recognize(
 	candidate providerapi.Candidate,
 ) providerapi.Recognition {
 	if candidate.RequestsDecoder(artifactbuiltin.DecoderID) &&
-		mcpDomain.IsBundleDocumentLocator(candidate.Locator) {
+		mcpDomainBundle.IsBundleDocumentLocator(candidate.Locator) {
 		return providerapi.RecognitionPreferred
 	}
 	return providerapi.RecognitionNone
@@ -78,7 +78,7 @@ func (d *Decoder) Decode(
 	candidate providerapi.Candidate,
 ) ([]providerapi.Decoded, []diagnostic.Diagnostic) {
 	if !candidate.RequestsDecoder(artifactbuiltin.DecoderID) ||
-		!mcpDomain.IsBundleDocumentLocator(candidate.Locator) {
+		!mcpDomainBundle.IsBundleDocumentLocator(candidate.Locator) {
 		return nil, nil
 	}
 	if d == nil || d.documents == nil {
@@ -97,7 +97,7 @@ func (d *Decoder) Decode(
 	if err != nil {
 		return nil, decoderError(candidate.Locator, "bundle", err)
 	}
-	b, err := mcpDomain.BundleFromParsedDocument(parsed)
+	b, err := mcpDomainBundle.BundleFromParsedDocument(parsed)
 	if err != nil {
 		return nil, decoderError(candidate.Locator, "bundle", err)
 	}
@@ -125,7 +125,7 @@ func (d *Decoder) Decode(
 	)
 
 	for _, name := range serverNames {
-		serverDocument, err := mcpDomain.ServerFromCanonicalBundle(b, name)
+		serverDocument, err := mcpDomainBundle.ServerFromCanonicalBundle(b, name)
 		if err != nil {
 			return nil, decoderError(candidate.Locator, name, err)
 		}

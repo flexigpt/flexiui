@@ -465,6 +465,8 @@ linters:
           alias: ${1}Domain
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/domain/server
           alias: ${1}DomainServer
+        - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/domain/bundle
+          alias: ${1}DomainBundle
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/domain/policy
           alias: ${1}DomainPolicy
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/domain/secret

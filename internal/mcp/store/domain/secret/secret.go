@@ -36,8 +36,8 @@ func NewMCPSecretRef(
 	kind MCPSecretKind,
 	slot string,
 ) (MCPSecretRef, error) {
-	kind = normalizeSecretKind(kind)
-	normalizedSlot, err := normalizeAndValidateSecretSlot(kind, slot)
+	kind = kind.normalized()
+	normalizedSlot, err := kind.NormalizeSlot(slot)
 	if err != nil {
 		return MCPSecretRef{}, err
 	}
@@ -51,33 +51,6 @@ func NewMCPSecretRef(
 		return MCPSecretRef{}, err
 	}
 	return ref, nil
-}
-
-func ValidateMCPSecretRef(
-	raw string,
-	server artifact.ArtifactRef,
-	kind MCPSecretKind,
-	slot string,
-) error {
-	if err := server.Validate(); err != nil {
-		return err
-	}
-	ref, err := ParseMCPSecretRef(raw)
-	if err != nil {
-		return err
-	}
-	kind = normalizeSecretKind(kind)
-	slot = normalizeSecretSlot(slot)
-	if ref.Server != server {
-		return errors.New("secret ref server does not match requested Artifact")
-	}
-	if ref.Kind != kind {
-		return fmt.Errorf("secret ref kind %q does not match expected kind %q", ref.Kind, kind)
-	}
-	if !strings.EqualFold(ref.Slot, slot) {
-		return fmt.Errorf("secret ref slot %q does not match expected slot %q", ref.Slot, slot)
-	}
-	return nil
 }
 
 func ParseMCPSecretRef(raw string) (MCPSecretRef, error) {
@@ -119,13 +92,37 @@ func ParseMCPSecretRef(raw string) (MCPSecretRef, error) {
 
 	ref := MCPSecretRef{
 		Server: wire.Server,
-		Kind:   normalizeSecretKind(wire.Kind),
+		Kind:   wire.Kind.normalized(),
 		Slot:   normalizeSecretSlot(wire.Slot),
 	}
 	if err := ref.Validate(); err != nil {
 		return MCPSecretRef{}, err
 	}
 	return ref, nil
+}
+
+func (ref MCPSecretRef) Matches(
+	server artifact.ArtifactRef,
+	kind MCPSecretKind,
+	slot string,
+) error {
+	if err := server.Validate(); err != nil {
+		return err
+	}
+	normalizedSlot, err := kind.NormalizeSlot(slot)
+	if err != nil {
+		return err
+	}
+	if ref.Server != server {
+		return errors.New("secret ref server does not match requested Artifact")
+	}
+	if ref.Kind != kind.normalized() {
+		return fmt.Errorf("secret ref kind %q does not match expected kind %q", ref.Kind, kind)
+	}
+	if ref.Slot != normalizedSlot {
+		return fmt.Errorf("secret ref slot %q does not match expected slot %q", ref.Slot, normalizedSlot)
+	}
+	return nil
 }
 
 func GetMCPSecretRefStorageKey(r MCPSecretRef) string {
@@ -169,18 +166,6 @@ func canonicalSecret(r MCPSecretRef) ([]byte, error) {
 		return nil, err
 	}
 	return append([]byte(nil), canonical...), nil
-}
-
-func ValidateMCPSecretKind(kind MCPSecretKind) error {
-	switch normalizeSecretKind(kind) {
-	case MCPSecretKindStdioEnv,
-		MCPSecretKindHTTPHeader,
-		MCPSecretKindOAuthClientCredentials,
-		MCPSecretKindOAuthToken:
-		return nil
-	default:
-		return fmt.Errorf("secret ref kind %q is invalid", kind)
-	}
 }
 
 func validateSecret(r MCPSecretRef) error {
@@ -268,12 +253,8 @@ func normalizeAndValidateSecretSlot(kind MCPSecretKind, slot string) (string, er
 	}
 }
 
-func ValidateSecretSlot(kind MCPSecretKind, slot string) error {
-	_, err := normalizeAndValidateSecretSlot(
-		normalizeSecretKind(kind),
-		slot,
-	)
-	return err
+func (kind MCPSecretKind) NormalizeSlot(slot string) (string, error) {
+	return normalizeAndValidateSecretSlot(kind.normalized(), slot)
 }
 
 func validateHTTPHeaderSecretSlot(name string) error {
@@ -326,7 +307,7 @@ func validateEnvSecretSlot(key string) error {
 	return nil
 }
 
-func normalizeSecretKind(kind MCPSecretKind) MCPSecretKind {
+func (kind MCPSecretKind) normalized() MCPSecretKind {
 	return MCPSecretKind(strings.TrimSpace(string(kind)))
 }
 

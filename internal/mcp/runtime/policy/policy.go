@@ -20,6 +20,15 @@ const (
 	MCPApprovalRuleDeny  MCPApprovalRule = "deny"
 )
 
+func (value MCPApprovalRule) Validate() error {
+	switch value {
+	case MCPApprovalRuleAllow, MCPApprovalRuleAsk, MCPApprovalRuleDeny:
+		return nil
+	default:
+		return fmt.Errorf("%w: invalid MCP approval rule %q", ErrInvalid, value)
+	}
+}
+
 type MCPExecutionMode string
 
 const (
@@ -27,12 +36,30 @@ const (
 	MCPExecutionModeAuto   MCPExecutionMode = "auto"
 )
 
+func (value MCPExecutionMode) Validate() error {
+	switch value {
+	case MCPExecutionModeAuto, MCPExecutionModeManual:
+		return nil
+	default:
+		return fmt.Errorf("%w: invalid MCP execution mode %q", ErrInvalid, value)
+	}
+}
+
 type MCPTrustLevel string
 
 const (
 	MCPTrustLevelUntrusted MCPTrustLevel = "untrusted"
 	MCPTrustLevelTrusted   MCPTrustLevel = "trusted"
 )
+
+func (value MCPTrustLevel) Validate() error {
+	switch value {
+	case MCPTrustLevelTrusted, MCPTrustLevelUntrusted:
+		return nil
+	default:
+		return fmt.Errorf("%w: invalid MCP trust level %q", ErrInvalid, value)
+	}
+}
 
 type MCPServerPolicy struct {
 	DefaultApprovalRule  MCPApprovalRule  `json:"defaultApprovalRule"`
@@ -43,6 +70,13 @@ type MCPServerPolicy struct {
 	RequireApprovalForDestructive bool `json:"requireApprovalForDestructive"`
 }
 
+func (value MCPServerPolicy) Validate() error {
+	if err := value.DefaultApprovalRule.Validate(); err != nil {
+		return err
+	}
+	return value.DefaultExecutionMode.Validate()
+}
+
 type MCPToolPolicyOverride struct {
 	ToolName string `json:"toolName"`
 
@@ -51,6 +85,28 @@ type MCPToolPolicyOverride struct {
 
 	AllowStaleDigest bool   `json:"allowStaleDigest,omitempty"`
 	ExpectedDigest   string `json:"expectedDigest,omitempty"`
+}
+
+func (value MCPToolPolicyOverride) Validate() error {
+	if value.ToolName != "" && strings.TrimSpace(value.ToolName) == "" {
+		return fmt.Errorf("%w: invalid MCP tool policy name", ErrInvalid)
+	}
+	if value.ApprovalRule != nil {
+		if err := value.ApprovalRule.Validate(); err != nil {
+			return err
+		}
+	}
+	if value.ExecutionMode != nil {
+		if err := value.ExecutionMode.Validate(); err != nil {
+			return err
+		}
+	}
+	if value.ExpectedDigest != "" {
+		if err := validateDigest(value.ExpectedDigest); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type MCPAppsPolicy struct {
@@ -65,6 +121,33 @@ type MCPPolicy struct {
 	DefaultPolicy MCPServerPolicy                  `json:"defaultPolicy"`
 	ToolPolicies  map[string]MCPToolPolicyOverride `json:"toolPolicies,omitempty"`
 	AppsPolicy    MCPAppsPolicy                    `json:"appsPolicy"`
+}
+
+func (value MCPPolicy) Validate() error {
+	if err := value.TrustLevel.Validate(); err != nil {
+		return err
+	}
+	if err := value.DefaultPolicy.Validate(); err != nil {
+		return err
+	}
+
+	for name, override := range value.ToolPolicies {
+		if strings.TrimSpace(name) == "" {
+			return fmt.Errorf("%w: empty MCP tool policy name", ErrInvalid)
+		}
+		if override.ToolName != "" && override.ToolName != name {
+			return fmt.Errorf(
+				"%w: MCP tool policy key %q differs from toolName %q",
+				ErrInvalid,
+				name,
+				override.ToolName,
+			)
+		}
+		if err := override.Validate(); err != nil {
+			return fmt.Errorf("MCP tool policy %q: %w", name, err)
+		}
+	}
+	return nil
 }
 
 type Composition struct {
@@ -92,41 +175,24 @@ func DefaultMCPAppsPolicy() MCPAppsPolicy {
 }
 
 func Baseline() MCPPolicy {
-	return NormalizeMCPPolicy(MCPPolicy{
+	return Normalize(MCPPolicy{
 		TrustLevel:    MCPTrustLevelUntrusted,
 		DefaultPolicy: DefaultMCPServerPolicy(),
 		AppsPolicy:    DefaultMCPAppsPolicy(),
 	})
 }
 
-func CloneMCPPolicy(input MCPPolicy) MCPPolicy {
+func Clone(input MCPPolicy) MCPPolicy {
 	output := input
-	output.ToolPolicies = CloneToolPolicies(input.ToolPolicies)
+	output.ToolPolicies = cloneToolPolicies(input.ToolPolicies)
 	if output.ToolPolicies == nil {
 		output.ToolPolicies = map[string]MCPToolPolicyOverride{}
 	}
 	return output
 }
 
-// CloneToolPolicies performs a deep clone of override pointer fields. A
-// shallow map clone is unsafe because ApprovalRule and ExecutionMode are
-// mutable pointers.
-func CloneToolPolicies(
-	input map[string]MCPToolPolicyOverride,
-) map[string]MCPToolPolicyOverride {
-	if input == nil {
-		return nil
-	}
-
-	output := make(map[string]MCPToolPolicyOverride, len(input))
-	for name, override := range input {
-		output[name] = cloneToolPolicyOverride(override)
-	}
-	return output
-}
-
-func NormalizeMCPPolicy(input MCPPolicy) MCPPolicy {
-	output := CloneMCPPolicy(input)
+func Normalize(input MCPPolicy) MCPPolicy {
+	output := Clone(input)
 
 	if output.TrustLevel == "" {
 		output.TrustLevel = MCPTrustLevelUntrusted
@@ -151,143 +217,12 @@ func NormalizeMCPPolicy(input MCPPolicy) MCPPolicy {
 	return output
 }
 
-func ValidateMCPPolicy(value MCPPolicy) error {
-	switch value.TrustLevel {
-	case MCPTrustLevelTrusted, MCPTrustLevelUntrusted:
-	default:
-		return fmt.Errorf(
-			"%w: invalid MCP trust level %q",
-			ErrInvalid,
-			value.TrustLevel,
-		)
-	}
-
-	if err := ValidateMCPServerPolicy(value.DefaultPolicy); err != nil {
-		return err
-	}
-
-	for name, override := range value.ToolPolicies {
-		if strings.TrimSpace(name) == "" {
-			return fmt.Errorf("%w: empty MCP tool policy name", ErrInvalid)
-		}
-		if err := ValidateMCPToolPolicyOverride(name, override); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func ValidateMCPServerPolicy(value MCPServerPolicy) error {
-	if err := ValidateMCPApprovalRule(value.DefaultApprovalRule); err != nil {
-		return err
-	}
-	return ValidateMCPExecutionMode(value.DefaultExecutionMode)
-}
-
-func ValidateMCPToolPolicyOverride(
-	name string,
-	value MCPToolPolicyOverride,
-) error {
-	if value.ToolName != "" && value.ToolName != name {
-		return fmt.Errorf(
-			"%w: MCP tool policy key differs from toolName",
-			ErrInvalid,
-		)
-	}
-	if value.ApprovalRule != nil {
-		if err := ValidateMCPApprovalRule(*value.ApprovalRule); err != nil {
-			return err
-		}
-	}
-	if value.ExecutionMode != nil {
-		if err := ValidateMCPExecutionMode(*value.ExecutionMode); err != nil {
-			return err
-		}
-	}
-	if value.ExpectedDigest != "" {
-		if err := ValidateDigest(value.ExpectedDigest); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func ValidateMCPApprovalRule(value MCPApprovalRule) error {
-	switch value {
-	case MCPApprovalRuleAllow, MCPApprovalRuleAsk, MCPApprovalRuleDeny:
-		return nil
-	default:
-		return fmt.Errorf(
-			"%w: invalid MCP approval rule %q",
-			ErrInvalid,
-			value,
-		)
-	}
-}
-
-func ValidateMCPExecutionMode(value MCPExecutionMode) error {
-	switch value {
-	case MCPExecutionModeAuto, MCPExecutionModeManual:
-		return nil
-	default:
-		return fmt.Errorf(
-			"%w: invalid MCP execution mode %q",
-			ErrInvalid,
-			value,
-		)
-	}
-}
-
-func ValidateDigest(value string) error {
-	raw, found := strings.CutPrefix(value, "sha256:")
-	if !found || len(raw) != sha256.Size*2 {
-		return fmt.Errorf("%w: invalid MCP digest", ErrInvalid)
-	}
-	if _, err := hex.DecodeString(raw); err != nil {
-		return fmt.Errorf("%w: invalid MCP digest: %w", ErrInvalid, err)
-	}
-	return nil
-}
-
-func ApprovalRuleRank(value MCPApprovalRule) int {
-	switch value {
-	case MCPApprovalRuleDeny:
-		return 3
-	case MCPApprovalRuleAsk:
-		return 2
-	default:
-		return 1
-	}
-}
-
-func ExecutionModeRank(value MCPExecutionMode) int {
-	if value == MCPExecutionModeManual {
-		return 2
-	}
-	return 1
-}
-
-func NormalizedApprovalRule(value MCPApprovalRule) MCPApprovalRule {
-	if value == "" {
-		return MCPApprovalRuleAsk
-	}
-	return value
-}
-
-func NormalizedExecutionMode(value MCPExecutionMode) MCPExecutionMode {
-	if value == "" {
-		return MCPExecutionModeManual
-	}
-	return value
-}
-
 func ComposeMCPPolicy(
 	baseline MCPPolicy,
 	policies ...MCPPolicy,
 ) (Composition, error) {
-	result := NormalizeMCPPolicy(baseline)
-	if err := ValidateMCPPolicy(result); err != nil {
+	result := Normalize(baseline)
+	if err := result.Validate(); err != nil {
 		return Composition{}, err
 	}
 
@@ -296,8 +231,8 @@ func ComposeMCPPolicy(
 
 	conflicts := map[string]string{}
 	for index, candidate := range policies {
-		candidate = NormalizeMCPPolicy(candidate)
-		if err := ValidateMCPPolicy(candidate); err != nil {
+		candidate = Normalize(candidate)
+		if err := candidate.Validate(); err != nil {
 			return Composition{}, fmt.Errorf("policy %d: %w", index, err)
 		}
 
@@ -362,10 +297,75 @@ func ComposeMCPPolicy(
 		}
 	}
 
+	if err := result.Validate(); err != nil {
+		return Composition{}, err
+	}
+
 	return Composition{
 		Body:      result,
 		Conflicts: maps.Clone(conflicts),
 	}, nil
+}
+
+func ApprovalRuleRank(value MCPApprovalRule) int {
+	switch value {
+	case MCPApprovalRuleDeny:
+		return 3
+	case MCPApprovalRuleAsk:
+		return 2
+	default:
+		return 1
+	}
+}
+
+func ExecutionModeRank(value MCPExecutionMode) int {
+	if value == MCPExecutionModeManual {
+		return 2
+	}
+	return 1
+}
+
+func NormalizedApprovalRule(value MCPApprovalRule) MCPApprovalRule {
+	if value == "" {
+		return MCPApprovalRuleAsk
+	}
+	return value
+}
+
+func NormalizedExecutionMode(value MCPExecutionMode) MCPExecutionMode {
+	if value == "" {
+		return MCPExecutionModeManual
+	}
+	return value
+}
+
+func cloneToolPolicies(
+	input map[string]MCPToolPolicyOverride,
+) map[string]MCPToolPolicyOverride {
+	if input == nil {
+		return nil
+	}
+
+	output := make(map[string]MCPToolPolicyOverride, len(input))
+	for name, override := range input {
+		output[name] = cloneToolPolicyOverride(override)
+	}
+	return output
+}
+
+func cloneToolPolicyOverride(
+	input MCPToolPolicyOverride,
+) MCPToolPolicyOverride {
+	output := input
+	if input.ApprovalRule != nil {
+		value := *input.ApprovalRule
+		output.ApprovalRule = &value
+	}
+	if input.ExecutionMode != nil {
+		value := *input.ExecutionMode
+		output.ExecutionMode = &value
+	}
+	return output
 }
 
 func composeToolPolicyOverride(
@@ -470,17 +470,13 @@ func restrictiveExecution(
 	return MCPExecutionModeAuto
 }
 
-func cloneToolPolicyOverride(
-	input MCPToolPolicyOverride,
-) MCPToolPolicyOverride {
-	output := input
-	if input.ApprovalRule != nil {
-		value := *input.ApprovalRule
-		output.ApprovalRule = &value
+func validateDigest(value string) error {
+	raw, found := strings.CutPrefix(value, "sha256:")
+	if !found || len(raw) != sha256.Size*2 {
+		return fmt.Errorf("%w: invalid MCP digest", ErrInvalid)
 	}
-	if input.ExecutionMode != nil {
-		value := *input.ExecutionMode
-		output.ExecutionMode = &value
+	if _, err := hex.DecodeString(raw); err != nil {
+		return fmt.Errorf("%w: invalid MCP digest: %w", ErrInvalid, err)
 	}
-	return output
+	return nil
 }

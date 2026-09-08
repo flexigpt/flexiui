@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"encoding/json"

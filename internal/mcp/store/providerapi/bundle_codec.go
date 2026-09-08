@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 )
 
 type (
@@ -48,10 +48,10 @@ func (BundleCodec) Key() schema.Key {
 
 func parseBundle(
 	raw []byte,
-) (mcpDomain.BundleDocument, json.RawMessage, error) {
-	value, err := jsonutil.DecodeCanonicalObject[mcpDomain.BundleDocument](raw, basespec.MaxDefinitionBytes)
+) (mcpDomainBundle.BundleDocument, json.RawMessage, error) {
+	value, err := jsonutil.DecodeCanonicalObject[mcpDomainBundle.BundleDocument](raw, basespec.MaxDefinitionBytes)
 	if err != nil {
-		return mcpDomain.BundleDocument{}, nil, err
+		return mcpDomainBundle.BundleDocument{}, nil, err
 	}
-	return mcpDomain.CanonicalizeBundle(value)
+	return mcpDomainBundle.CanonicalizeBundle(value)
 }

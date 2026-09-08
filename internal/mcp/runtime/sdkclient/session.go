@@ -12,8 +12,8 @@ import (
 	"sync"
 
 	mcpApps "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/apps"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -317,7 +317,7 @@ func (s *Session) listAllTools(
 			approvalRule, executionMode, override, hasOverride := effectiveToolPolicy(config, t.Name)
 			toolDigest := digestAny(t)
 			enabled := taskSupport != mcpServer.MCPTaskSupportRequired &&
-				approvalRule != mcpDomainPolicy.MCPApprovalRuleDeny
+				approvalRule != mcpPolicy.MCPApprovalRuleDeny
 			if hasOverride &&
 				override.ExpectedDigest != "" &&
 				override.ExpectedDigest != toolDigest &&
@@ -541,19 +541,19 @@ func effectiveToolPolicy(
 	config mcpServer.RuntimeConfig,
 	toolName string,
 ) (
-	mcpDomainPolicy.MCPApprovalRule,
-	mcpDomainPolicy.MCPExecutionMode,
-	mcpDomainPolicy.MCPToolPolicyOverride,
+	mcpPolicy.MCPApprovalRule,
+	mcpPolicy.MCPExecutionMode,
+	mcpPolicy.MCPToolPolicyOverride,
 	bool,
 ) {
-	return mcpDomainPolicy.EffectiveToolPolicy(config.Policy, toolName)
+	return mcpPolicy.EffectiveToolPolicy(config.Policy, toolName)
 }
 
 func inferRisk(
 	annotations *mcpSDK.ToolAnnotations,
-	trustLevel mcpDomainPolicy.MCPTrustLevel,
+	trustLevel mcpPolicy.MCPTrustLevel,
 ) mcpServer.MCPToolRisk {
-	hints := mcpDomainPolicy.ToolRiskHints{}
+	hints := mcpPolicy.ToolRiskHints{}
 	if annotations != nil {
 		hints.DestructiveHint = annotations.DestructiveHint
 		hints.OpenWorldHint = annotations.OpenWorldHint
@@ -561,7 +561,7 @@ func inferRisk(
 	}
 
 	return mcpServer.MCPToolRisk(
-		mcpDomainPolicy.InferToolRisk(hints, trustLevel),
+		mcpPolicy.InferToolRisk(hints, trustLevel),
 	)
 }
 

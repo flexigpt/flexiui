@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"encoding/json"
@@ -35,7 +35,7 @@ func (d AttachmentData) Validate() error {
 	if d.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
 		return fmt.Errorf("%w: invalid MCP Bundle attachment data schema", basespec.ErrInvalid)
 	}
-	return ValidateBundlePackageAddress(d.PackageAddress)
+	return validatePackageAddress(d.PackageAddress)
 }
 
 func EncodeAttachmentData(

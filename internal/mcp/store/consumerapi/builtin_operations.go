@@ -15,7 +15,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 )
 
 type EnsureBuiltInRequest struct {
@@ -51,7 +51,7 @@ func (a *API) EnsureBuiltIn(
 	if err := request.SourceID.Validate(); err != nil {
 		return Bundle{}, err
 	}
-	if err := mcpDomain.ValidateBundlePackageAddress(request.PackageAddress); err != nil {
+	if _, err := mcpDomainBundle.DocumentLocatorForPackage(request.PackageAddress); err != nil {
 		return Bundle{}, err
 	}
 	if !a.protection.IsProtectedRoot(request.RootID) {
@@ -62,14 +62,14 @@ func (a *API) EnsureBuiltIn(
 		)
 	}
 
-	document, err := mcpDomain.BundleFromParsedDocument(
+	document, err := mcpDomainBundle.BundleFromParsedDocument(
 		request.Document,
 	)
 	if err != nil {
 		return Bundle{}, err
 	}
 
-	expectedAddress, err := mcpDomain.PackageAddressForBundle(
+	expectedAddress, err := mcpDomainBundle.PackageAddressForBundle(
 		document.LogicalName,
 		document.LogicalVersion,
 	)
@@ -99,7 +99,7 @@ func (a *API) EnsureBuiltIn(
 		)
 	}
 
-	collectionData, err := mcpDomain.EncodeCollectionData(mcpDomain.CollectionData{
+	collectionData, err := mcpDomainBundle.EncodeCollectionData(mcpDomainBundle.CollectionData{
 		SchemaVersion:           artifactbuiltin.MCPSchemaVersion,
 		DiscoveryPolicyRevision: artifactbuiltin.DecoderRevision,
 		LogicalName:             document.LogicalName,
@@ -109,7 +109,7 @@ func (a *API) EnsureBuiltIn(
 	if err != nil {
 		return Bundle{}, err
 	}
-	attachmentData, err := mcpDomain.EncodeAttachmentData(mcpDomain.AttachmentData{
+	attachmentData, err := mcpDomainBundle.EncodeAttachmentData(mcpDomainBundle.AttachmentData{
 		SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
 		PackageAddress: request.PackageAddress,
 	})
@@ -174,7 +174,7 @@ func (a *API) EnsureBuiltIn(
 func ensureBuiltInTopologyMatches(
 	bundle Bundle,
 	request EnsureBuiltInRequest,
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 	collectionData json.RawMessage,
 	attachmentData json.RawMessage,
 ) error {

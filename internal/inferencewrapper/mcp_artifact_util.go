@@ -15,8 +15,8 @@ import (
 
 	mcpConversation "github.com/flexigpt/flexigpt-app/internal/mcp/conversation"
 	mcpApps "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/apps"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 )
 
 const mcpContextInputID = "mcp-context"
@@ -698,8 +698,8 @@ func constrainSelectedTool(
 	output := tool
 
 	if selection.ApprovalRule != nil {
-		if mcpDomainPolicy.ApprovalRuleRank(*selection.ApprovalRule) <
-			mcpDomainPolicy.ApprovalRuleRank(mcpDomainPolicy.NormalizedApprovalRule(tool.ApprovalRule)) {
+		if mcpPolicy.ApprovalRuleRank(*selection.ApprovalRule) <
+			mcpPolicy.ApprovalRuleRank(mcpPolicy.NormalizedApprovalRule(tool.ApprovalRule)) {
 			return mcpServer.MCPToolCapability{}, errors.New(
 				"conversation approval override weakens effective policy",
 			)
@@ -708,8 +708,8 @@ func constrainSelectedTool(
 	}
 
 	if selection.ExecutionMode != nil {
-		if mcpDomainPolicy.ExecutionModeRank(*selection.ExecutionMode) <
-			mcpDomainPolicy.ExecutionModeRank(mcpDomainPolicy.NormalizedExecutionMode(tool.ExecutionMode)) {
+		if mcpPolicy.ExecutionModeRank(*selection.ExecutionMode) <
+			mcpPolicy.ExecutionModeRank(mcpPolicy.NormalizedExecutionMode(tool.ExecutionMode)) {
 			return mcpServer.MCPToolCapability{}, errors.New(
 				"conversation execution override weakens effective policy",
 			)

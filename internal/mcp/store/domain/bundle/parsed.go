@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ func BundleFromParsedDocument(
 	input schema.ParsedDocument,
 ) (BundleDocument, error) {
 	expected := artifactbuiltin.MCPBundleSchemaKey
-	if err := validateParsedMCPDocument(
+	if err := validateParsedDocument(
 		input,
 		expected,
 		"MCP Bundle",
@@ -103,7 +103,7 @@ func decodeCanonicalDocument(
 	return nil
 }
 
-func validateParsedMCPDocument(
+func validateParsedDocument(
 	input schema.ParsedDocument,
 	expected schema.Key,
 	subject string,

@@ -388,26 +388,12 @@ func validateApprovalSummary(value mcpServer.MCPApprovalSummary) error {
 	if err := validateInvocationSource(value.Source); err != nil {
 		return err
 	}
-	if err := mcpServer.ValidateOptionalText(
-		"MCP approval app instance ID",
-		value.AppInstanceID,
-		mcpServer.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
 	if value.Source == mcpServer.MCPInvocationSourceApp &&
 		strings.TrimSpace(value.AppInstanceID) == "" {
 		return fmt.Errorf(
 			"%w: appInstanceID is required for an app approval",
 			mcpServer.ErrMCPInvalidRuntimeRequest,
 		)
-	}
-	if err := mcpServer.ValidateRequiredText(
-		"MCP approval tool name",
-		value.ToolName,
-		mcpServer.MaxDisplayNameBytes,
-	); err != nil {
-		return err
 	}
 
 	switch value.Risk {

@@ -2,6 +2,7 @@ package secret
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 )
@@ -31,7 +32,15 @@ const (
 )
 
 func (kind MCPSecretKind) Validate() error {
-	return ValidateMCPSecretKind(kind)
+	switch kind.normalized() {
+	case MCPSecretKindStdioEnv,
+		MCPSecretKindHTTPHeader,
+		MCPSecretKindOAuthClientCredentials,
+		MCPSecretKindOAuthToken:
+		return nil
+	default:
+		return fmt.Errorf("secret ref kind %q is invalid", kind)
+	}
 }
 
 type MCPSecretRef struct {

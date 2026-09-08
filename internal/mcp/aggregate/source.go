@@ -6,8 +6,8 @@ import (
 	"maps"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
@@ -116,10 +116,10 @@ func runtimeConfig(
 		LogicalName:               string(resolved.Document.LogicalName),
 		DisplayName:               resolved.Document.DisplayName,
 		OAuthClientSecretRequired: input.ClientCredentialSecretRequired,
-		Policy: mcpDomainPolicy.MCPPolicy{
+		Policy: mcpPolicy.MCPPolicy{
 			TrustLevel:    resolved.Policy.Body.TrustLevel,
 			DefaultPolicy: resolved.Policy.Body.DefaultPolicy,
-			ToolPolicies:  mcpDomainPolicy.CloneToolPolicies(resolved.Policy.Body.ToolPolicies),
+			ToolPolicies:  mcpPolicy.Clone(resolved.Policy.Body).ToolPolicies,
 			AppsPolicy:    resolved.Policy.Body.AppsPolicy,
 		},
 		SensitiveValues: append(

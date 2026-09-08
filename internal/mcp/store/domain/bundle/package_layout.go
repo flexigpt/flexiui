@@ -1,4 +1,4 @@
-package domain
+package bundle
 
 import (
 	"fmt"
@@ -26,32 +26,22 @@ func PackageAddressForBundle(
 func DocumentLocatorForPackage(
 	address source.ManagedPackageAddress,
 ) (basespec.Locator, error) {
-	if err := ValidateBundlePackageAddress(address); err != nil {
+	if err := validatePackageAddress(address); err != nil {
 		return "", err
 	}
 	return address.FileLocator(artifactbuiltin.MCPBundleDocumentFileName)
 }
 
-func ValidateDocumentLocator(value basespec.Locator) error {
-	if err := value.ValidatePortable(false); err != nil {
-		return err
-	}
-	if path.Base(string(value)) != string(artifactbuiltin.MCPBundleDocumentFileName) ||
-		path.Dir(string(value)) == "." {
-		return fmt.Errorf(
-			"%w: MCP Bundle document locator must be nested and named %q",
-			basespec.ErrInvalid,
-			artifactbuiltin.MCPBundleDocumentFileName,
-		)
-	}
-	return nil
-}
-
 func IsBundleDocumentLocator(value basespec.Locator) bool {
-	return path.Base(string(value)) == string(artifactbuiltin.MCPBundleDocumentFileName)
+	if value.ValidatePortable(false) != nil ||
+		path.Base(string(value)) != string(artifactbuiltin.MCPBundleDocumentFileName) ||
+		path.Dir(string(value)) == "." {
+		return false
+	}
+	return true
 }
 
-func ValidateBundlePackageAddress(
+func validatePackageAddress(
 	address source.ManagedPackageAddress,
 ) error {
 	if err := address.Validate(); err != nil {

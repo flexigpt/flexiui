@@ -9,7 +9,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
@@ -55,7 +55,7 @@ type GetMCPBundleDocumentRequest struct {
 }
 
 type GetMCPBundleDocumentResponse struct {
-	Body *mcpDomain.BundleDocument `json:"body"`
+	Body *mcpDomainBundle.BundleDocument `json:"body"`
 }
 
 type ListMCPBundleServersRequest struct {

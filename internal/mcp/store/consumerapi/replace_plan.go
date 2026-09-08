@@ -14,14 +14,14 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	mcpDomain "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain"
+	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
 
 type documentReplacePlan struct {
 	bundle Bundle
 
-	document mcpDomain.BundleDocument
+	document mcpDomainBundle.BundleDocument
 	raw      json.RawMessage
 
 	collectionData json.RawMessage
@@ -70,7 +70,7 @@ func (a *API) prepareDocumentReplace(
 		return documentReplacePlan{}, basespec.ErrConflict
 	}
 
-	document, err := mcpDomain.BundleFromParsedDocument(parsed)
+	document, err := mcpDomainBundle.BundleFromParsedDocument(parsed)
 	if err != nil {
 		return documentReplacePlan{}, err
 	}
@@ -82,11 +82,8 @@ func (a *API) prepareDocumentReplace(
 			basespec.ErrConflict,
 		)
 	}
-	if err := validateRequiredPolicyReferences(document); err != nil {
-		return documentReplacePlan{}, err
-	}
 
-	collectionData, err := mcpDomain.EncodeCollectionData(mcpDomain.CollectionData{
+	collectionData, err := mcpDomainBundle.EncodeCollectionData(mcpDomainBundle.CollectionData{
 		SchemaVersion:           artifactbuiltin.MCPSchemaVersion,
 		DiscoveryPolicyRevision: artifactbuiltin.DecoderRevision,
 		LogicalName:             document.LogicalName,
@@ -193,25 +190,6 @@ func (a *API) prepareDocumentReplace(
 	}, nil
 }
 
-func validateRequiredPolicyReferences(
-	document mcpDomain.BundleDocument,
-) error {
-	for name, extension := range document.BundleExtension.Servers {
-		if extension.Policy == nil || !extension.Policy.Required {
-			continue
-		}
-		if _, found := document.BundleExtension.Policies[string(extension.Policy.Ref)]; !found {
-			return fmt.Errorf(
-				"%w: MCP server %q requires missing policy %q",
-				basespec.ErrReferenceUnresolved,
-				name,
-				extension.Policy.Ref,
-			)
-		}
-	}
-	return nil
-}
-
 func preparedRegistrationData(
 	bundle Bundle,
 	registration Registration,
@@ -247,10 +225,9 @@ func preparedRegistrationData(
 	if err != nil {
 		return nil, err
 	}
-	if err := mcpDomainServer.ValidateServerDataForDocument(
+	if err := serverData.ValidateFor(
 		serverRef,
 		document,
-		serverData,
 	); err != nil {
 		return nil, err
 	}
@@ -259,7 +236,7 @@ func preparedRegistrationData(
 
 func replaceCollectionMetadataNeeded(
 	bundle Bundle,
-	document mcpDomain.BundleDocument,
+	document mcpDomainBundle.BundleDocument,
 	collectionData json.RawMessage,
 ) bool {
 	return bundle.Collection.DisplayName != displayName(document) ||
