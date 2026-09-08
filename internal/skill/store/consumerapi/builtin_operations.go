@@ -1,4 +1,4 @@
-package bundle
+package consumerapi
 
 import (
 	"context"
@@ -15,14 +15,9 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
-type BuiltInCollectionSkill struct {
-	ArtifactID artifact.ArtifactID
-	Member     basespec.Locator
-	Enabled    bool
-}
 type preparedBuiltInSkill struct {
 	request          BuiltInCollectionSkill
 	name             string
@@ -31,18 +26,7 @@ type preparedBuiltInSkill struct {
 	packageSHA256    cryptoutil.Digest
 }
 
-// BuiltInCollectionInstallRequest is trusted installer input. It materializes
-// exactly one complete portable Collection package in one managed Source
-// package directory, pins all static Artifacts, and then refreshes once.
-type BuiltInCollectionInstallRequest struct {
-	Bundle                     collection.CollectionRef
-	ExpectedCollectionRevision uint64
-	PackageAddress             source.ManagedPackageAddress
-	PackageFiles               []source.ManagedPackageFile
-	Skills                     []BuiltInCollectionSkill
-}
-
-func (a *StoreAPI) InstallBuiltInCollection(
+func (a *API) InstallBuiltInCollection(
 	ctx context.Context,
 	request BuiltInCollectionInstallRequest,
 ) ([]CreateManagedSkillResponse, error) {
@@ -93,7 +77,7 @@ func (a *StoreAPI) InstallBuiltInCollection(
 			basespec.ErrConflict,
 		)
 	}
-	attachmentData, err := DecodeAttachmentData(attachment.Data)
+	attachmentData, err := skillDomain.DecodeAttachmentData(attachment.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +209,7 @@ func (a *StoreAPI) InstallBuiltInCollection(
 			return nil, err
 		}
 		expectedName := path.Base(path.Dir(string(skill.Member)))
-		definitionValue, _, err := skillArtifact.DecodeSkillDocument(
+		definitionValue, _, err := skillDomain.DecodeSkillDocument(
 			normalizedSkillMD,
 			expectedName,
 		)
@@ -354,7 +338,7 @@ func filesForBuiltInMember(
 	return normalized, nil
 }
 
-func (a *StoreAPI) ensurePinnedManagedSkill(
+func (a *API) ensurePinnedManagedSkill(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 	expectedCollectionRevision uint64,

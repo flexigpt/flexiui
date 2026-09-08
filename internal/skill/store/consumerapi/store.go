@@ -1,4 +1,4 @@
-package bundle
+package consumerapi
 
 import (
 	"bytes"
@@ -23,10 +23,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
-type StoreAPI struct {
+type API struct {
 	sources          compositionapi.SourceAPI
 	collections      compositionapi.CollectionAPI
 	artifacts        compositionapi.ArtifactAPI
@@ -36,7 +36,7 @@ type StoreAPI struct {
 	protection       compositionapi.ProtectionAPI
 }
 
-func NewStoreAPI(
+func New(
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
@@ -44,7 +44,7 @@ func NewStoreAPI(
 	resources compositionapi.ResourceAPI,
 	managedArtifacts compositionapi.ManagedArtifactAPI,
 	protection compositionapi.ProtectionAPI,
-) (*StoreAPI, error) {
+) (*API, error) {
 	if sources == nil ||
 		collections == nil ||
 		artifacts == nil ||
@@ -58,7 +58,7 @@ func NewStoreAPI(
 		)
 	}
 
-	return &StoreAPI{
+	return &API{
 		sources:          sources,
 		collections:      collections,
 		artifacts:        artifacts,
@@ -69,7 +69,7 @@ func NewStoreAPI(
 	}, nil
 }
 
-func (a *StoreAPI) CreateSkillBundle(
+func (a *API) CreateSkillBundle(
 	ctx context.Context,
 	request *CreateSkillBundleRequest,
 ) (*CreateSkillBundleResponse, error) {
@@ -89,7 +89,7 @@ func (a *StoreAPI) CreateSkillBundle(
 	return &CreateSkillBundleResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) GetSkillBundle(
+func (a *API) GetSkillBundle(
 	ctx context.Context,
 	request *GetSkillBundleRequest,
 ) (*GetSkillBundleResponse, error) {
@@ -109,7 +109,7 @@ func (a *StoreAPI) GetSkillBundle(
 	return &GetSkillBundleResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) ListSkillBundles(
+func (a *API) ListSkillBundles(
 	ctx context.Context,
 	request *ListSkillBundlesRequest,
 ) (*ListSkillBundlesResponse, error) {
@@ -133,7 +133,7 @@ func (a *StoreAPI) ListSkillBundles(
 	}, nil
 }
 
-func (a *StoreAPI) UpdateSkillBundle(
+func (a *API) UpdateSkillBundle(
 	ctx context.Context,
 	request *UpdateSkillBundleRequest,
 ) (*UpdateSkillBundleResponse, error) {
@@ -153,7 +153,7 @@ func (a *StoreAPI) UpdateSkillBundle(
 	return &UpdateSkillBundleResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) RetireSkillBundle(
+func (a *API) RetireSkillBundle(
 	ctx context.Context,
 	request *RetireSkillBundleRequest,
 ) (*RetireSkillBundleResponse, error) {
@@ -177,7 +177,7 @@ func (a *StoreAPI) RetireSkillBundle(
 	return &RetireSkillBundleResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) PurgeSkillBundle(
+func (a *API) PurgeSkillBundle(
 	ctx context.Context,
 	request *PurgeSkillBundleRequest,
 ) (*PurgeSkillBundleResponse, error) {
@@ -202,7 +202,7 @@ func (a *StoreAPI) PurgeSkillBundle(
 	}, nil
 }
 
-func (a *StoreAPI) AttachSkillBundleSource(
+func (a *API) AttachSkillBundleSource(
 	ctx context.Context,
 	request *AttachSkillBundleSourceRequest,
 ) (*AttachSkillBundleSourceResponse, error) {
@@ -227,7 +227,7 @@ func (a *StoreAPI) AttachSkillBundleSource(
 	return &AttachSkillBundleSourceResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) RefreshSkillBundle(
+func (a *API) RefreshSkillBundle(
 	ctx context.Context,
 	request *RefreshSkillBundleRequest,
 ) (*RefreshSkillBundleResponse, error) {
@@ -247,7 +247,7 @@ func (a *StoreAPI) RefreshSkillBundle(
 	return &RefreshSkillBundleResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) CreateManagedSkill(
+func (a *API) CreateManagedSkill(
 	ctx context.Context,
 	request *CreateManagedSkillRequest,
 ) (*CreateManagedSkillStoreResponse, error) {
@@ -271,7 +271,7 @@ func (a *StoreAPI) CreateManagedSkill(
 	return &CreateManagedSkillStoreResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) GetManagedSkillDocument(
+func (a *API) GetManagedSkillDocument(
 	ctx context.Context,
 	request *GetManagedSkillDocumentRequest,
 ) (*GetManagedSkillDocumentResponse, error) {
@@ -291,7 +291,7 @@ func (a *StoreAPI) GetManagedSkillDocument(
 	return &GetManagedSkillDocumentResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) AdoptSkill(
+func (a *API) AdoptSkill(
 	ctx context.Context,
 	request *AdoptSkillRequest,
 ) (*AdoptSkillResponse, error) {
@@ -311,7 +311,7 @@ func (a *StoreAPI) AdoptSkill(
 	return &AdoptSkillResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) PinSkill(
+func (a *API) PinSkill(
 	ctx context.Context,
 	request *PinSkillRequest,
 ) (*PinSkillResponse, error) {
@@ -331,7 +331,7 @@ func (a *StoreAPI) PinSkill(
 	return &PinSkillResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) GetSkill(
+func (a *API) GetSkill(
 	ctx context.Context,
 	request *GetSkillRequest,
 ) (*GetSkillResponse, error) {
@@ -351,7 +351,7 @@ func (a *StoreAPI) GetSkill(
 	return &GetSkillResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) ListBundleSkills(
+func (a *API) ListBundleSkills(
 	ctx context.Context,
 	request *ListBundleSkillsRequest,
 ) (*ListBundleSkillsResponse, error) {
@@ -375,7 +375,7 @@ func (a *StoreAPI) ListBundleSkills(
 	}, nil
 }
 
-func (a *StoreAPI) SetSkillEnabled(
+func (a *API) SetSkillEnabled(
 	ctx context.Context,
 	request *SetSkillEnabledRequest,
 ) (*SetSkillEnabledResponse, error) {
@@ -400,7 +400,7 @@ func (a *StoreAPI) SetSkillEnabled(
 	return &SetSkillEnabledResponse{Body: &value}, nil
 }
 
-func (a *StoreAPI) UnadoptSkill(
+func (a *API) UnadoptSkill(
 	ctx context.Context,
 	request *UnadoptSkillRequest,
 ) (*UnadoptSkillResponse, error) {
@@ -426,7 +426,7 @@ func (a *StoreAPI) UnadoptSkill(
 	}, nil
 }
 
-func (a *StoreAPI) PurgeSkill(
+func (a *API) PurgeSkill(
 	ctx context.Context,
 	request *PurgeSkillRequest,
 ) (*PurgeSkillResponse, error) {
@@ -451,14 +451,14 @@ func (a *StoreAPI) PurgeSkill(
 	}, nil
 }
 
-func (a *StoreAPI) CreateBundle(
+func (a *API) CreateBundle(
 	ctx context.Context,
 	request CreateSkillBundleBody,
 ) (Bundle, error) {
 	return a.createBundle(ctx, request, false)
 }
 
-func (a *StoreAPI) ListBundles(
+func (a *API) ListBundles(
 	ctx context.Context,
 	rootID root.RootID,
 ) ([]Bundle, error) {
@@ -481,7 +481,7 @@ func (a *StoreAPI) ListBundles(
 	return output, nil
 }
 
-func (a *StoreAPI) UpdateBundle(
+func (a *API) UpdateBundle(
 	ctx context.Context,
 	request UpdateSkillBundleBody,
 ) (Bundle, error) {
@@ -497,7 +497,7 @@ func (a *StoreAPI) UpdateBundle(
 		return Bundle{}, basespec.ErrConflict
 	}
 
-	data, err := EncodeCollectionData(current.Data)
+	data, err := skillDomain.EncodeCollectionData(current.Data)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -532,7 +532,7 @@ func (a *StoreAPI) UpdateBundle(
 	return value, nil
 }
 
-func (a *StoreAPI) RetireBundle(
+func (a *API) RetireBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedRevision uint64,
@@ -556,7 +556,7 @@ func (a *StoreAPI) RetireBundle(
 	return a.collections.Retire(ctx, ref, expectedRevision)
 }
 
-func (a *StoreAPI) PurgeBundle(
+func (a *API) PurgeBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedRevision uint64,
@@ -575,7 +575,7 @@ func (a *StoreAPI) PurgeBundle(
 			ref.CollectionID,
 		)
 	}
-	data, err := DecodeCollectionData(value.Data)
+	data, err := skillDomain.DecodeCollectionData(value.Data)
 	if err != nil {
 		return err
 	}
@@ -619,7 +619,7 @@ func (a *StoreAPI) PurgeBundle(
 	return nil
 }
 
-func (a *StoreAPI) AttachSource(
+func (a *API) AttachSource(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 	expectedCollectionRevision uint64,
@@ -646,14 +646,14 @@ func (a *StoreAPI) AttachSource(
 	if err := a.validateAttachmentDraft(ctx, bundle.RootID, draft); err != nil {
 		return Bundle{}, err
 	}
-	attachmentData, err := NewAttachmentData(
+	attachmentData, err := skillDomain.NewAttachmentData(
 		draft.DiscoveryRoot,
 		draft.ExpectedMemberDigests,
 	)
 	if err != nil {
 		return Bundle{}, err
 	}
-	encodedAttachmentData, err := EncodeAttachmentData(attachmentData)
+	encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -688,7 +688,7 @@ func (a *StoreAPI) AttachSource(
 	return value, nil
 }
 
-func (a *StoreAPI) RefreshBundle(
+func (a *API) RefreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (catalog.RefreshCollectionResult, error) {
@@ -698,7 +698,7 @@ func (a *StoreAPI) RefreshBundle(
 // EnsureBuiltInBundleCurrent preserves startup convergence without publishing
 // a new catalog when the protected bundle is already current. It is reserved
 // for the trusted built-in installer and explicit built-in update paths.
-func (a *StoreAPI) EnsureBuiltInBundleCurrent(
+func (a *API) EnsureBuiltInBundleCurrent(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) error {
@@ -721,7 +721,7 @@ func (a *StoreAPI) EnsureBuiltInBundleCurrent(
 	return err
 }
 
-func (a *StoreAPI) EnsureBuiltInBundleTopology(
+func (a *API) EnsureBuiltInBundleTopology(
 	ctx context.Context,
 	request BuiltInBundleTopology,
 ) (Bundle, error) {
@@ -749,9 +749,9 @@ func (a *StoreAPI) EnsureBuiltInBundleTopology(
 		return Bundle{}, err
 	}
 	if !builtInBundleTopologyMatches(bundle, request) {
-		data, err := EncodeCollectionData(CollectionData{
+		data, err := skillDomain.EncodeCollectionData(skillDomain.CollectionData{
 			SchemaVersion:           artifactbuiltin.SkillCollectionV1SchemaVersion,
-			DiscoveryPolicyRevision: DiscoveryPolicyRevision,
+			DiscoveryPolicyRevision: skillDomain.DiscoveryPolicyRevision,
 			LogicalName:             request.LogicalName,
 			LogicalVersion:          request.LogicalVersion,
 			Labels:                  request.Labels,
@@ -781,14 +781,14 @@ func (a *StoreAPI) EnsureBuiltInBundleTopology(
 
 		if len(bundle.Attachments) == 1 {
 			attachment := bundle.Attachments[0]
-			attachmentData, err := NewAttachmentData(
+			attachmentData, err := skillDomain.NewAttachmentData(
 				request.DiscoveryRoot,
 				request.ExpectedMemberDigests,
 			)
 			if err != nil {
 				return Bundle{}, err
 			}
-			encodedAttachmentData, err := EncodeAttachmentData(attachmentData)
+			encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 			if err != nil {
 				return Bundle{}, err
 			}
@@ -831,7 +831,7 @@ func (a *StoreAPI) EnsureBuiltInBundleTopology(
 	return bundle, nil
 }
 
-func (a *StoreAPI) GetBundle(
+func (a *API) GetBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (Bundle, error) {
@@ -851,7 +851,7 @@ func (a *StoreAPI) GetBundle(
 		)
 	}
 
-	data, err := DecodeCollectionData(value.Data)
+	data, err := skillDomain.DecodeCollectionData(value.Data)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -893,7 +893,7 @@ func (a *StoreAPI) GetBundle(
 	}, nil
 }
 
-func (a *StoreAPI) ListSkills(
+func (a *API) ListSkills(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 ) ([]artifact.Artifact, error) {
@@ -916,7 +916,7 @@ func (a *StoreAPI) ListSkills(
 // GetManagedSkillDocument reads the canonical definition for a managed Skill
 // package. External and discovered Skills remain source-owned and intentionally
 // do not expose an editable document through this API.
-func (a *StoreAPI) getManagedSkillDocument(
+func (a *API) getManagedSkillDocument(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ManagedSkillDocument, error) {
@@ -966,14 +966,14 @@ func (a *StoreAPI) getManagedSkillDocument(
 	if err != nil {
 		return ManagedSkillDocument{}, err
 	}
-	doc, err := skillArtifact.DocumentFromDefinition(definitionValue)
+	doc, err := skillDomain.DocumentFromDefinition(definitionValue)
 	if err != nil {
 		return ManagedSkillDocument{}, err
 	}
 	return ManagedSkillDocument{Artifact: value.Clone(), Document: doc}, nil
 }
 
-func (a *StoreAPI) adoptSkill(
+func (a *API) adoptSkill(
 	ctx context.Context,
 	request AdoptSkillBody,
 ) (artifact.Artifact, error) {
@@ -1052,7 +1052,7 @@ func (a *StoreAPI) adoptSkill(
 	})
 }
 
-func (a *StoreAPI) pinSkill(
+func (a *API) pinSkill(
 	ctx context.Context,
 	request PinSkillBody,
 ) (artifact.Artifact, error) {
@@ -1092,7 +1092,7 @@ func (a *StoreAPI) pinSkill(
 	})
 }
 
-func (a *StoreAPI) setSkillEnabled(
+func (a *API) setSkillEnabled(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
@@ -1112,7 +1112,7 @@ func (a *StoreAPI) setSkillEnabled(
 	)
 }
 
-func (a *StoreAPI) unadoptSkill(
+func (a *API) unadoptSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
@@ -1132,7 +1132,7 @@ func (a *StoreAPI) unadoptSkill(
 	)
 }
 
-func (a *StoreAPI) purgeSkill(
+func (a *API) purgeSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
@@ -1213,7 +1213,7 @@ func (a *StoreAPI) purgeSkill(
 	return nil
 }
 
-func (a *StoreAPI) getSkill(
+func (a *API) getSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (artifact.Artifact, error) {
@@ -1237,7 +1237,7 @@ func (a *StoreAPI) getSkill(
 	return value, nil
 }
 
-func (a *StoreAPI) currentBundleCatalog(
+func (a *API) currentBundleCatalog(
 	ctx context.Context,
 	bundle Bundle,
 ) (catalog.Snapshot, error) {
@@ -1249,7 +1249,7 @@ func (a *StoreAPI) currentBundleCatalog(
 	)
 }
 
-func (a *StoreAPI) currentDefinitionForArtifact(
+func (a *API) currentDefinitionForArtifact(
 	ctx context.Context,
 	record artifact.Artifact,
 ) (definition.Definition, error) {
@@ -1276,9 +1276,47 @@ func (a *StoreAPI) currentDefinitionForArtifact(
 	return definitionForArtifact(snapshot, record)
 }
 
+func definitionForArtifact(
+	snapshot catalog.Snapshot,
+	record artifact.Artifact,
+) (definition.Definition, error) {
+	if record.ResolvedDefinition == nil {
+		return definition.Definition{}, fmt.Errorf(
+			"%w: Skill Artifact %q has no current definition",
+			basespec.ErrReferenceUnresolved,
+			record.ID,
+		)
+	}
+	if snapshot.RootID != record.RootID ||
+		snapshot.CollectionID != record.CollectionID {
+		return definition.Definition{}, fmt.Errorf(
+			"%w: Skill catalog belongs to another Collection",
+			basespec.ErrInvalid,
+		)
+	}
+
+	value, err := snapshot.DefinitionForOccurrence(catalog.OccurrenceKey{
+		CollectionID:       record.CollectionID,
+		SourceID:           record.Binding.SourceID,
+		Locator:            record.Binding.Locator,
+		SubresourceLocator: record.Binding.SubresourceLocator,
+	})
+	if err != nil {
+		return definition.Definition{}, err
+	}
+	if value.Digest != *record.ResolvedDefinition {
+		return definition.Definition{}, fmt.Errorf(
+			"%w: Skill Artifact %q catalog definition changed",
+			basespec.ErrConflict,
+			record.ID,
+		)
+	}
+	return value, nil
+}
+
 // createBundle keeps the built-in attachment role inside trusted bootstrap
 // composition. Public bundle creation must not mint built-in provenance.
-func (a *StoreAPI) createBundle(
+func (a *API) createBundle(
 	ctx context.Context,
 	request CreateSkillBundleBody,
 	allowBuiltInAttachment bool,
@@ -1303,9 +1341,9 @@ func (a *StoreAPI) createBundle(
 		}
 	}
 
-	data, err := EncodeCollectionData(CollectionData{
+	data, err := skillDomain.EncodeCollectionData(skillDomain.CollectionData{
 		SchemaVersion:           artifactbuiltin.SkillCollectionV1SchemaVersion,
-		DiscoveryPolicyRevision: DiscoveryPolicyRevision,
+		DiscoveryPolicyRevision: skillDomain.DiscoveryPolicyRevision,
 		LogicalName:             request.LogicalName,
 		LogicalVersion:          request.LogicalVersion,
 		Labels:                  request.Labels,
@@ -1351,14 +1389,14 @@ func (a *StoreAPI) createBundle(
 		if err := a.validateAttachmentDraft(ctx, request.RootID, draft); err != nil {
 			return Bundle{}, err
 		}
-		attachmentData, err := NewAttachmentData(
+		attachmentData, err := skillDomain.NewAttachmentData(
 			draft.DiscoveryRoot,
 			draft.ExpectedMemberDigests,
 		)
 		if err != nil {
 			return Bundle{}, err
 		}
-		encodedAttachmentData, err := EncodeAttachmentData(attachmentData)
+		encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 		if err != nil {
 			return Bundle{}, err
 		}
@@ -1398,11 +1436,11 @@ func (a *StoreAPI) createBundle(
 			provisionedSource = &value
 		}
 
-		attachmentData, err := NewAttachmentData(".", nil)
+		attachmentData, err := skillDomain.NewAttachmentData(".", nil)
 		if err != nil {
 			return Bundle{}, err
 		}
-		encodedAttachmentData, err := EncodeAttachmentData(attachmentData)
+		encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 		if err != nil {
 			return Bundle{}, err
 		}
@@ -1534,11 +1572,11 @@ func bundleCreationIntentMatches(
 			attachment.Enabled != draft.Enabled {
 			return false
 		}
-		actualData, err := DecodeAttachmentData(attachment.Data)
+		actualData, err := skillDomain.DecodeAttachmentData(attachment.Data)
 		if err != nil {
 			return false
 		}
-		expectedData, err := NewAttachmentData(
+		expectedData, err := skillDomain.NewAttachmentData(
 			draft.DiscoveryRoot,
 			draft.ExpectedMemberDigests,
 		)
@@ -1589,14 +1627,14 @@ func builtInBundleTopologyMatches(
 	}
 
 	attachment := value.Attachments[0]
-	expectedAttachment, err := NewAttachmentData(
+	expectedAttachment, err := skillDomain.NewAttachmentData(
 		request.DiscoveryRoot,
 		request.ExpectedMemberDigests,
 	)
 	if err != nil {
 		return false
 	}
-	actualAttachment, err := DecodeAttachmentData(attachment.Data)
+	actualAttachment, err := skillDomain.DecodeAttachmentData(attachment.Data)
 	if err != nil {
 		return false
 	}
@@ -1613,7 +1651,7 @@ func builtInBundleTopologyMatches(
 		)
 }
 
-func (a *StoreAPI) refreshBundle(
+func (a *API) refreshBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	allowProtected bool,
@@ -1643,7 +1681,7 @@ func (a *StoreAPI) refreshBundle(
 //
 // Built-in package bootstrap is the only caller permitted to publish through
 // a RoleBuiltIn attachment. User-facing creation always uses RoleManaged.
-func (a *StoreAPI) createManagedSkill(
+func (a *API) createManagedSkill(
 	ctx context.Context,
 	request CreateManagedSkillBody,
 	allowBuiltInAttachment bool,
@@ -1696,7 +1734,7 @@ func (a *StoreAPI) createManagedSkill(
 	if err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
-	definitionValue, _, err := skillArtifact.DecodeSkillDocument(skillMD,
+	definitionValue, _, err := skillDomain.DecodeSkillDocument(skillMD,
 		request.SkillName,
 	)
 	if err != nil {
@@ -1760,14 +1798,14 @@ func (a *StoreAPI) createManagedSkill(
 			basespec.ErrConflict,
 		)
 	}
-	packageAddress, err := skillArtifact.ManagedPackageAddressForSkill(
+	packageAddress, err := skillDomain.ManagedPackageAddressForSkill(
 		definitionValue.LogicalName,
 		definitionValue.LogicalVersion,
 	)
 	if err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
-	skillLocator, err := skillArtifact.ManagedPackageLocatorForSkill(packageAddress)
+	skillLocator, err := skillDomain.ManagedPackageLocatorForSkill(packageAddress)
 	if err != nil {
 		return CreateManagedSkillResponse{}, err
 	}
@@ -1961,7 +1999,7 @@ func (a *StoreAPI) createManagedSkill(
 	)
 }
 
-func (a *StoreAPI) requireBundleMutation(
+func (a *API) requireBundleMutation(
 	ctx context.Context,
 	rootID root.RootID,
 	allowProtected bool,
@@ -2008,7 +2046,7 @@ func managedSkillCreateResult(
 }
 
 func validateBundleAttachmentTopology(
-	data CollectionData,
+	data skillDomain.CollectionData,
 	attachments []collection.Attachment,
 ) error {
 	var (
@@ -2069,7 +2107,7 @@ func requireBundleOwnedManagedSource(
 	return nil
 }
 
-func (a *StoreAPI) validateAttachmentDraft(
+func (a *API) validateAttachmentDraft(
 	ctx context.Context,
 	rootID root.RootID,
 	draft AttachmentDraft,
@@ -2080,7 +2118,7 @@ func (a *StoreAPI) validateAttachmentDraft(
 	if err := validateRole(draft.Role); err != nil {
 		return err
 	}
-	if _, err := NewAttachmentData(
+	if _, err := skillDomain.NewAttachmentData(
 		draft.DiscoveryRoot,
 		draft.ExpectedMemberDigests,
 	); err != nil {
@@ -2093,7 +2131,7 @@ func (a *StoreAPI) validateAttachmentDraft(
 	return validateRoleSourceKind(draft.Role, value.Kind)
 }
 
-func (a *StoreAPI) validateAttachment(
+func (a *API) validateAttachment(
 	ctx context.Context,
 	rootID root.RootID,
 	value collection.Attachment,
@@ -2101,7 +2139,7 @@ func (a *StoreAPI) validateAttachment(
 	if err := validateRole(value.Role); err != nil {
 		return err
 	}
-	if _, err := DecodeAttachmentData(value.Data); err != nil {
+	if _, err := skillDomain.DecodeAttachmentData(value.Data); err != nil {
 		return err
 	}
 	sourceValue, err := a.sources.Get(
@@ -2117,7 +2155,10 @@ func (a *StoreAPI) validateAttachment(
 
 func validateRole(role collection.AttachmentRole) error {
 	switch role {
-	case artifactbuiltin.ManagedAttachmentRole, artifactbuiltin.BuiltInAttachmentRole, RoleExternal, RoleLibrary:
+	case artifactbuiltin.ManagedAttachmentRole,
+		artifactbuiltin.BuiltInAttachmentRole,
+		skillDomain.RoleExternal,
+		skillDomain.RoleLibrary:
 		return nil
 	default:
 		return fmt.Errorf(
@@ -2142,7 +2183,7 @@ func validateRoleSourceKind(
 				source.SourceKindManagedDirectory,
 			)
 		}
-	case RoleExternal, RoleLibrary:
+	case skillDomain.RoleExternal, skillDomain.RoleLibrary:
 		if kind != source.SourceKindFilesystemDirectory {
 			return fmt.Errorf(
 				"%w: skill bundle role %q requires source kind %q",
@@ -2236,7 +2277,7 @@ func managedSkillPackageAddressOf(
 			basespec.ErrInvalid,
 		)
 	}
-	return skillArtifact.ManagedPackageAddressFromSkillLocator(binding.Locator)
+	return skillDomain.ManagedPackageAddressFromSkillLocator(binding.Locator)
 }
 
 func normalizeManagedSkillFiles(
@@ -2411,7 +2452,7 @@ func managedSkillPackageDigest(
 	return cryptoutil.DigestBytes(canonical), nil
 }
 
-func (a *StoreAPI) managedSkillByID(
+func (a *API) managedSkillByID(
 	ctx context.Context,
 	rootID root.RootID,
 	artifactID artifact.ArtifactID,

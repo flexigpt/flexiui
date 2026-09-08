@@ -1,4 +1,4 @@
-package schemaadapter
+package builtin
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 type Artifact struct {
@@ -426,7 +426,7 @@ func hydrateCollection(
 		memberDigest := cryptoutil.Digest(*member.Digest)
 
 		expectedName := path.Base(path.Dir(member.Locator))
-		skillDefinition, _, err := skillArtifact.DecodeSkillDocument(
+		skillDefinition, _, err := skillDomain.DecodeSkillDocument(
 			memberContents[memberLocator],
 			expectedName,
 		)

@@ -1,4 +1,4 @@
-package bundle
+package builtin
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"

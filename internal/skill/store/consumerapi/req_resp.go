@@ -1,4 +1,4 @@
-package bundle
+package consumerapi
 
 import (
 	"fmt"
@@ -10,7 +10,59 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
+
+type AttachmentDraft struct {
+	SourceID              source.SourceID
+	Role                  collection.AttachmentRole
+	Enabled               bool
+	DiscoveryRoot         basespec.Locator
+	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
+}
+
+type Bundle struct {
+	Collection  collection.Collection
+	Data        skillDomain.CollectionData
+	Attachments []collection.Attachment
+	Sources     []source.Summary
+}
+
+type ManagedSkillDocument struct {
+	Artifact artifact.Artifact
+	Document document.SkillDocument
+}
+
+// BuiltInBundleTopology is trusted bootstrap input. SkillStoreWrapper does not
+// expose this type through Wails.
+type BuiltInBundleTopology struct {
+	RootID                root.RootID
+	CollectionID          collection.CollectionID
+	SourceID              source.SourceID
+	LogicalName           basespec.LogicalName
+	LogicalVersion        basespec.LogicalVersion
+	DisplayName           string
+	Description           string
+	Labels                map[string]string
+	Enabled               bool
+	DiscoveryRoot         basespec.Locator
+	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
+}
+
+type BuiltInCollectionSkill struct {
+	ArtifactID artifact.ArtifactID
+	Member     basespec.Locator
+	Enabled    bool
+}
+
+type BuiltInCollectionInstallRequest struct {
+	Bundle                     collection.CollectionRef
+	ExpectedCollectionRevision uint64
+	PackageAddress             source.ManagedPackageAddress
+	PackageFiles               []source.ManagedPackageFile
+	Skills                     []BuiltInCollectionSkill
+}
 
 type CreateSkillBundleBody struct {
 	RootID                  root.RootID

@@ -1,4 +1,4 @@
-package artifact
+package domain
 
 import (
 	"fmt"
@@ -15,6 +15,9 @@ func RuntimePackageLocator(
 	locator basespec.Locator,
 	subresource basespec.SubresourceLocator,
 ) (basespec.Locator, error) {
+	if err := locator.ValidatePortable(false); err != nil {
+		return "", err
+	}
 	if subresource != "" {
 		return "", fmt.Errorf(
 			"%w: Agent Skill bindings cannot target a subresource",

@@ -5,20 +5,42 @@ import (
 	"errors"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
-	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
-	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
-	"github.com/flexigpt/flexigpt-app/internal/skill/store/schemaadapter"
-	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
+	skillBuiltin "github.com/flexigpt/flexigpt-app/internal/skill/store/builtin"
+	skillConsumerAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/consumerapi"
 )
 
-type SkillStoreWrapper struct {
-	api    *skillBundle.StoreAPI
-	router *skillStore.ArtifactRouter
+func NewSkillBuiltInInstaller(
+	skills skillConsumerAPI.BuiltinStore,
+	schemas compositionapi.SchemaAPI,
+) (artifactbuiltin.HydrationInstaller, error) {
+	if skills == nil || schemas == nil {
+		return nil, errors.New("skill built-in installer dependencies are incomplete")
+	}
 
-	builtInInstaller artifactbuiltin.HydrationInstaller
+	registry, err := skillBuiltin.LoadRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	packages, err := artifactbuiltin.EmbeddedSkillPackages()
+	if err != nil {
+		return nil, err
+	}
+
+	return skillBuiltin.NewInstaller(
+		skillBuiltin.InstallerDependencies{
+			Skills:                 skills,
+			SkillRegistry:          registry,
+			Packages:               packages,
+			ShareableCanonicalizer: schemas,
+		},
+	)
+}
+
+type SkillStoreWrapper struct {
+	api *skillConsumerAPI.API
 }
 
 func InitSkillStoreWrapper(
@@ -28,16 +50,15 @@ func InitSkillStoreWrapper(
 	artifacts compositionapi.ArtifactAPI,
 	catalogs compositionapi.CatalogAPI,
 	resources compositionapi.ResourceAPI,
-	schemas compositionapi.SchemaAPI,
 	managedArtifacts compositionapi.ManagedArtifactAPI,
 	protection compositionapi.ProtectionAPI,
-	workspaceSkills *workspaceadapter.Adapter,
 ) error {
-	if wrapper == nil || workspaceSkills == nil {
+	if wrapper == nil {
 		return errors.New("skill store wrapper dependencies are incomplete")
 	}
 
-	storeAPI, err := skillBundle.NewStoreAPI(
+	api, err := skillConsumerAPI.New(
+
 		sources,
 		collections,
 		artifacts,
@@ -50,283 +71,210 @@ func InitSkillStoreWrapper(
 		return err
 	}
 
-	router, err := skillStore.NewArtifactRouter(
-		artifacts,
-		collections,
-	)
-	if err != nil {
-		return err
-	}
-
-	workspaceResolver, err := workspaceadapter.NewStoreLoader(
-		workspaceSkills,
-	)
-	if err != nil {
-		return err
-	}
-
-	bundleResolver, err := skillBundle.NewStoreLoader(storeAPI)
-	if err != nil {
-		return err
-	}
-
-	if err := router.Register(
-		artifactbuiltin.WorkspaceCollectionV1Kind,
-		workspaceResolver,
-	); err != nil {
-		return err
-	}
-
-	if err := router.Register(
-		artifactbuiltin.SkillCollectionV1Kind,
-		bundleResolver,
-	); err != nil {
-		return err
-	}
-
-	skillRegistry, err := schemaadapter.LoadRegistry()
-	if err != nil {
-		return err
-	}
-
-	packages, err := artifactbuiltin.EmbeddedSkillPackages()
-	if err != nil {
-		return err
-	}
-
-	builtIns, err := schemaadapter.NewInstaller(
-		schemaadapter.InstallerDependencies{
-			Skills:                 storeAPI,
-			SkillRegistry:          skillRegistry,
-			Packages:               packages,
-			ShareableCanonicalizer: schemas,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	wrapper.api = storeAPI
-	wrapper.router = router
-	wrapper.builtInInstaller = builtIns
+	wrapper.api = api
 	return nil
 }
 
 func (w *SkillStoreWrapper) CreateSkillBundle(
-	request *skillBundle.CreateSkillBundleRequest,
-) (*skillBundle.CreateSkillBundleResponse, error) {
+	request *skillConsumerAPI.CreateSkillBundleRequest,
+) (*skillConsumerAPI.CreateSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.CreateSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.CreateSkillBundleResponse, error) {
 			return w.api.CreateSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) GetSkillBundle(
-	request *skillBundle.GetSkillBundleRequest,
-) (*skillBundle.GetSkillBundleResponse, error) {
+	request *skillConsumerAPI.GetSkillBundleRequest,
+) (*skillConsumerAPI.GetSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.GetSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.GetSkillBundleResponse, error) {
 			return w.api.GetSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) ListSkillBundles(
-	request *skillBundle.ListSkillBundlesRequest,
-) (*skillBundle.ListSkillBundlesResponse, error) {
+	request *skillConsumerAPI.ListSkillBundlesRequest,
+) (*skillConsumerAPI.ListSkillBundlesResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.ListSkillBundlesResponse, error) {
+		func() (*skillConsumerAPI.ListSkillBundlesResponse, error) {
 			return w.api.ListSkillBundles(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) UpdateSkillBundle(
-	request *skillBundle.UpdateSkillBundleRequest,
-) (*skillBundle.UpdateSkillBundleResponse, error) {
+	request *skillConsumerAPI.UpdateSkillBundleRequest,
+) (*skillConsumerAPI.UpdateSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.UpdateSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.UpdateSkillBundleResponse, error) {
 			return w.api.UpdateSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) RetireSkillBundle(
-	request *skillBundle.RetireSkillBundleRequest,
-) (*skillBundle.RetireSkillBundleResponse, error) {
+	request *skillConsumerAPI.RetireSkillBundleRequest,
+) (*skillConsumerAPI.RetireSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.RetireSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.RetireSkillBundleResponse, error) {
 			return w.api.RetireSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) PurgeSkillBundle(
-	request *skillBundle.PurgeSkillBundleRequest,
-) (*skillBundle.PurgeSkillBundleResponse, error) {
+	request *skillConsumerAPI.PurgeSkillBundleRequest,
+) (*skillConsumerAPI.PurgeSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.PurgeSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.PurgeSkillBundleResponse, error) {
 			return w.api.PurgeSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) AttachSkillBundleSource(
-	request *skillBundle.AttachSkillBundleSourceRequest,
-) (*skillBundle.AttachSkillBundleSourceResponse, error) {
+	request *skillConsumerAPI.AttachSkillBundleSourceRequest,
+) (*skillConsumerAPI.AttachSkillBundleSourceResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.AttachSkillBundleSourceResponse, error) {
+		func() (*skillConsumerAPI.AttachSkillBundleSourceResponse, error) {
 			return w.api.AttachSkillBundleSource(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) RefreshSkillBundle(
-	request *skillBundle.RefreshSkillBundleRequest,
-) (*skillBundle.RefreshSkillBundleResponse, error) {
+	request *skillConsumerAPI.RefreshSkillBundleRequest,
+) (*skillConsumerAPI.RefreshSkillBundleResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.RefreshSkillBundleResponse, error) {
+		func() (*skillConsumerAPI.RefreshSkillBundleResponse, error) {
 			return w.api.RefreshSkillBundle(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) CreateManagedSkill(
-	request *skillBundle.CreateManagedSkillRequest,
-) (*skillBundle.CreateManagedSkillStoreResponse, error) {
+	request *skillConsumerAPI.CreateManagedSkillRequest,
+) (*skillConsumerAPI.CreateManagedSkillStoreResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.CreateManagedSkillStoreResponse, error) {
+		func() (*skillConsumerAPI.CreateManagedSkillStoreResponse, error) {
 			return w.api.CreateManagedSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) GetManagedSkillDocument(
-	request *skillBundle.GetManagedSkillDocumentRequest,
-) (*skillBundle.GetManagedSkillDocumentResponse, error) {
+	request *skillConsumerAPI.GetManagedSkillDocumentRequest,
+) (*skillConsumerAPI.GetManagedSkillDocumentResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.GetManagedSkillDocumentResponse, error) {
+		func() (*skillConsumerAPI.GetManagedSkillDocumentResponse, error) {
 			return w.api.GetManagedSkillDocument(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) AdoptSkill(
-	request *skillBundle.AdoptSkillRequest,
-) (*skillBundle.AdoptSkillResponse, error) {
+	request *skillConsumerAPI.AdoptSkillRequest,
+) (*skillConsumerAPI.AdoptSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.AdoptSkillResponse, error) {
+		func() (*skillConsumerAPI.AdoptSkillResponse, error) {
 			return w.api.AdoptSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) PinSkill(
-	request *skillBundle.PinSkillRequest,
-) (*skillBundle.PinSkillResponse, error) {
+	request *skillConsumerAPI.PinSkillRequest,
+) (*skillConsumerAPI.PinSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.PinSkillResponse, error) {
+		func() (*skillConsumerAPI.PinSkillResponse, error) {
 			return w.api.PinSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) GetSkill(
-	request *skillBundle.GetSkillRequest,
-) (*skillBundle.GetSkillResponse, error) {
+	request *skillConsumerAPI.GetSkillRequest,
+) (*skillConsumerAPI.GetSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.GetSkillResponse, error) {
+		func() (*skillConsumerAPI.GetSkillResponse, error) {
 			return w.api.GetSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) ListBundleSkills(
-	request *skillBundle.ListBundleSkillsRequest,
-) (*skillBundle.ListBundleSkillsResponse, error) {
+	request *skillConsumerAPI.ListBundleSkillsRequest,
+) (*skillConsumerAPI.ListBundleSkillsResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.ListBundleSkillsResponse, error) {
+		func() (*skillConsumerAPI.ListBundleSkillsResponse, error) {
 			return w.api.ListBundleSkills(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) SetSkillEnabled(
-	request *skillBundle.SetSkillEnabledRequest,
-) (*skillBundle.SetSkillEnabledResponse, error) {
+	request *skillConsumerAPI.SetSkillEnabledRequest,
+) (*skillConsumerAPI.SetSkillEnabledResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.SetSkillEnabledResponse, error) {
+		func() (*skillConsumerAPI.SetSkillEnabledResponse, error) {
 			return w.api.SetSkillEnabled(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) UnadoptSkill(
-	request *skillBundle.UnadoptSkillRequest,
-) (*skillBundle.UnadoptSkillResponse, error) {
+	request *skillConsumerAPI.UnadoptSkillRequest,
+) (*skillConsumerAPI.UnadoptSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.UnadoptSkillResponse, error) {
+		func() (*skillConsumerAPI.UnadoptSkillResponse, error) {
 			return w.api.UnadoptSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) PurgeSkill(
-	request *skillBundle.PurgeSkillRequest,
-) (*skillBundle.PurgeSkillResponse, error) {
+	request *skillConsumerAPI.PurgeSkillRequest,
+) (*skillConsumerAPI.PurgeSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.PurgeSkillResponse, error) {
+		func() (*skillConsumerAPI.PurgeSkillResponse, error) {
 			return w.api.PurgeSkill(ctx, request)
-		},
-	)
-}
-
-// ResolveArtifactSkill is a Skill aggregate bridge, not a generic Artifact
-// Store API. Runtime-facing migration is handled by the later aggregate
-// checkpoint.
-func (w *SkillStoreWrapper) ResolveArtifactSkill(
-	ref artifact.ArtifactRef,
-) (skillStore.ResolvedArtifactSkill, error) {
-	ctx := context.Background()
-
-	return middleware.WithRecoveryResp(
-		func() (skillStore.ResolvedArtifactSkill, error) {
-			return w.router.ResolveArtifactSkill(ctx, ref)
 		},
 	)
 }
@@ -335,7 +283,5 @@ func (w *SkillStoreWrapper) close() {
 	if w == nil {
 		return
 	}
-	w.builtInInstaller = nil
-	w.router = nil
 	w.api = nil
 }

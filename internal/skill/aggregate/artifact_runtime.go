@@ -16,7 +16,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	skillRuntime "github.com/flexigpt/flexigpt-app/internal/skill/runtime"
-	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
 
 // Service is an internal Artifact Store to Agent Skills bridge.
@@ -25,7 +24,7 @@ import (
 // where backend callers hold ArtifactRef identities and need them translated
 // into runtime-owned SkillDef identities.
 type Service struct {
-	resolver *skillStore.ArtifactRouter
+	resolver *ArtifactRouter
 	runtime  *skillRuntime.Service
 
 	lifecycleMu sync.RWMutex
@@ -33,7 +32,7 @@ type Service struct {
 }
 
 func New(
-	resolver *skillStore.ArtifactRouter,
+	resolver *ArtifactRouter,
 	runtimeService *skillRuntime.Service,
 ) (*Service, error) {
 	if resolver == nil {
@@ -308,7 +307,7 @@ func (s *Service) resolveArtifactSkills(
 func (s *Service) resolveArtifactSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-) (skillStore.ResolvedArtifactSkill, bool) {
+) (ResolvedArtifactSkill, bool) {
 	return s.resolveArtifactSkillWithResync(ctx, ref, nil)
 }
 
@@ -316,37 +315,37 @@ func (s *Service) resolveArtifactSkillWithResync(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	resynced map[collection.CollectionRef]error,
-) (skillStore.ResolvedArtifactSkill, bool) {
+) (ResolvedArtifactSkill, bool) {
 	if resynced == nil {
 		resynced = map[collection.CollectionRef]error{}
 	}
 
 	collectionRef, err := s.resolver.CollectionForArtifact(ctx, ref)
 	if err != nil {
-		return skillStore.ResolvedArtifactSkill{}, false
+		return ResolvedArtifactSkill{}, false
 	}
 
 	if previous, found := resynced[collectionRef]; found {
 		if previous != nil {
-			return skillStore.ResolvedArtifactSkill{}, false
+			return ResolvedArtifactSkill{}, false
 		}
 	} else {
 		err := s.resyncCollection(ctx, collectionRef)
 		resynced[collectionRef] = err
 		if err != nil {
-			return skillStore.ResolvedArtifactSkill{}, false
+			return ResolvedArtifactSkill{}, false
 		}
 	}
 
 	value, err := s.resolver.ResolveArtifactSkill(ctx, ref)
 	if err != nil || value.Collection != collectionRef {
-		return skillStore.ResolvedArtifactSkill{}, false
+		return ResolvedArtifactSkill{}, false
 	}
 	if !s.runtime.IsRegistered(skillRuntime.SkillRegistration{
 		Definition: value.Definition,
 		Revision:   value.Version,
 	}) {
-		return skillStore.ResolvedArtifactSkill{}, false
+		return ResolvedArtifactSkill{}, false
 	}
 	return value, true
 }

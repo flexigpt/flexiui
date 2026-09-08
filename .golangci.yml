@@ -459,6 +459,14 @@ linters:
           alias: ${1}Artifact
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/artifact
           alias: ${1}Artifact
+        - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/builtin
+          alias: ${1}Builtin
+        - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/domain
+          alias: ${1}Domain
+        - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/consumerapi
+          alias: ${1}ConsumerAPI
+        - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/providerapi
+          alias: ${1}ProviderAPI
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/bundle
           alias: ${1}Bundle
         - pkg: github.com/flexigpt/flexigpt-app/internal/(\w+)/store/schemaadapter

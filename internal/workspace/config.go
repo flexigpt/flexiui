@@ -6,7 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
@@ -35,7 +35,7 @@ var defaultArtifactSupportMatrix = []defaultArtifactSupport{
 			Kind:      artifactbuiltin.AgentSkillArtifactKind,
 			SchemaID:  artifactbuiltin.AgentSkillSchemaID,
 			DecoderID: artifactbuiltin.AgentSkillDecoderID,
-			Validator: skillArtifact.ValidateDefinition,
+			Validator: skillDomain.ValidateDefinition,
 		},
 	},
 }

@@ -1,4 +1,4 @@
-package bundle
+package aggregate
 
 import (
 	"context"
@@ -13,9 +13,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillConsumerAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/consumerapi"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 // ResolvedSkill is the typed Skill Bundle handoff to application composition.
@@ -29,10 +30,43 @@ type ResolvedSkill struct {
 	Version  string
 }
 
+// BundleResolver resolves Skill Bundle Artifacts into runtime registrations.
+// Bundle validation remains owned by consumerapi through BundleReader.
+type BundleResolver struct {
+	bundles   skillConsumerAPI.BundleReader
+	artifacts compositionapi.ArtifactAPI
+	catalogs  compositionapi.CatalogAPI
+	resources compositionapi.ResourceAPI
+}
+
+func NewBundleResolver(
+	bundles skillConsumerAPI.BundleReader,
+	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
+	resources compositionapi.ResourceAPI,
+) (*BundleResolver, error) {
+	if bundles == nil ||
+		artifacts == nil ||
+		catalogs == nil ||
+		resources == nil {
+		return nil, fmt.Errorf(
+			"%w: Skill Bundle runtime resolver dependencies are incomplete",
+			basespec.ErrInvalid,
+		)
+	}
+
+	return &BundleResolver{
+		bundles:   bundles,
+		artifacts: artifacts,
+		catalogs:  catalogs,
+		resources: resources,
+	}, nil
+}
+
 // ListResolvedSkills is deliberately fail-closed. A collection reconciliation
 // must not retain a previous runtime definition when a current Artifact can no
 // longer be projected.
-func (a *StoreAPI) ListResolvedSkills(
+func (r *BundleResolver) ListResolvedSkills(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 ) ([]ResolvedSkill, error) {
@@ -40,11 +74,11 @@ func (a *StoreAPI) ListResolvedSkills(
 		return nil, err
 	}
 
-	bundleValue, err := a.GetBundle(ctx, bundle)
+	bundleValue, err := r.bundles.GetBundle(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
-	records, err := a.artifacts.ListByCollection(ctx, bundle)
+	records, err := r.artifacts.ListByCollection(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
@@ -69,13 +103,13 @@ func (a *StoreAPI) ListResolvedSkills(
 		)
 	}
 
-	catalogValue, err := a.currentBundleCatalog(ctx, bundleValue)
+	catalogValue, err := r.catalogs.CurrentCatalog(ctx, bundleValue.Collection.Ref())
 	if err != nil {
 		return nil, err
 	}
 	output := make([]ResolvedSkill, 0, len(eligible))
 	for _, record := range eligible {
-		value, err := a.resolvedSkillFromSnapshot(
+		value, err := r.resolvedSkillFromSnapshot(
 			ctx,
 			record,
 			bundleValue,
@@ -103,7 +137,7 @@ func (a *StoreAPI) ListResolvedSkills(
 // enablement, catalog currentness, definition compatibility, and the source
 // snapshot generation. Source adapters and MapStore remain responsible for
 // their own containment and filesystem behavior.
-func (a *StoreAPI) ResolveSkill(
+func (r *BundleResolver) ResolveSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ResolvedSkill, error) {
@@ -111,7 +145,7 @@ func (a *StoreAPI) ResolveSkill(
 		return ResolvedSkill{}, err
 	}
 
-	record, err := a.artifacts.Get(ctx, ref)
+	record, err := r.artifacts.Get(ctx, ref)
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
@@ -120,16 +154,16 @@ func (a *StoreAPI) ResolveSkill(
 		RootID:       record.RootID,
 		CollectionID: record.CollectionID,
 	}
-	bundle, err := a.GetBundle(ctx, bundleRef)
+	bundle, err := r.bundles.GetBundle(ctx, bundleRef)
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
 
-	snapshot, err := a.currentBundleCatalog(ctx, bundle)
+	snapshot, err := r.catalogs.CurrentCatalog(ctx, bundle.Collection.Ref())
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
-	return a.resolvedSkillFromSnapshot(
+	return r.resolvedSkillFromSnapshot(
 		ctx,
 		record,
 		bundle,
@@ -137,10 +171,10 @@ func (a *StoreAPI) ResolveSkill(
 	)
 }
 
-func (a *StoreAPI) resolvedSkillFromSnapshot(
+func (r *BundleResolver) resolvedSkillFromSnapshot(
 	ctx context.Context,
 	record artifact.Artifact,
-	bundle Bundle,
+	bundle skillConsumerAPI.Bundle,
 	snapshot catalog.Snapshot,
 ) (ResolvedSkill, error) {
 	bundleRef := bundle.Collection.Ref()
@@ -186,11 +220,11 @@ func (a *StoreAPI) resolvedSkillFromSnapshot(
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
-	if err := skillArtifact.ValidateDefinition(value); err != nil {
+	if err := skillDomain.ValidateDefinition(value); err != nil {
 		return ResolvedSkill{}, err
 	}
 
-	resolved, err := a.resources.ResolveArtifact(
+	resolved, err := r.resources.ResolveArtifact(
 		ctx,
 		record.Ref(),
 		resource.ResolveOptions{},
@@ -220,14 +254,14 @@ func (a *StoreAPI) resolvedSkillFromSnapshot(
 		)
 	}
 
-	packageLocator, err := skillArtifact.RuntimePackageLocator(
+	packageLocator, err := skillDomain.RuntimePackageLocator(
 		record.Binding.Locator,
 		record.Binding.SubresourceLocator,
 	)
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
-	location, err := a.resources.ResolveVerifiedLocalPath(
+	location, err := r.resources.ResolveVerifiedLocalPath(
 		ctx,
 		resolved,
 		packageLocator,

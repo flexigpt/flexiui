@@ -16,7 +16,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
@@ -328,7 +328,7 @@ func (f *Adapter) loadLocal(
 			continue
 		}
 
-		packageLocator, err := skillArtifact.RuntimePackageLocator(
+		packageLocator, err := skillDomain.RuntimePackageLocator(
 			item.Artifact.Binding.Locator,
 			item.Artifact.Binding.SubresourceLocator,
 		)
@@ -390,7 +390,7 @@ func projectWorkspaceSkill(
 	if dataErr != nil {
 		return output, dataErr
 	}
-	doc, err := skillArtifact.DocumentFromDefinition(
+	doc, err := skillDomain.DocumentFromDefinition(
 		resourceValue.Definition,
 	)
 	if err != nil {

@@ -1,4 +1,4 @@
-package artifact
+package domain
 
 type Argument struct {
 	Name        string `json:"name"`

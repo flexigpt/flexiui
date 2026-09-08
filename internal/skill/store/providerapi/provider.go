@@ -1,20 +1,16 @@
-package bundle
+package providerapi
 
-import (
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
-)
+import "github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 
 const artifactProviderName = "agent-skill"
 
-// Provider registers the Agent Skill artifact family with Artifact Store.
-// Bundle lifecycle and runtime projection remain owned by this package.
+// Provider registers the Agent Skill Artifact Store plugin.
 type Provider struct {
 	descriptor providerapi.Descriptor
 }
 
 func NewProvider() (*Provider, error) {
-	decoder, err := skillArtifact.NewDecoder()
+	decoder, err := NewDecoder()
 	if err != nil {
 		return nil, err
 	}

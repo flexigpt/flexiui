@@ -26,6 +26,7 @@ type App struct {
 	toolStoreAPI            *ToolStoreWrapper
 	toolRuntimeAPI          *ToolRuntimeWrapper
 	skillStoreAPI           *SkillStoreWrapper
+	skillBuiltInInstaller   artifactbuiltin.HydrationInstaller
 	skillAggregateAPI       *SkillAggregateWrapper
 	skillRuntimeAPI         *SkillRuntimeWrapper
 	mcpStoreAPI             *MCPStoreWrapper
@@ -292,23 +293,39 @@ func (a *App) initManagers() {
 		artifactComposition.Artifacts,
 		artifactComposition.Catalogs,
 		artifactComposition.Resources,
-		artifactComposition.Schemas,
 		artifactComposition.ManagedArtifacts,
 		artifactComposition.Protection,
-		a.workspaceRuntimeAPI.api.SkillAdapter(),
 	)
 	if err != nil {
 		slog.Error(
-			"couldn't initialize artifact-backed Skill store",
+			"couldn't initialize Skill Store consumer API",
 			"error", err,
 		)
 		panic("failed to initialize managers: Skill store initialization failed\n" + err.Error())
 	}
-	slog.Info("artifact-backed Skill store initialized")
+	slog.Info("skill store consumer API initialized")
+
+	a.skillBuiltInInstaller, err = NewSkillBuiltInInstaller(
+		a.skillStoreAPI.api,
+		artifactComposition.Schemas,
+	)
+	if err != nil {
+		slog.Error(
+			"couldn't initialize Skill built-in installer",
+			"error", err,
+		)
+		panic("failed to initialize managers: Skill built-in installer initialization failed\n" + err.Error())
+	}
+	slog.Info("skill built-in installer initialized")
 
 	err = InitSkillAggregateWrapper(
 		a.skillAggregateAPI,
-		a.skillStoreAPI.router,
+		a.skillStoreAPI.api,
+		artifactComposition.Artifacts,
+		artifactComposition.Collections,
+		artifactComposition.Catalogs,
+		artifactComposition.Resources,
+		a.workspaceRuntimeAPI.api.SkillAdapter(),
 		a.skillRuntimeAPI,
 	)
 	if err != nil {
@@ -363,7 +380,7 @@ func (a *App) initManagers() {
 	err = EnsureBuiltinArtifactTopology(
 		context.Background(),
 		a.artifactStoreComposition.Topology,
-		a.skillStoreAPI,
+		a.skillBuiltInInstaller,
 		a.mcpStoreAPI,
 	)
 	if err != nil {
@@ -497,6 +514,7 @@ func (a *App) shutdown(ctx context.Context) { //nolint:all
 	if a.skillStoreAPI != nil {
 		a.skillStoreAPI.close()
 	}
+	a.skillBuiltInInstaller = nil
 
 	if a.artifactStoreComposition != nil {
 		if err := a.artifactStoreComposition.Close(); err != nil {

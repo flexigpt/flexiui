@@ -1,4 +1,4 @@
-package bundle
+package domain
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ type CollectionData struct {
 
 func EncodeCollectionData(value CollectionData) (json.RawMessage, error) {
 	value = value.Clone()
-	if err := ValidateCollectionData(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -67,38 +67,38 @@ func DecodeCollectionData(
 		)
 	}
 
-	if err := ValidateCollectionData(value); err != nil {
+	if err := value.Validate(); err != nil {
 		return CollectionData{}, err
 	}
 	return value.Clone(), nil
 }
 
-func ValidateCollectionData(value CollectionData) error {
-	if value.SchemaVersion != artifactbuiltin.SkillCollectionV1SchemaVersion {
+func (d CollectionData) Validate() error {
+	if d.SchemaVersion != artifactbuiltin.SkillCollectionV1SchemaVersion {
 		return fmt.Errorf(
 			"%w: unsupported skill bundle schema version %q",
 			basespec.ErrInvalid,
-			value.SchemaVersion,
+			d.SchemaVersion,
 		)
 	}
 	if err := basespec.ValidateRequiredText(
 		"skill bundle discovery policy revision",
-		value.DiscoveryPolicyRevision,
+		d.DiscoveryPolicyRevision,
 		basespec.MaxVersionBytes,
 	); err != nil {
 		return err
 	}
 	if err := basespec.ValidatePortableMetadata(
-		value.LogicalName,
-		value.LogicalVersion,
+		d.LogicalName,
+		d.LogicalVersion,
 		"",
 		"",
-		value.Labels,
+		d.Labels,
 	); err != nil {
 		return err
 	}
-	if value.ManagedSourceID != "" {
-		if err := value.ManagedSourceID.Validate(); err != nil {
+	if d.ManagedSourceID != "" {
+		if err := d.ManagedSourceID.Validate(); err != nil {
 			return err
 		}
 	}

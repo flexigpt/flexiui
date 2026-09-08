@@ -1,7 +1,8 @@
-package bundle
+package providerapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
@@ -10,7 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 type skillCollectionBehavior struct{}
@@ -24,7 +26,7 @@ func (skillCollectionBehavior) CollectionKind() collection.CollectionKind {
 }
 
 func (skillCollectionBehavior) Revision() string {
-	return DiscoveryPolicyRevision
+	return skillDomain.DiscoveryPolicyRevision
 }
 
 func (b skillCollectionBehavior) BuildDiscoveryPlan(
@@ -50,7 +52,7 @@ func (b skillCollectionBehavior) BuildDiscoveryPlan(
 		)
 	}
 
-	data, err := DecodeCollectionData(collectionValue.Data)
+	data, err := skillDomain.DecodeCollectionData(collectionValue.Data)
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
@@ -92,7 +94,7 @@ func (b skillCollectionBehavior) BuildDiscoveryPlan(
 				index,
 			)
 		}
-		if err := validateRole(attachment.Role); err != nil {
+		if err := skillDomain.ValidateAttachmentRole(attachment.Role); err != nil {
 			return providerapi.Plan{}, err
 		}
 
@@ -104,14 +106,14 @@ func (b skillCollectionBehavior) BuildDiscoveryPlan(
 				attachment.SourceID,
 			)
 		}
-		if err := validateRoleSourceKind(
+		if err := skillDomain.ValidateAttachmentRoleSourceKind(
 			attachment.Role,
 			sourceValue.Kind,
 		); err != nil {
 			return providerapi.Plan{}, err
 		}
 
-		attachmentData, err := DecodeAttachmentData(attachment.Data)
+		attachmentData, err := skillDomain.DecodeAttachmentData(attachment.Data)
 		if err != nil {
 			return providerapi.Plan{}, err
 		}
@@ -202,12 +204,12 @@ func (skillCollectionBehavior) DecideAutomaticAdoption(
 	}
 
 	switch input.Attachment.Role {
-	case RoleExternal, RoleLibrary:
+	case skillDomain.RoleExternal, skillDomain.RoleLibrary:
 	default:
 		return providerapi.AdoptionDecision{}, nil
 	}
 
-	if err := skillArtifact.ValidateDefinition(input.Definition); err != nil {
+	if err := skillDomain.ValidateDefinition(input.Definition); err != nil {
 		return providerapi.AdoptionDecision{
 			Diagnostics: []diagnostic.Diagnostic{{
 				Severity: diagnostic.SeverityError,
@@ -231,12 +233,12 @@ func (skillCollectionBehavior) DecideAutomaticAdoption(
 		Adopt:   true,
 		Name:    name,
 		Enabled: true,
-		Data:    emptyArtifactData(),
+		Data:    json.RawMessage(jsonutil.EmptyObject),
 	}, nil
 }
 
 func validateProviderBundleAttachmentTopology(
-	data CollectionData,
+	data skillDomain.CollectionData,
 	attachments []providerapi.Attachment,
 ) error {
 	var (

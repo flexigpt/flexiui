@@ -9,7 +9,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	skillRuntime "github.com/flexigpt/flexigpt-app/internal/skill/runtime"
-	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
 
 const artifactCollectionCatalogPrefix = "artifact-collection:"
@@ -17,11 +16,11 @@ const artifactCollectionCatalogPrefix = "artifact-collection:"
 // CatalogSource adapts Artifact Store Collections to the runtime-owned
 // CatalogSource contract. Runtime treats CatalogID as an opaque string.
 type CatalogSource struct {
-	router *skillStore.ArtifactRouter
+	router *ArtifactRouter
 }
 
 func NewCatalogSource(
-	router *skillStore.ArtifactRouter,
+	router *ArtifactRouter,
 ) (*CatalogSource, error) {
 	if router == nil {
 		return nil, fmt.Errorf(

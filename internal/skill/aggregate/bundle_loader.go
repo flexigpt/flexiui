@@ -1,4 +1,4 @@
-package bundle
+package aggregate
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"github.com/flexigpt/agentskills-go/provider/fs"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
 
 type RuntimeSkillSource interface {
@@ -23,40 +22,40 @@ type RuntimeSkillSource interface {
 	) ([]ResolvedSkill, error)
 }
 
-type StoreLoader struct {
+type BundleLoader struct {
 	source RuntimeSkillSource
 }
 
-func NewStoreLoader(
+func NewBundleLoader(
 	source RuntimeSkillSource,
-) (*StoreLoader, error) {
+) (*BundleLoader, error) {
 	if source == nil {
 		return nil, errors.New("skill bundle runtime source is nil")
 	}
-	return &StoreLoader{source: source}, nil
+	return &BundleLoader{source: source}, nil
 }
 
-func (r *StoreLoader) ResolveArtifactSkill(
+func (r *BundleLoader) ResolveArtifactSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-) (skillStore.ResolvedArtifactSkill, error) {
+) (ResolvedArtifactSkill, error) {
 	value, err := r.source.ResolveSkill(ctx, ref)
 	if err != nil {
-		return skillStore.ResolvedArtifactSkill{}, err
+		return ResolvedArtifactSkill{}, err
 	}
 	return resolvedArtifactSkillOf(value)
 }
 
-func (r *StoreLoader) ListCollectionSkills(
+func (r *BundleLoader) ListCollectionSkills(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) ([]skillStore.ResolvedArtifactSkill, error) {
+) ([]ResolvedArtifactSkill, error) {
 	values, err := r.source.ListResolvedSkills(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
 
-	output := make([]skillStore.ResolvedArtifactSkill, 0, len(values))
+	output := make([]ResolvedArtifactSkill, 0, len(values))
 	for _, value := range values {
 		projected, err := resolvedArtifactSkillOf(value)
 		if err != nil {
@@ -69,8 +68,8 @@ func (r *StoreLoader) ListCollectionSkills(
 
 func resolvedArtifactSkillOf(
 	value ResolvedSkill,
-) (skillStore.ResolvedArtifactSkill, error) {
-	output := skillStore.ResolvedArtifactSkill{
+) (ResolvedArtifactSkill, error) {
+	output := ResolvedArtifactSkill{
 		Artifact:   value.Artifact,
 		Collection: value.Collection,
 		Definition: provider.SkillDef{
@@ -81,7 +80,7 @@ func resolvedArtifactSkillOf(
 		Version: value.Version,
 	}
 	if err := output.Validate(); err != nil {
-		return skillStore.ResolvedArtifactSkill{}, err
+		return ResolvedArtifactSkill{}, err
 	}
 	return output, nil
 }

@@ -1,8 +1,6 @@
-package artifact
+package domain
 
 import (
-	"context"
-	"path"
 	"strings"
 
 	"github.com/flexigpt/agentskills-go/document"
@@ -10,67 +8,10 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
-type Decoder struct{}
-
-func NewDecoder() (*Decoder, error) {
-	return &Decoder{}, nil
-}
-
-func (*Decoder) ID() basespec.DecoderID {
-	return artifactbuiltin.AgentSkillDecoderID
-}
-
-func (*Decoder) Revision() string {
-	return artifactbuiltin.AgentSkillSchemaVersion
-}
-
-func (d *Decoder) Recognize(
-	_ context.Context,
-	candidate providerapi.Candidate,
-) providerapi.Recognition {
-	if candidate.RequestsDecoder(artifactbuiltin.AgentSkillDecoderID) && basespec.Locator(path.Base(
-		string(candidate.Locator),
-	)) == artifactbuiltin.AgentSkillDefinitionFileName {
-		return providerapi.RecognitionPreferred
-	}
-	return providerapi.RecognitionNone
-}
-
-func (d *Decoder) Decode(
-	_ context.Context,
-	candidate providerapi.Candidate,
-) ([]providerapi.Decoded, []diagnostic.Diagnostic) {
-	if !candidate.RequestsDecoder(artifactbuiltin.AgentSkillDecoderID) ||
-		basespec.Locator(path.Base(string(candidate.Locator))) != artifactbuiltin.AgentSkillDefinitionFileName {
-		return nil, nil
-	}
-
-	parent := path.Dir(string(candidate.Locator))
-	if parent == "." || parent == "/" || parent == "" {
-		return nil, nil
-	}
-	expectedName := path.Base(parent)
-	value, warnings, err := DecodeSkillDocument(
-		candidate.Content,
-		expectedName,
-	)
-	if err != nil {
-		return nil, errorDiagnostics(candidate.Locator, err)
-	}
-	for index := range warnings {
-		warnings[index].Location = &diagnostic.Location{
-			Locator: candidate.Locator,
-		}
-	}
-	return []providerapi.Decoded{{Definition: value}}, warnings
-}
-
 // DecodeSkillDocument is the shared SKILL.md parse-and-definition path used
-// by discovery and managed Skill publication. It deliberately delegates
-// parsing and semantic validation to agentskills-go.
+// by discovery, managed Skill publication, and built-in Skill hydration.
 func DecodeSkillDocument(
 	content []byte,
 	expectedName string,
@@ -93,7 +34,7 @@ func DecodeSkillDocument(
 	if err != nil {
 		return definition.Definition{}, nil, err
 	}
-	return canonical, warningDiagnostics("", warnings), nil
+	return canonical, warningDiagnostics(warnings), nil
 }
 
 func definitionForDocument(
@@ -107,6 +48,7 @@ func definitionForDocument(
 			Default:     argument.Default,
 		})
 	}
+
 	raw, err := definition.EncodeBody(Body{
 		Name:           doc.Name,
 		DisplayName:    doc.DisplayName,
@@ -120,6 +62,7 @@ func definitionForDocument(
 	if err != nil {
 		return definition.Definition{}, err
 	}
+
 	return definition.Definition{
 		Kind:          artifactbuiltin.AgentSkillArtifactKind,
 		SchemaID:      artifactbuiltin.AgentSkillSchemaID,
@@ -134,22 +77,7 @@ func definitionForDocument(
 	}, nil
 }
 
-func errorDiagnostics(
-	locator basespec.Locator,
-	err error,
-) []diagnostic.Diagnostic {
-	return []diagnostic.Diagnostic{{
-		Severity: diagnostic.SeverityError,
-		Code:     "agent.skill.invalid",
-		Message:  diagnostic.BoundedMessage(err.Error()),
-		Location: &diagnostic.Location{
-			Locator: locator,
-		},
-	}}
-}
-
 func warningDiagnostics(
-	locator basespec.Locator,
 	warnings []string,
 ) []diagnostic.Diagnostic {
 	output := make([]diagnostic.Diagnostic, 0, len(warnings))
@@ -165,9 +93,6 @@ func warningDiagnostics(
 			Severity: diagnostic.SeverityWarning,
 			Code:     "agent.skill.parse-warning",
 			Message:  diagnostic.BoundedMessage(warning),
-			Location: &diagnostic.Location{
-				Locator: locator,
-			},
 		})
 	}
 	return output

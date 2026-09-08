@@ -1,4 +1,4 @@
-package schemaadapter
+package builtin
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-	"github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
 )
 
 type hydrationArtifact struct {
@@ -128,7 +127,7 @@ func (i *Installer) desiredHydrationFingerprint(
 		if err != nil {
 			return "", err
 		}
-		packageAddress, err := bundle.BuiltInCollectionPackageAddress(
+		packageAddress, err := BuiltInCollectionPackageAddress(
 			basespec.LogicalName(collectionValue.Definition.LogicalName),
 			basespec.LogicalVersion(collectionValue.Definition.LogicalVersion),
 		)
