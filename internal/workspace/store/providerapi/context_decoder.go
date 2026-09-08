@@ -14,7 +14,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
-
+	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/artifactadapter"
 	workspaceDomainContext "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/context"
 )
@@ -54,14 +54,14 @@ func (*ContextDecoder) Decode(
 	if !utf8.Valid(candidate.Content) {
 		return nil, artifactadapter.WorkspaceArtifactDiagnostics(
 			candidate.Locator,
-			artifactadapter.DiagnosticCodeContextInvalidUTF8,
+			workspaceDomain.DiagnosticCodeContextInvalidUTF8,
 			"context file must contain valid UTF-8",
 		)
 	}
 	if bytes.ContainsRune(candidate.Content, 0) {
 		return nil, artifactadapter.WorkspaceArtifactDiagnostics(
 			candidate.Locator,
-			artifactadapter.DiagnosticCodeContextInvalidContent,
+			workspaceDomain.DiagnosticCodeContextInvalidContent,
 			"context file contains a NUL byte",
 		)
 	}
@@ -112,7 +112,7 @@ func (*ContextDecoder) Decode(
 	if err := workspaceDomainContext.ValidateContextDefinition(value); err != nil {
 		return nil, artifactadapter.WorkspaceArtifactDiagnostics(
 			candidate.Locator,
-			artifactadapter.DiagnosticCodeContextInvalidContent,
+			workspaceDomain.DiagnosticCodeContextInvalidContent,
 			err.Error(),
 		)
 	}

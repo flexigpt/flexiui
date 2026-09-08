@@ -26,7 +26,6 @@ import (
 	settingStore "github.com/flexigpt/flexigpt-app/internal/setting/store"
 	skillAggregate "github.com/flexigpt/flexigpt-app/internal/skill/aggregate"
 	toolStore "github.com/flexigpt/flexigpt-app/internal/tool/store"
-	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
 	workspaceConversation "github.com/flexigpt/flexigpt-app/internal/workspace/conversation"
 )
 
@@ -58,7 +57,7 @@ func InitAggregrateWrapper(
 	ts *toolStore.ToolStore,
 	artifactSkills *skillAggregate.Service,
 	mr *mcpConnection.MCPRuntimeManager,
-	workspaceAPI workspaceAggregate.ConversationSource,
+	workspaceAPI workspaceConversation.WorkspaceSource,
 ) error {
 	if agg == nil || ts == nil || mps == nil || ss == nil || artifactSkills == nil || workspaceAPI == nil {
 		panic("initializing aggregate store wrapper on nil receivers")

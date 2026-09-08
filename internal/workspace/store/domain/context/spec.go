@@ -102,11 +102,9 @@ func ArtifactSupport() workspaceDomain.ArtifactSupport {
 	return artifactSupport
 }
 
-type contextDefinition struct {
+type Definition struct {
 	Name      string                                    `json:"name"`
 	Role      artifactbuiltin.WorkspaceContextRole      `json:"role"`
 	MediaType artifactbuiltin.WorkspaceContextMediaType `json:"mediaType"`
 	Content   string                                    `json:"content"`
 }
-
-type Definition = contextDefinition

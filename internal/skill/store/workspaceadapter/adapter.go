@@ -17,6 +17,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
+	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/artifactadapter"
 )
@@ -282,7 +283,7 @@ func (f *Adapter) loadLocal(
 			continue
 		}
 		decision := f.runtimePolicy.Decide(ctx, artifactadapter.RuntimePolicyRequest{
-			Use:              artifactadapter.RuntimeUseSkill,
+			Use:              workspaceRuntime.RuntimeUseSkill,
 			Workspace:        workspaceValue,
 			Artifact:         item.Artifact,
 			DefinitionDigest: item.Definition.Digest,
@@ -291,7 +292,7 @@ func (f *Adapter) loadLocal(
 		if err := decision.Validate(); err != nil {
 			return SkillLoadPlan{}, err
 		}
-		if decision.Disposition != artifactadapter.RuntimeAllowed {
+		if decision.Disposition != workspaceRuntime.RuntimeAllowed {
 			output.Diagnostics = diagnostic.Append(
 				output.Diagnostics,
 				artifactadapter.RuntimeDecisionDiagnostic(decision, item.Artifact),
@@ -459,7 +460,7 @@ func runtimeLocationDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     artifactadapter.DiagnosticCodeRuntimeUnavailable,
+		Code:     workspaceDomain.DiagnosticCodeRuntimeUnavailable,
 		Message:  diagnostic.BoundedMessage(err.Error()),
 		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,
@@ -474,7 +475,7 @@ func skillProjectionDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     artifactadapter.DiagnosticCodeProjectionInvalid,
+		Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 		Message:  diagnostic.BoundedMessage(err.Error()),
 		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,

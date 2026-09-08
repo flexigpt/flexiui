@@ -9,46 +9,17 @@ import (
 	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
 )
 
-type OverflowBehavior = workspaceRuntime.OverflowBehavior
-
-const (
-	OverflowTruncate = workspaceRuntime.OverflowTruncate
-	OverflowExclude  = workspaceRuntime.OverflowExclude
-)
-
-const (
-	DiagnosticCodeContextDocumentTruncated = workspaceRuntime.DiagnosticCodeContextDocumentTruncated
-	DiagnosticCodeContextDocumentExcluded  = workspaceRuntime.DiagnosticCodeContextDocumentExcluded
-	DiagnosticCodeContextBudgetExceeded    = workspaceRuntime.DiagnosticCodeContextBudgetExceeded
-)
-
-type CompositionPolicy = workspaceRuntime.CompositionPolicy
-
-func DefaultCompositionPolicy() CompositionPolicy {
-	return workspaceRuntime.DefaultCompositionPolicy()
-}
-
-type CompositionStatus = workspaceRuntime.CompositionStatus
-
-const (
-	CompositionIncluded    = workspaceRuntime.CompositionIncluded
-	CompositionTruncated   = workspaceRuntime.CompositionTruncated
-	CompositionExcluded    = workspaceRuntime.CompositionExcluded
-	CompositionDenied      = workspaceRuntime.CompositionDenied
-	CompositionUnavailable = workspaceRuntime.CompositionUnavailable
-)
-
 type CompositionDecision struct {
-	Artifact      artifact.ArtifactRef `json:"artifact"`
-	Status        CompositionStatus    `json:"status"`
-	Code          string               `json:"code,omitempty"`
-	OriginalBytes int                  `json:"originalBytes"`
-	IncludedBytes int                  `json:"includedBytes"`
+	Artifact      artifact.ArtifactRef               `json:"artifact"`
+	Status        workspaceRuntime.CompositionStatus `json:"status"`
+	Code          string                             `json:"code,omitempty"`
+	OriginalBytes int                                `json:"originalBytes"`
+	IncludedBytes int                                `json:"includedBytes"`
 }
 
 func applyCompositionPolicy(
 	engine *workspaceRuntime.Engine,
-	policy CompositionPolicy,
+	policy workspaceRuntime.CompositionPolicy,
 	values []ContextContribution,
 	diagnostics []diagnostic.Diagnostic,
 	decisions []CompositionDecision,
@@ -78,12 +49,11 @@ func applyCompositionPolicy(
 		runtimeValues = append(
 			runtimeValues,
 			workspaceRuntime.ContextContribution{
-				ID:              id,
-				Name:            value.Name,
-				Role:            string(value.Role),
-				Locator:         string(value.Locator),
-				Content:         value.Content,
-				ConventionOrder: value.ConventionOrder,
+				ID:      id,
+				Name:    value.Name,
+				Role:    string(value.Role),
+				Locator: string(value.Locator),
+				Content: value.Content,
 			},
 		)
 	}

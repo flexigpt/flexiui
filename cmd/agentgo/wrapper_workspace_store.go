@@ -43,7 +43,7 @@ func InitWorkspaceWrappers(
 	}
 
 	runtimeAPI, err := workspaceAggregate.NewRuntimeAPI(
-		storeAPI.ContextAdapter(),
+		storeAPI.ContextService(),
 		storeAPI.SkillAdapter(),
 	)
 	if err != nil {

@@ -92,12 +92,11 @@ const (
 // source configuration, and persistence types deliberately do not enter this
 // package.
 type ContextContribution struct {
-	ID              string
-	Name            string
-	Role            string
-	Locator         string
-	Content         string
-	ConventionOrder int
+	ID      string
+	Name    string
+	Role    string
+	Locator string
+	Content string
 
 	OriginalBytes int
 	IncludedBytes int

@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
+	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 )
 
@@ -32,10 +33,6 @@ type WorkspaceDiscovery struct {
 type WorkspaceAttachmentSettings struct {
 	Recursive     *bool `json:"recursive,omitempty"`
 	Authoritative *bool `json:"authoritative,omitempty"`
-}
-
-type WorkspaceArtifactSettings struct {
-	RuntimeDisabled bool `json:"runtimeDisabled"`
 }
 
 type WorkspaceAttachmentView struct {
@@ -149,11 +146,11 @@ type WorkspaceContextContribution struct {
 }
 
 type WorkspaceContextDecision struct {
-	Artifact      artifact.ArtifactRef `json:"artifact"`
-	Status        CompositionStatus    `json:"status"`
-	Code          string               `json:"code,omitempty"`
-	OriginalBytes int                  `json:"originalBytes"`
-	IncludedBytes int                  `json:"includedBytes"`
+	Artifact      artifact.ArtifactRef               `json:"artifact"`
+	Status        workspaceRuntime.CompositionStatus `json:"status"`
+	Code          string                             `json:"code,omitempty"`
+	OriginalBytes int                                `json:"originalBytes"`
+	IncludedBytes int                                `json:"includedBytes"`
 }
 
 type WorkspaceContextLoadPlan struct {
@@ -359,20 +356,11 @@ type SetWorkspaceArtifactRuntimeDisabledResponse struct {
 	Body *WorkspaceArtifactView
 }
 
-func RequireRequestBody[T any](
-	request *T,
-	bodyPresent bool,
-	requireBody bool,
-	subject string,
-) error {
-	return requireRequestBody(request, bodyPresent, requireBody, subject)
-}
-
-// requireRequestBody performs transport-shape checks only.
+// RequireRequestBody performs transport-shape checks only.
 //
 // Domain validation belongs to Workspace services. Store validation and
 // lifecycle enforcement belong to Artifact Store.
-func requireRequestBody[T any](
+func RequireRequestBody[T any](
 	request *T,
 	bodyPresent bool,
 	requireBody bool,

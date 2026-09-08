@@ -69,7 +69,28 @@ type ContextInspection struct {
 	Diagnostics     []diagnostic.Diagnostic  `json:"diagnostics,omitempty"`
 }
 
-type WorkspaceDataSource interface {
+// ContextService is the aggregate-facing storage port for Workspace Context
+// list, inspection, and composition operations.
+type ContextService interface {
+	List(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+	) ([]ContextDocument, error)
+
+	Load(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+		artifactRefs []artifact.ArtifactRef,
+	) (ContextInspection, error)
+
+	Compose(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+		artifactRefs []artifact.ArtifactRef,
+	) (ContextLoadPlan, error)
+}
+
+type workspaceDataSource interface {
 	GetWorkspace(
 		ctx context.Context,
 		workspace collection.CollectionRef,
@@ -87,20 +108,18 @@ type WorkspaceDataSource interface {
 	) (workspaceDomain.LoadPlan, error)
 }
 
-// ContextAdapter projects Artifact Store context artifacts into pure runtime
-// context-engine inputs.
-type ContextAdapter struct {
-	query             WorkspaceDataSource
+type contextService struct {
+	query             workspaceDataSource
 	runtimePolicy     artifactadapter.SourceUsePolicy
-	compositionPolicy CompositionPolicy
+	compositionPolicy workspaceRuntime.CompositionPolicy
 	engine            *workspaceRuntime.Engine
 }
 
-func NewContextAdapter(
-	query WorkspaceDataSource,
+func newContextService(
+	query workspaceDataSource,
 	runtimePolicy artifactadapter.SourceUsePolicy,
-	compositionPolicy CompositionPolicy,
-) (*ContextAdapter, error) {
+	compositionPolicy workspaceRuntime.CompositionPolicy,
+) (ContextService, error) {
 	if query == nil || runtimePolicy == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace context adapter query is nil",
@@ -116,7 +135,7 @@ func NewContextAdapter(
 			err,
 		)
 	}
-	return &ContextAdapter{
+	return &contextService{
 		query:             query,
 		runtimePolicy:     runtimePolicy,
 		compositionPolicy: compositionPolicy,
@@ -124,7 +143,7 @@ func NewContextAdapter(
 	}, nil
 }
 
-func (p *ContextAdapter) Compose(
+func (p *contextService) Compose(
 	ctx context.Context,
 	workspace collection.CollectionRef,
 	artifactRefs []artifact.ArtifactRef,
@@ -168,13 +187,13 @@ func (p *ContextAdapter) Compose(
 			)
 			output.Decisions = append(output.Decisions, CompositionDecision{
 				Artifact: item.Artifact.Ref(),
-				Status:   CompositionUnavailable,
-				Code:     artifactadapter.DiagnosticCodeProjectionInvalid,
+				Status:   workspaceRuntime.CompositionUnavailable,
+				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 			})
 			continue
 		}
 		decision := p.runtimePolicy.Decide(ctx, artifactadapter.RuntimePolicyRequest{
-			Use:              artifactadapter.RuntimeUseContextPrompt,
+			Use:              workspaceRuntime.RuntimeUseContextPrompt,
 			Workspace:        workspaceValue,
 			Artifact:         item.Artifact,
 			DefinitionDigest: item.Definition.Digest,
@@ -183,14 +202,14 @@ func (p *ContextAdapter) Compose(
 		if err := decision.Validate(); err != nil {
 			return ContextLoadPlan{}, err
 		}
-		if decision.Disposition != artifactadapter.RuntimeAllowed {
+		if decision.Disposition != workspaceRuntime.RuntimeAllowed {
 			output.Diagnostics = diagnostic.Append(
 				output.Diagnostics,
 				artifactadapter.RuntimeDecisionDiagnostic(decision, item.Artifact),
 			)
-			status := CompositionDenied
-			if decision.Disposition == artifactadapter.RuntimeUnavailable {
-				status = CompositionUnavailable
+			status := workspaceRuntime.CompositionDenied
+			if decision.Disposition == workspaceRuntime.RuntimeUnavailable {
+				status = workspaceRuntime.CompositionUnavailable
 			}
 			output.Decisions = append(output.Decisions, CompositionDecision{
 				Artifact: item.Artifact.Ref(),
@@ -210,8 +229,8 @@ func (p *ContextAdapter) Compose(
 			)
 			output.Decisions = append(output.Decisions, CompositionDecision{
 				Artifact: item.Artifact.Ref(),
-				Status:   CompositionUnavailable,
-				Code:     artifactadapter.DiagnosticCodeProjectionInvalid,
+				Status:   workspaceRuntime.CompositionUnavailable,
+				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 			})
 			continue
 		}
@@ -239,8 +258,8 @@ func (p *ContextAdapter) Compose(
 		}
 		output.Decisions = append(output.Decisions, CompositionDecision{
 			Artifact: ref,
-			Status:   CompositionUnavailable,
-			Code:     artifactadapter.DiagnosticCodeArtifactUnresolved,
+			Status:   workspaceRuntime.CompositionUnavailable,
+			Code:     workspaceDomain.DiagnosticCodeArtifactUnresolved,
 		})
 	}
 
@@ -271,7 +290,7 @@ func (p *ContextAdapter) Compose(
 	return output, nil
 }
 
-func (p *ContextAdapter) List(
+func (p *contextService) List(
 	ctx context.Context,
 	workspace collection.CollectionRef,
 ) ([]ContextDocument, error) {
@@ -305,7 +324,7 @@ func (p *ContextAdapter) List(
 	return output, nil
 }
 
-func (p *ContextAdapter) Load(
+func (p *contextService) Load(
 	ctx context.Context,
 	workspace collection.CollectionRef,
 	artifactRefs []artifact.ArtifactRef,
@@ -372,7 +391,7 @@ func (p *ContextAdapter) Load(
 			output.Diagnostics,
 			diagnostic.Diagnostic{
 				Severity: diagnostic.SeverityError,
-				Code:     artifactadapter.DiagnosticCodeArtifactUnresolved,
+				Code:     workspaceDomain.DiagnosticCodeArtifactUnresolved,
 				Message:  "one or more requested Context Artifacts were not available for inspection",
 			},
 		)
@@ -466,7 +485,7 @@ func contextProjectionDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     artifactadapter.DiagnosticCodeProjectionInvalid,
+		Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 		Message:  diagnostic.BoundedMessage(err.Error()),
 		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,

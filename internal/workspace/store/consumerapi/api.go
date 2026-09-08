@@ -78,7 +78,7 @@ func (a *StoreAPI) GetWorkspace(
 	ctx context.Context,
 	request *GetWorkspaceRequest,
 ) (*GetWorkspaceResponse, error) {
-	if err := requireRequestBody(
+	if err := RequireRequestBody(
 		request,
 		false,
 		false,
@@ -101,7 +101,7 @@ func (a *StoreAPI) ListWorkspaces(
 	ctx context.Context,
 	request *ListWorkspacesRequest,
 ) (*ListWorkspacesResponse, error) {
-	if err := requireRequestBody(
+	if err := RequireRequestBody(
 		request,
 		false,
 		false,
@@ -133,7 +133,7 @@ func (a *StoreAPI) GetWorkspaceCatalog(
 	ctx context.Context,
 	request *GetWorkspaceCatalogRequest,
 ) (*GetWorkspaceCatalogResponse, error) {
-	if err := requireRequestBody(
+	if err := RequireRequestBody(
 		request,
 		false,
 		false,
@@ -156,7 +156,7 @@ func (a *StoreAPI) GetWorkspaceArtifact(
 	ctx context.Context,
 	request *GetWorkspaceArtifactRequest,
 ) (*GetWorkspaceArtifactResponse, error) {
-	if err := requireRequestBody(
+	if err := RequireRequestBody(
 		request,
 		false,
 		false,
@@ -180,7 +180,7 @@ func (a *StoreAPI) ListWorkspaceArtifacts(
 	ctx context.Context,
 	request *ListWorkspaceArtifactsRequest,
 ) (*ListWorkspaceArtifactsResponse, error) {
-	if err := requireRequestBody(
+	if err := RequireRequestBody(
 		request,
 		false,
 		false,
@@ -213,8 +213,11 @@ func (a *StoreAPI) ListWorkspaceArtifacts(
 	}, nil
 }
 
-func (a *StoreAPI) ContextAdapter() *ContextAdapter {
-	return a.workspace.contextAdapter
+func (a *StoreAPI) ContextService() ContextService {
+	if a == nil || a.workspace == nil {
+		return nil
+	}
+	return a.workspace.contextService
 }
 
 func (a *StoreAPI) SkillAdapter() *workspaceadapter.Adapter {
@@ -743,7 +746,7 @@ func workspaceArtifactViewOf(value artifact.Artifact) WorkspaceArtifactView {
 			diagnostics,
 			diagnostic.Diagnostic{
 				Severity: diagnostic.SeverityError,
-				Code:     artifactadapter.DiagnosticCodeProjectionInvalid,
+				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 				Message:  "the Workspace Artifact has invalid local runtime settings",
 				Location: &diagnostic.Location{
 					Locator:            value.Binding.Locator,

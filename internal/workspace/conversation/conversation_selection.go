@@ -11,8 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	workspaceAggregate "github.com/flexigpt/flexigpt-app/internal/workspace/aggregate"
 	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
+	workspaceConsumerAPI "github.com/flexigpt/flexigpt-app/internal/workspace/store/consumerapi"
 )
 
 type ConversationSelectionStatus string
@@ -49,7 +49,7 @@ type ConversationResourceSelectionRef struct {
 }
 
 type ConversationSelection struct {
-	Workspace         workspaceAggregate.WorkspaceRef    `json:"workspace"`
+	Workspace         workspaceConsumerAPI.WorkspaceRef  `json:"workspace"`
 	DisplayName       string                             `json:"displayName,omitempty"`
 	WorkspaceRevision uint64                             `json:"workspaceRevision,omitempty"`
 	CatalogRevision   uint64                             `json:"catalogRevision,omitempty"`
@@ -89,14 +89,14 @@ type ConversationSkillUsage struct {
 }
 
 type ConversationUsage struct {
-	Workspace         workspaceAggregate.WorkspaceRef `json:"workspace"`
-	DisplayName       string                          `json:"displayName,omitempty"`
-	WorkspaceRevision uint64                          `json:"workspaceRevision,omitempty"`
-	CatalogRevision   uint64                          `json:"catalogRevision,omitempty"`
-	Status            ConversationSelectionStatus     `json:"status"`
-	Contexts          []ConversationContextUsage      `json:"contexts,omitempty"`
-	Skills            []ConversationSkillUsage        `json:"skills,omitempty"`
-	Diagnostics       []diagnostic.Diagnostic         `json:"diagnostics,omitempty"`
+	Workspace         workspaceConsumerAPI.WorkspaceRef `json:"workspace"`
+	DisplayName       string                            `json:"displayName,omitempty"`
+	WorkspaceRevision uint64                            `json:"workspaceRevision,omitempty"`
+	CatalogRevision   uint64                            `json:"catalogRevision,omitempty"`
+	Status            ConversationSelectionStatus       `json:"status"`
+	Contexts          []ConversationContextUsage        `json:"contexts,omitempty"`
+	Skills            []ConversationSkillUsage          `json:"skills,omitempty"`
+	Diagnostics       []diagnostic.Diagnostic           `json:"diagnostics,omitempty"`
 }
 
 type ConversationResolution struct {
@@ -104,12 +104,31 @@ type ConversationResolution struct {
 	Prompt string
 }
 
+// WorkspaceSource is the minimal aggregate-facing port required to resolve
+// persisted Workspace selections at inference time.
+type WorkspaceSource interface {
+	GetWorkspace(
+		ctx context.Context,
+		request *workspaceConsumerAPI.GetWorkspaceRequest,
+	) (*workspaceConsumerAPI.GetWorkspaceResponse, error)
+
+	ComposeWorkspaceContext(
+		ctx context.Context,
+		request *workspaceConsumerAPI.ComposeWorkspaceContextRequest,
+	) (*workspaceConsumerAPI.ComposeWorkspaceContextResponse, error)
+
+	LoadWorkspaceSkills(
+		ctx context.Context,
+		request *workspaceConsumerAPI.LoadWorkspaceSkillsRequest,
+	) (*workspaceConsumerAPI.LoadWorkspaceSkillsResponse, error)
+}
+
 type ConversationResolver struct {
-	workspaceAPI workspaceAggregate.ConversationSource
+	workspaceAPI WorkspaceSource
 }
 
 func NewConversationResolver(
-	workspaceAPI workspaceAggregate.ConversationSource,
+	workspaceAPI WorkspaceSource,
 ) (*ConversationResolver, error) {
 	if workspaceAPI == nil {
 		return nil, errors.New("nil workspace API provider")
@@ -128,7 +147,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 		return ConversationResolution{}, err
 	}
 
-	workspaceValue, err := cr.workspaceAPI.GetWorkspace(ctx, &workspaceAggregate.GetWorkspaceRequest{
+	workspaceValue, err := cr.workspaceAPI.GetWorkspace(ctx, &workspaceConsumerAPI.GetWorkspaceRequest{
 		Workspace: selection.Workspace,
 	})
 	if err != nil {
@@ -206,9 +225,9 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 	if len(contextArtifactRefs) > 0 {
 		contextPlan, composeErr := cr.workspaceAPI.ComposeWorkspaceContext(
 			ctx,
-			&workspaceAggregate.ComposeWorkspaceContextRequest{
+			&workspaceConsumerAPI.ComposeWorkspaceContextRequest{
 				Workspace: selection.Workspace,
-				Body: &workspaceAggregate.ComposeWorkspaceContextRequestBody{
+				Body: &workspaceConsumerAPI.ComposeWorkspaceContextRequestBody{
 					Artifacts: contextArtifactRefs,
 				},
 			},
@@ -218,7 +237,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				conversationSelectionDiagnostic(
-					"workspaceAggregate.conversation.context-unavailable",
+					"workspace.conversation.context-unavailable",
 					composeErr.Error(),
 				),
 			)
@@ -306,9 +325,9 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 	if len(skillArtifactRefs) > 0 {
 		skillPlan, loadErr := cr.workspaceAPI.LoadWorkspaceSkills(
 			ctx,
-			&workspaceAggregate.LoadWorkspaceSkillsRequest{
+			&workspaceConsumerAPI.LoadWorkspaceSkillsRequest{
 				Workspace: selection.Workspace,
-				Body: &workspaceAggregate.LoadWorkspaceSkillsRequestBody{
+				Body: &workspaceConsumerAPI.LoadWorkspaceSkillsRequestBody{
 					Artifacts: skillArtifactRefs,
 				},
 			},
@@ -317,7 +336,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 			usage.Diagnostics = diagnostic.Append(
 				usage.Diagnostics,
 				conversationSelectionDiagnostic(
-					"workspaceAggregate.conversation.skills-unavailable",
+					"workspace.conversation.skills-unavailable",
 					loadErr.Error(),
 				),
 			)
@@ -356,7 +375,7 @@ func (cr *ConversationResolver) ResolveConversationSelection(
 					current.Diagnostics = diagnostic.Append(
 						current.Diagnostics,
 						conversationSelectionDiagnostic(
-							"workspaceAggregate.conversation.skill-ineligible",
+							"workspace.conversation.skill-ineligible",
 							"only Workspace Skills with insert=\"instructions\" can enter a conversation Skill session",
 						),
 					)
@@ -410,7 +429,7 @@ func unresolvedConversationUsage(
 		Status:            ConversationSelectionUnavailable,
 		Diagnostics: []diagnostic.Diagnostic{
 			conversationSelectionDiagnostic(
-				"workspaceAggregate.conversation.unavailable",
+				"workspace.conversation.unavailable",
 				message,
 			),
 		},

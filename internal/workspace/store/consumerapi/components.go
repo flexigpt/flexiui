@@ -11,7 +11,7 @@ type components struct {
 	workspaceRootID root.RootID
 	service         *Service
 	query           *QueryService
-	contextAdapter  *ContextAdapter
+	contextService  ContextService
 	skillAdapter    *workspaceadapter.Adapter
 	supportedKinds  map[artifact.ArtifactKind]struct{}
 }
@@ -50,7 +50,7 @@ func newComponents(
 
 	runtimePolicy := config.runtimePolicy()
 
-	contextAdapter, err := NewContextAdapter(
+	contextService, err := newContextService(
 		query,
 		runtimePolicy,
 		config.contextCompositionPolicy(),
@@ -80,7 +80,7 @@ func newComponents(
 		workspaceRootID: config.WorkspaceRootID,
 		service:         service,
 		query:           query,
-		contextAdapter:  contextAdapter,
+		contextService:  contextService,
 		skillAdapter:    skillAdapter,
 		supportedKinds:  supportedKinds,
 	}, nil

@@ -5,41 +5,37 @@ import (
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	workspaceConsumerAPI "github.com/flexigpt/flexigpt-app/internal/workspace/store/consumerapi"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 )
 
 type WorkspaceStoreReader interface {
 	GetWorkspace(
 		ctx context.Context,
-		request *GetWorkspaceRequest,
-	) (*GetWorkspaceResponse, error)
+		request *workspaceConsumerAPI.GetWorkspaceRequest,
+	) (*workspaceConsumerAPI.GetWorkspaceResponse, error)
 }
 
 type WorkspaceRuntimeReader interface {
 	ComposeWorkspaceContext(
 		ctx context.Context,
-		request *ComposeWorkspaceContextRequest,
-	) (*ComposeWorkspaceContextResponse, error)
+		request *workspaceConsumerAPI.ComposeWorkspaceContextRequest,
+	) (*workspaceConsumerAPI.ComposeWorkspaceContextResponse, error)
 
 	LoadWorkspaceSkills(
 		ctx context.Context,
-		request *LoadWorkspaceSkillsRequest,
-	) (*LoadWorkspaceSkillsResponse, error)
+		request *workspaceConsumerAPI.LoadWorkspaceSkillsRequest,
+	) (*workspaceConsumerAPI.LoadWorkspaceSkillsResponse, error)
 }
 
 type WorkspaceArtifactSettingsStore interface {
 	SetArtifactRuntimeDisabled(
 		ctx context.Context,
-		workspace WorkspaceRef,
+		workspace workspaceConsumerAPI.WorkspaceRef,
 		ref artifact.ArtifactRef,
 		expectedRevision uint64,
 		runtimeDisabled bool,
-	) (WorkspaceArtifactView, error)
-}
-
-type ConversationSource interface {
-	WorkspaceStoreReader
-	WorkspaceRuntimeReader
+	) (workspaceConsumerAPI.WorkspaceArtifactView, error)
 }
 
 type AggregateAPI struct {
@@ -69,30 +65,30 @@ func NewAggregateAPI(
 
 func (a *AggregateAPI) GetWorkspace(
 	ctx context.Context,
-	request *GetWorkspaceRequest,
-) (*GetWorkspaceResponse, error) {
+	request *workspaceConsumerAPI.GetWorkspaceRequest,
+) (*workspaceConsumerAPI.GetWorkspaceResponse, error) {
 	return a.store.GetWorkspace(ctx, request)
 }
 
 func (a *AggregateAPI) ComposeWorkspaceContext(
 	ctx context.Context,
-	request *ComposeWorkspaceContextRequest,
-) (*ComposeWorkspaceContextResponse, error) {
+	request *workspaceConsumerAPI.ComposeWorkspaceContextRequest,
+) (*workspaceConsumerAPI.ComposeWorkspaceContextResponse, error) {
 	return a.runtime.ComposeWorkspaceContext(ctx, request)
 }
 
 func (a *AggregateAPI) LoadWorkspaceSkills(
 	ctx context.Context,
-	request *LoadWorkspaceSkillsRequest,
-) (*LoadWorkspaceSkillsResponse, error) {
+	request *workspaceConsumerAPI.LoadWorkspaceSkillsRequest,
+) (*workspaceConsumerAPI.LoadWorkspaceSkillsResponse, error) {
 	return a.runtime.LoadWorkspaceSkills(ctx, request)
 }
 
 func (a *AggregateAPI) SetWorkspaceArtifactRuntimeDisabled(
 	ctx context.Context,
-	request *SetWorkspaceArtifactRuntimeDisabledRequest,
-) (*SetWorkspaceArtifactRuntimeDisabledResponse, error) {
-	if err := requireRequestBody(
+	request *workspaceConsumerAPI.SetWorkspaceArtifactRuntimeDisabledRequest,
+) (*workspaceConsumerAPI.SetWorkspaceArtifactRuntimeDisabledResponse, error) {
+	if err := workspaceConsumerAPI.RequireRequestBody(
 		request,
 		request != nil && request.Body != nil,
 		true,
@@ -115,7 +111,7 @@ func (a *AggregateAPI) SetWorkspaceArtifactRuntimeDisabled(
 		)
 	}
 
-	return &SetWorkspaceArtifactRuntimeDisabledResponse{
+	return &workspaceConsumerAPI.SetWorkspaceArtifactRuntimeDisabledResponse{
 		Body: &value,
 	}, nil
 }

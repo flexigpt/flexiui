@@ -6,6 +6,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/support"
@@ -14,14 +15,14 @@ import (
 type Config struct {
 	WorkspaceRootID    root.RootID
 	Supports           []workspaceDomain.ArtifactSupport
-	ContextComposition CompositionPolicy
+	ContextComposition workspaceRuntime.CompositionPolicy
 	SourceUsePolicy    artifactadapter.SourceUsePolicy
 }
 
 func (c Config) normalized() Config {
 	output := c
 	if len(output.Supports) == 0 {
-		output.Supports = DefaultArtifactSupports()
+		output.Supports = support.DefaultArtifactSupports()
 	}
 	if output.WorkspaceRootID == "" {
 		output.WorkspaceRootID = artifactbuiltin.WorkspaceRootID
@@ -57,10 +58,6 @@ func (c Config) normalizedSupports() ([]workspaceDomain.ArtifactSupport, error) 
 	return output, nil
 }
 
-func DefaultArtifactSupports() []workspaceDomain.ArtifactSupport {
-	return support.DefaultArtifactSupports()
-}
-
 func (c Config) runtimePolicy() artifactadapter.SourceUsePolicy {
 	if c.SourceUsePolicy != nil {
 		return c.SourceUsePolicy
@@ -69,15 +66,15 @@ func (c Config) runtimePolicy() artifactadapter.SourceUsePolicy {
 	return artifactadapter.NewArtifactRuntimePolicy()
 }
 
-func (c Config) contextCompositionPolicy() CompositionPolicy {
+func (c Config) contextCompositionPolicy() workspaceRuntime.CompositionPolicy {
 	return c.ContextComposition.Normalized()
 }
 
 func DefaultConfig() Config {
 	return Config{
 		WorkspaceRootID:    artifactbuiltin.WorkspaceRootID,
-		Supports:           DefaultArtifactSupports(),
-		ContextComposition: DefaultCompositionPolicy(),
+		Supports:           support.DefaultArtifactSupports(),
+		ContextComposition: workspaceRuntime.DefaultCompositionPolicy(),
 		SourceUsePolicy:    artifactadapter.NewArtifactRuntimePolicy(),
 	}
 }

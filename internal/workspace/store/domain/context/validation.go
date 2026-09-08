@@ -45,7 +45,7 @@ func ValidateContextDefinition(
 		)
 	}
 
-	body, err := definition.DecodeBody[contextDefinition](value.Body)
+	body, err := definition.DecodeBody[Definition](value.Body)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func ValidateContextDefinition(
 			workspaceDomain.ErrInvalidWorkspace,
 		)
 	}
-	if value.LogicalName != contextLogicalName(body.Name) {
+	if value.LogicalName != LogicalName(body.Name) {
 		return fmt.Errorf(
 			"%w: Context logical name does not match body.name",
 			workspaceDomain.ErrInvalidWorkspace,
@@ -117,10 +117,6 @@ func ValidateContextDefinition(
 }
 
 func LogicalName(name string) basespec.LogicalName {
-	return contextLogicalName(name)
-}
-
-func contextLogicalName(name string) basespec.LogicalName {
 	contextVal := "context"
 	base := strings.ToLower(strings.TrimSuffix(name, path.Ext(name)))
 	parts := strings.FieldsFunc(base, func(character rune) bool {

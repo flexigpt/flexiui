@@ -185,7 +185,7 @@ func (q *QueryService) ComposeLoadPlan(
 					plan.Diagnostics,
 					recordAvailabilityDiagnostic(
 						unresolvedValue,
-						DiagnosticCodeArtifactUnresolved,
+						workspaceDomain.DiagnosticCodeArtifactUnresolved,
 						"the Workspace Artifact is unavailable for loading",
 					),
 				)
@@ -194,7 +194,7 @@ func (q *QueryService) ComposeLoadPlan(
 					plan.Diagnostics,
 					diagnostic.Diagnostic{
 						Severity: diagnostic.SeverityError,
-						Code:     DiagnosticCodeArtifactUnresolved,
+						Code:     workspaceDomain.DiagnosticCodeArtifactUnresolved,
 						Message:  "the requested Workspace Artifact was not found",
 					},
 				)
@@ -208,7 +208,7 @@ func (q *QueryService) ComposeLoadPlan(
 				plan.Diagnostics,
 				recordAvailabilityDiagnostic(
 					resourceValue.Artifact,
-					DiagnosticCodeArtifactUnavailable,
+					workspaceDomain.DiagnosticCodeArtifactUnavailable,
 					"the Workspace catalog is stale and must be refreshed",
 				),
 			)
@@ -219,7 +219,7 @@ func (q *QueryService) ComposeLoadPlan(
 				plan.Diagnostics,
 				recordAvailabilityDiagnostic(
 					resourceValue.Artifact,
-					DiagnosticCodeArtifactUnavailable,
+					workspaceDomain.DiagnosticCodeArtifactUnavailable,
 					"the Workspace Artifact is disabled",
 				),
 			)
@@ -230,7 +230,7 @@ func (q *QueryService) ComposeLoadPlan(
 				plan.Diagnostics,
 				recordAvailabilityDiagnostic(
 					resourceValue.Artifact,
-					DiagnosticCodeArtifactUnavailable,
+					workspaceDomain.DiagnosticCodeArtifactUnavailable,
 					"the Workspace Artifact is not available",
 				),
 			)
@@ -241,7 +241,7 @@ func (q *QueryService) ComposeLoadPlan(
 				plan.Diagnostics,
 				recordAvailabilityDiagnostic(
 					resourceValue.Artifact,
-					DiagnosticCodeArtifactUnavailable,
+					workspaceDomain.DiagnosticCodeArtifactUnavailable,
 					"the linked Workspace Artifact is not catalog-current",
 				),
 			)
@@ -312,7 +312,7 @@ func (q *QueryService) Catalog(
 			freshnessDiagnostics,
 			diagnostic.Diagnostic{
 				Severity: diagnostic.SeverityWarning,
-				Code:     DiagnosticCodeCatalogStale,
+				Code:     workspaceDomain.DiagnosticCodeCatalogStale,
 				Message:  "the Workspace catalog no longer matches current collection metadata",
 			},
 		)
@@ -322,7 +322,7 @@ func (q *QueryService) Catalog(
 			freshnessDiagnostics,
 			diagnostic.Diagnostic{
 				Severity: diagnostic.SeverityWarning,
-				Code:     DiagnosticCodeCatalogDecoderStale,
+				Code:     workspaceDomain.DiagnosticCodeCatalogDecoderStale,
 				Message:  "the Workspace decoder capability set changed after this catalog was published",
 			},
 		)
@@ -332,7 +332,7 @@ func (q *QueryService) Catalog(
 			freshnessDiagnostics,
 			diagnostic.Diagnostic{
 				Severity: diagnostic.SeverityWarning,
-				Code:     DiagnosticCodeCatalogPlanStale,
+				Code:     workspaceDomain.DiagnosticCodeCatalogPlanStale,
 				Message:  "the Workspace provider discovery behavior changed after this catalog was published",
 			},
 		)
@@ -554,7 +554,7 @@ func projectionDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     DiagnosticCodeProjectionInvalid,
+		Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 		Message:  diagnostic.BoundedMessage(err.Error()),
 		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,
@@ -580,7 +580,7 @@ func recordSourceUnavailableDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     DiagnosticCodeArtifactUnavailable,
+		Code:     workspaceDomain.DiagnosticCodeArtifactUnavailable,
 		Message:  "the Artifact Source is no longer attached to this Workspace",
 		Location: &diagnostic.Location{
 			Locator:            value.Binding.Locator,
@@ -595,7 +595,7 @@ func recordDefinitionUnavailableDiagnostic(
 ) diagnostic.Diagnostic {
 	return diagnostic.Diagnostic{
 		Severity: diagnostic.SeverityError,
-		Code:     DiagnosticCodeArtifactUnavailable,
+		Code:     workspaceDomain.DiagnosticCodeArtifactUnavailable,
 		Message: diagnostic.BoundedMessage(
 			fmt.Sprintf(
 				"the resolved Workspace Artifact definition could not be read: %v",
