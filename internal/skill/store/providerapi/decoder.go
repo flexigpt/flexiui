@@ -2,7 +2,6 @@ package providerapi
 
 import (
 	"context"
-	"fmt"
 	"path"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
@@ -14,8 +13,8 @@ import (
 
 type Decoder struct{}
 
-func NewDecoder() (*Decoder, error) {
-	return &Decoder{}, nil
+func NewDecoder() *Decoder {
+	return &Decoder{}
 }
 
 func (*Decoder) ID() basespec.DecoderID {
@@ -75,8 +74,4 @@ func (*Decoder) Decode(
 	}
 
 	return []providerapi.Decoded{{Definition: value}}, warnings
-}
-
-func (d *Decoder) String() string {
-	return fmt.Sprintf("%s@%s", d.ID(), d.Revision())
 }

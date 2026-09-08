@@ -152,10 +152,18 @@ func (b skillCollectionBehavior) BuildDiscoveryPlan(
 		}.Normalized())
 	}
 
-	if err := validateProviderBundleAttachmentTopology(
-		data,
-		attachments,
-	); err != nil {
+	topology := make(
+		[]skillDomain.AttachmentTopologyEntry,
+		0,
+		len(attachments),
+	)
+	for _, attachment := range attachments {
+		topology = append(topology, skillDomain.AttachmentTopologyEntry{
+			SourceID: attachment.SourceID,
+			Role:     attachment.Role,
+		})
+	}
+	if err := skillDomain.ValidateAttachmentTopology(data, topology); err != nil {
 		return providerapi.Plan{}, err
 	}
 
@@ -235,53 +243,4 @@ func (skillCollectionBehavior) DecideAutomaticAdoption(
 		Enabled: true,
 		Data:    json.RawMessage(jsonutil.EmptyObject),
 	}, nil
-}
-
-func validateProviderBundleAttachmentTopology(
-	data skillDomain.CollectionData,
-	attachments []providerapi.Attachment,
-) error {
-	var (
-		managedAttachmentCount int
-		managedAttachmentID    source.SourceID
-		builtInAttachmentCount int
-	)
-
-	for _, attachment := range attachments {
-		switch attachment.Role {
-		case artifactbuiltin.ManagedAttachmentRole:
-			managedAttachmentCount++
-			managedAttachmentID = attachment.SourceID
-
-		case artifactbuiltin.BuiltInAttachmentRole:
-			builtInAttachmentCount++
-		}
-	}
-
-	if managedAttachmentCount > 1 {
-		return fmt.Errorf(
-			"%w: skill bundle has multiple managed attachments",
-			basespec.ErrInvalid,
-		)
-	}
-	if builtInAttachmentCount > 1 {
-		return fmt.Errorf(
-			"%w: skill bundle has multiple built-in attachments",
-			basespec.ErrInvalid,
-		)
-	}
-
-	if data.ManagedSourceID == "" {
-		return nil
-	}
-	if managedAttachmentCount != 1 ||
-		managedAttachmentID != data.ManagedSourceID {
-		return fmt.Errorf(
-			"%w: bundle-owned managed Source %q is not its sole managed attachment",
-			basespec.ErrInvalid,
-			data.ManagedSourceID,
-		)
-	}
-
-	return nil
 }

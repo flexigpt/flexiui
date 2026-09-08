@@ -1273,45 +1273,7 @@ func (a *API) currentDefinitionForArtifact(
 		return definition.Definition{}, err
 	}
 
-	return definitionForArtifact(snapshot, record)
-}
-
-func definitionForArtifact(
-	snapshot catalog.Snapshot,
-	record artifact.Artifact,
-) (definition.Definition, error) {
-	if record.ResolvedDefinition == nil {
-		return definition.Definition{}, fmt.Errorf(
-			"%w: Skill Artifact %q has no current definition",
-			basespec.ErrReferenceUnresolved,
-			record.ID,
-		)
-	}
-	if snapshot.RootID != record.RootID ||
-		snapshot.CollectionID != record.CollectionID {
-		return definition.Definition{}, fmt.Errorf(
-			"%w: Skill catalog belongs to another Collection",
-			basespec.ErrInvalid,
-		)
-	}
-
-	value, err := snapshot.DefinitionForOccurrence(catalog.OccurrenceKey{
-		CollectionID:       record.CollectionID,
-		SourceID:           record.Binding.SourceID,
-		Locator:            record.Binding.Locator,
-		SubresourceLocator: record.Binding.SubresourceLocator,
-	})
-	if err != nil {
-		return definition.Definition{}, err
-	}
-	if value.Digest != *record.ResolvedDefinition {
-		return definition.Definition{}, fmt.Errorf(
-			"%w: Skill Artifact %q catalog definition changed",
-			basespec.ErrConflict,
-			record.ID,
-		)
-	}
-	return value, nil
+	return skillDomain.DefinitionForArtifact(snapshot, record)
 }
 
 // createBundle keeps the built-in attachment role inside trusted bootstrap
@@ -2049,46 +2011,18 @@ func validateBundleAttachmentTopology(
 	data skillDomain.CollectionData,
 	attachments []collection.Attachment,
 ) error {
-	var (
-		managedAttachmentCount int
-		managedAttachmentID    source.SourceID
-		builtInAttachmentCount int
+	entries := make(
+		[]skillDomain.AttachmentTopologyEntry,
+		0,
+		len(attachments),
 	)
 	for _, attachment := range attachments {
-		switch attachment.Role {
-		case artifactbuiltin.ManagedAttachmentRole:
-			managedAttachmentCount++
-			managedAttachmentID = attachment.SourceID
-		case artifactbuiltin.BuiltInAttachmentRole:
-			builtInAttachmentCount++
-		}
+		entries = append(entries, skillDomain.AttachmentTopologyEntry{
+			SourceID: attachment.SourceID,
+			Role:     attachment.Role,
+		})
 	}
-	if managedAttachmentCount > 1 {
-		return fmt.Errorf(
-			"%w: skill bundle has multiple managed attachments",
-			basespec.ErrInvalid,
-		)
-	}
-	if builtInAttachmentCount > 1 {
-		return fmt.Errorf(
-			"%w: skill bundle has multiple built-in attachments",
-			basespec.ErrInvalid,
-		)
-	}
-	if data.ManagedSourceID == "" {
-		// Legacy bundles can still be read. They cannot be used for new
-		// managed package writes until an explicit ownership repair exists.
-		return nil
-	}
-	if managedAttachmentCount != 1 ||
-		managedAttachmentID != data.ManagedSourceID {
-		return fmt.Errorf(
-			"%w: bundle-owned managed Source %q is not its sole managed attachment",
-			basespec.ErrInvalid,
-			data.ManagedSourceID,
-		)
-	}
-	return nil
+	return skillDomain.ValidateAttachmentTopology(data, entries)
 }
 
 func requireBundleOwnedManagedSource(
@@ -2115,7 +2049,7 @@ func (a *API) validateAttachmentDraft(
 	if err := draft.SourceID.Validate(); err != nil {
 		return err
 	}
-	if err := validateRole(draft.Role); err != nil {
+	if err := skillDomain.ValidateAttachmentRole(draft.Role); err != nil {
 		return err
 	}
 	if _, err := skillDomain.NewAttachmentData(
@@ -2128,7 +2062,7 @@ func (a *API) validateAttachmentDraft(
 	if err != nil {
 		return err
 	}
-	return validateRoleSourceKind(draft.Role, value.Kind)
+	return skillDomain.ValidateAttachmentRoleSourceKind(draft.Role, value.Kind)
 }
 
 func (a *API) validateAttachment(
@@ -2136,7 +2070,7 @@ func (a *API) validateAttachment(
 	rootID root.RootID,
 	value collection.Attachment,
 ) error {
-	if err := validateRole(value.Role); err != nil {
+	if err := skillDomain.ValidateAttachmentRole(value.Role); err != nil {
 		return err
 	}
 	if _, err := skillDomain.DecodeAttachmentData(value.Data); err != nil {
@@ -2150,50 +2084,7 @@ func (a *API) validateAttachment(
 	if err != nil {
 		return err
 	}
-	return validateRoleSourceKind(value.Role, sourceValue.Kind)
-}
-
-func validateRole(role collection.AttachmentRole) error {
-	switch role {
-	case artifactbuiltin.ManagedAttachmentRole,
-		artifactbuiltin.BuiltInAttachmentRole,
-		skillDomain.RoleExternal,
-		skillDomain.RoleLibrary:
-		return nil
-	default:
-		return fmt.Errorf(
-			"%w: unsupported skill bundle attachment role %q",
-			basespec.ErrInvalid,
-			role,
-		)
-	}
-}
-
-func validateRoleSourceKind(
-	role collection.AttachmentRole,
-	kind source.SourceKind,
-) error {
-	switch role {
-	case artifactbuiltin.ManagedAttachmentRole, artifactbuiltin.BuiltInAttachmentRole:
-		if kind != source.SourceKindManagedDirectory {
-			return fmt.Errorf(
-				"%w: skill bundle role %q requires source kind %q",
-				basespec.ErrInvalid,
-				role,
-				source.SourceKindManagedDirectory,
-			)
-		}
-	case skillDomain.RoleExternal, skillDomain.RoleLibrary:
-		if kind != source.SourceKindFilesystemDirectory {
-			return fmt.Errorf(
-				"%w: skill bundle role %q requires source kind %q",
-				basespec.ErrInvalid,
-				role,
-				source.SourceKindFilesystemDirectory,
-			)
-		}
-	}
-	return nil
+	return skillDomain.ValidateAttachmentRoleSourceKind(value.Role, sourceValue.Kind)
 }
 
 func managedAttachmentForRole(

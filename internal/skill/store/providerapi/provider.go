@@ -10,11 +10,7 @@ type Provider struct {
 }
 
 func NewProvider() (*Provider, error) {
-	decoder, err := NewDecoder()
-	if err != nil {
-		return nil, err
-	}
-
+	decoder := NewDecoder()
 	descriptor := providerapi.Descriptor{
 		Name: artifactProviderName,
 		CollectionBehaviors: []providerapi.CollectionBehavior{
