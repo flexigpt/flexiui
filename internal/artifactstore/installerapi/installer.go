@@ -9,7 +9,7 @@ import (
 // API is the privileged application-composition capability for protected
 // Artifact Store topology installation and hydration.
 //
-// It is intentionally separate from *consumerapi.API.
+// It is intentionally separate from ordinary entity APIs and domain facades.
 type API interface {
 	EnsureProtectedTopology(
 		ctx context.Context,

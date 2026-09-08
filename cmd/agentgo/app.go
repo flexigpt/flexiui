@@ -365,7 +365,7 @@ func (a *App) initManagers() {
 
 	err = EnsureBuiltinArtifactTopology(
 		context.Background(),
-		a.artifactStoreComposition,
+		a.artifactStoreComposition.Topology,
 		a.skillStoreAPI,
 		a.mcpStoreAPI,
 	)

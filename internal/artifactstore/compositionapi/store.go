@@ -28,11 +28,14 @@ type Store struct {
 	Schemas          SchemaAPI
 	ManagedArtifacts ManagedArtifactAPI
 	Protection       ProtectionAPI
+	Topology         installerapi.API
 
 	components *system.Components
 	closeOnce  sync.Once
 	closeErr   error
 }
+
+var _ installerapi.API = (*Store)(nil)
 
 type protectionAPI struct {
 	policy root.RootPolicy
@@ -113,6 +116,10 @@ func Open(
 		},
 		components: components,
 	}
+
+	// Topology is intentionally exposed as the narrow privileged installer
+	// contract instead of requiring callers to retain the complete Store.
+	output.Topology = output
 
 	for _, draft := range config.RetainedRoots {
 		if _, err := output.Roots.Create(ctx, draft); err != nil {
