@@ -9,7 +9,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
@@ -94,60 +93,6 @@ type ResourceGroup struct {
 	Kind       artifact.ArtifactKind `json:"-"`
 	Resources  []Resource            `json:"-"`
 	Unrecorded []catalog.Occurrence  `json:"-"`
-}
-
-type EmptyWorkspaceRequest struct {
-	CollectionID collection.CollectionID `json:"collectionID"`
-	RootID       root.RootID             `json:"rootID"`
-	DisplayName  string                  `json:"displayName"`
-	Description  string                  `json:"description,omitempty"`
-	Discovery    DiscoveryPreferences    `json:"discovery"`
-}
-
-type FilesystemWorkspaceRequest struct {
-	CollectionID    collection.CollectionID `json:"collectionID"`
-	RootID          root.RootID             `json:"rootID"`
-	DisplayName     string                  `json:"displayName"`
-	Description     string                  `json:"description,omitempty"`
-	PrimarySourceID source.SourceID         `json:"primarySourceID"`
-	Discovery       DiscoveryPreferences    `json:"discovery"`
-}
-
-type UpdateRequest struct {
-	Workspace        WorkspaceRef         `json:"workspace"`
-	ExpectedRevision uint64               `json:"expectedRevision"`
-	DisplayName      string               `json:"displayName"`
-	Description      string               `json:"description,omitempty"`
-	Enabled          bool                 `json:"enabled"`
-	Discovery        DiscoveryPreferences `json:"discovery"`
-}
-
-type AttachRequest struct {
-	Workspace                  WorkspaceRef              `json:"workspace"`
-	ExpectedCollectionRevision uint64                    `json:"expectedCollectionRevision"`
-	SourceID                   source.SourceID           `json:"sourceID"`
-	Role                       collection.AttachmentRole `json:"role"`
-	Enabled                    bool                      `json:"enabled"`
-	Data                       AttachmentData            `json:"data"`
-}
-
-type UpdateAttachmentRequest struct {
-	Workspace                  WorkspaceRef
-	SourceID                   source.SourceID
-	ExpectedCollectionRevision uint64
-	ExpectedAttachmentRevision uint64
-	Role                       collection.AttachmentRole
-	Enabled                    bool
-	Data                       AttachmentData
-}
-
-type SetPrimaryRequest struct {
-	Workspace                  WorkspaceRef
-	ExpectedCollectionRevision uint64
-	PreviousSourceID           source.SourceID
-	PreviousAttachmentRevision uint64
-	SourceID                   source.SourceID
-	Clear                      bool
 }
 
 type CatalogView struct {

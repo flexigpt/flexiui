@@ -15,7 +15,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillArtifact "github.com/flexigpt/flexigpt-app/internal/skill/store/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
@@ -72,16 +71,57 @@ type SkillLoadPlan struct {
 	Diagnostics     []diagnostic.Diagnostic  `json:"diagnostics,omitempty"`
 }
 
+type WorkspaceDataSource interface {
+	Catalog(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+	) (spec.CatalogView, error)
+
+	ResolveArtifact(
+		ctx context.Context,
+		ref artifact.ArtifactRef,
+	) (spec.Workspace, spec.Resource, error)
+
+	ComposeLoadPlan(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+		artifactRefs []artifact.ArtifactRef,
+	) (spec.LoadPlan, error)
+
+	GetWorkspace(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+	) (spec.Workspace, error)
+}
+
+type ArtifactResourceReader interface {
+	ResolveArtifact(
+		ctx context.Context,
+		ref artifact.ArtifactRef,
+		options resource.ResolveOptions,
+	) (resource.ResolvedArtifact, error)
+
+	ResolveVerifiedLocalPath(
+		ctx context.Context,
+		resolved resource.ResolvedArtifact,
+		localLocator basespec.Locator,
+	) (string, error)
+
+	SupportsLocalPath(
+		kind source.SourceKind,
+	) bool
+}
+
 type Adapter struct {
-	query         *artifactadapter.QueryService
+	query         WorkspaceDataSource
 	runtimePolicy artifactadapter.SourceUsePolicy
-	resourceAPI   compositionapi.ResourceAPI
+	resourceAPI   ArtifactResourceReader
 }
 
 func NewAdapter(
-	query *artifactadapter.QueryService,
+	query WorkspaceDataSource,
 	runtimePolicy artifactadapter.SourceUsePolicy,
-	resourceAPI compositionapi.ResourceAPI,
+	resourceAPI ArtifactResourceReader,
 ) (*Adapter, error) {
 	if query == nil || runtimePolicy == nil || resourceAPI == nil {
 		return nil, fmt.Errorf(
@@ -89,6 +129,7 @@ func NewAdapter(
 			spec.ErrInvalidWorkspace,
 		)
 	}
+
 	return &Adapter{
 		query:         query,
 		runtimePolicy: runtimePolicy,

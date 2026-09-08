@@ -32,7 +32,7 @@ type ResolvedSkill struct {
 // ListResolvedSkills is deliberately fail-closed. A collection reconciliation
 // must not retain a previous runtime definition when a current Artifact can no
 // longer be projected.
-func (a *API) ListResolvedSkills(
+func (a *StoreAPI) ListResolvedSkills(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 ) ([]ResolvedSkill, error) {
@@ -44,7 +44,7 @@ func (a *API) ListResolvedSkills(
 	if err != nil {
 		return nil, err
 	}
-	records, err := a.dependencies.Artifacts.ListByCollection(ctx, bundle)
+	records, err := a.artifacts.ListByCollection(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (a *API) ListResolvedSkills(
 // enablement, catalog currentness, definition compatibility, and the source
 // snapshot generation. Source adapters and MapStore remain responsible for
 // their own containment and filesystem behavior.
-func (a *API) ResolveSkill(
+func (a *StoreAPI) ResolveSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ResolvedSkill, error) {
@@ -111,7 +111,7 @@ func (a *API) ResolveSkill(
 		return ResolvedSkill{}, err
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
@@ -137,7 +137,7 @@ func (a *API) ResolveSkill(
 	)
 }
 
-func (a *API) resolvedSkillFromSnapshot(
+func (a *StoreAPI) resolvedSkillFromSnapshot(
 	ctx context.Context,
 	record artifact.Artifact,
 	bundle Bundle,
@@ -190,7 +190,7 @@ func (a *API) resolvedSkillFromSnapshot(
 		return ResolvedSkill{}, err
 	}
 
-	resolved, err := a.dependencies.Resources.ResolveArtifact(
+	resolved, err := a.resources.ResolveArtifact(
 		ctx,
 		record.Ref(),
 		resource.ResolveOptions{},
@@ -227,7 +227,7 @@ func (a *API) resolvedSkillFromSnapshot(
 	if err != nil {
 		return ResolvedSkill{}, err
 	}
-	location, err := a.dependencies.Resources.ResolveVerifiedLocalPath(
+	location, err := a.resources.ResolveVerifiedLocalPath(
 		ctx,
 		resolved,
 		packageLocator,

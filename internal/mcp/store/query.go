@@ -53,7 +53,7 @@ type PolicyView struct {
 // Catalog inputs, Source revision, Source generation, stable source bytes,
 // canonical schema identity, Collection metadata, and all current valid
 // subresource Definitions.
-func (a *API) GetDocument(
+func (a *StoreAPI) GetDocument(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (BundleDocument, error) {
@@ -70,7 +70,7 @@ func (a *API) GetDocument(
 		return BundleDocument{}, err
 	}
 
-	entry, err := a.dependencies.Resources.ReadCollectionEntry(
+	entry, err := a.resources.ReadCollectionEntry(
 		ctx,
 		ref,
 		bundle.Source.ID,
@@ -146,21 +146,21 @@ func (a *API) GetDocument(
 	return document, nil
 }
 
-func (a *API) ListServers(
+func (a *StoreAPI) ListServers(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]artifact.Artifact, error) {
 	return a.listArtifactsByKind(ctx, ref, artifactbuiltin.ServerKind)
 }
 
-func (a *API) ListPolicies(
+func (a *StoreAPI) ListPolicies(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]artifact.Artifact, error) {
 	return a.listArtifactsByKind(ctx, ref, artifactbuiltin.PolicyKind)
 }
 
-func (a *API) GetServerInstallation(
+func (a *StoreAPI) GetServerInstallation(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (ServerInstallationView, error) {
@@ -171,7 +171,7 @@ func (a *API) GetServerInstallation(
 		return ServerInstallationView{}, err
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return ServerInstallationView{}, err
 	}
@@ -227,13 +227,13 @@ func (a *API) GetServerInstallation(
 		InstallationRevision: revision,
 		InstallationEnabled:  installationEnabled,
 		RuntimeEnabled:       runtimeEnabled,
-		BuiltIn: a.dependencies.Protection.IsProtectedRoot(
+		BuiltIn: a.protection.IsProtectedRoot(
 			record.RootID,
 		),
 	}, nil
 }
 
-func (a *API) InspectMCPPolicy(
+func (a *StoreAPI) InspectMCPPolicyForRuntime(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (PolicyView, error) {
@@ -244,7 +244,7 @@ func (a *API) InspectMCPPolicy(
 		return PolicyView{}, err
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return PolicyView{}, err
 	}
@@ -289,13 +289,13 @@ func (a *API) InspectMCPPolicy(
 		Body:            body,
 		EffectiveEnabled: bundle.Collection.Enabled &&
 			record.Enabled,
-		BuiltIn: a.dependencies.Protection.IsProtectedRoot(
+		BuiltIn: a.protection.IsProtectedRoot(
 			record.RootID,
 		),
 	}, nil
 }
 
-func (a *API) GetBundleInstallation(
+func (a *StoreAPI) GetBundleInstallation(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (BundleInstallationView, error) {
@@ -308,7 +308,7 @@ func (a *API) GetBundleInstallation(
 		return BundleInstallationView{}, err
 	}
 
-	builtIn := a.dependencies.Protection.IsProtectedRoot(ref.RootID)
+	builtIn := a.protection.IsProtectedRoot(ref.RootID)
 	output := BundleInstallationView{
 		Bundle:             ref,
 		BuiltIn:            builtIn,
@@ -318,14 +318,14 @@ func (a *API) GetBundleInstallation(
 	if !builtIn {
 		return output, nil
 	}
-	if a.dependencies.Overlays == nil {
+	if a.overlays == nil {
 		return BundleInstallationView{}, fmt.Errorf(
 			"%w: protected MCP Bundle overlay store is unavailable",
 			basespec.ErrReferenceUnresolved,
 		)
 	}
 
-	overlay, found, err := a.dependencies.Overlays.GetBundleOverlay(
+	overlay, found, err := a.overlays.GetBundleOverlay(
 		ctx,
 		ref.RootID,
 		ref.CollectionID,
@@ -344,7 +344,7 @@ func (a *API) GetBundleInstallation(
 	return output, nil
 }
 
-func (a *API) listArtifactsByKind(
+func (a *StoreAPI) listArtifactsByKind(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	kind artifact.ArtifactKind,
@@ -353,7 +353,7 @@ func (a *API) listArtifactsByKind(
 		return nil, err
 	}
 
-	records, err := a.dependencies.Artifacts.ListByCollection(ctx, ref)
+	records, err := a.artifacts.ListByCollection(ctx, ref)
 	if err != nil {
 		return nil, err
 	}

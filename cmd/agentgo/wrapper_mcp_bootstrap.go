@@ -11,6 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	mcpAggregate "github.com/flexigpt/flexigpt-app/internal/mcp/aggregate"
 	mcpAuth "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/auth"
@@ -31,7 +33,15 @@ func InitMCPWrappers(
 	storeWrapper *MCPStoreWrapper,
 	runtimeWrapper *MCPRuntimeWrapper,
 	aggregateWrapper *MCPAggregateWrapper,
-	storeDependencies mcpStore.Dependencies,
+	sources compositionapi.SourceAPI,
+	collections compositionapi.CollectionAPI,
+	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
+	resources compositionapi.ResourceAPI,
+	schemas compositionapi.SchemaAPI,
+	managedArtifacts compositionapi.ManagedArtifactAPI,
+	protection compositionapi.ProtectionAPI,
+	userRootID root.RootID,
 	settingsStore mcpAuthKeyStore,
 ) error {
 	if storeWrapper == nil ||
@@ -49,15 +59,20 @@ func InitMCPWrappers(
 		return err
 	}
 	secrets := newSettingMCPSecretResolver(settingsStore)
-	storeDependencies.Overlays = overlays
-	storeDependencies.SecretCleaner = secrets
-	storeDependencies.BaselinePolicy = mcpPolicy.Baseline()
-
-	storeAPI, err := mcpStore.New(storeDependencies)
-	if err != nil {
-		return err
-	}
-	storeFacade, err := mcpStore.NewStoreAPI(storeAPI)
+	storeAPI, err := mcpStore.NewStoreAPI(
+		sources,
+		collections,
+		artifacts,
+		catalogs,
+		resources,
+		schemas,
+		managedArtifacts,
+		protection,
+		userRootID,
+		overlays,
+		secrets,
+		mcpPolicy.Baseline(),
+	)
 	if err != nil {
 		return err
 	}
@@ -155,7 +170,7 @@ func InitMCPWrappers(
 	}
 
 	builtIns, err := newMCPBuiltInInstaller(
-		storeDependencies.Schemas,
+		schemas,
 		storeAPI,
 		overlays,
 	)
@@ -163,7 +178,7 @@ func InitMCPWrappers(
 		return cleanup(err)
 	}
 
-	storeWrapper.api = storeFacade
+	storeWrapper.api = storeAPI
 	storeWrapper.builtInInstaller = builtIns
 
 	runtimeWrapper.runtime = runtimeManager
@@ -181,7 +196,7 @@ func InitMCPWrappers(
 
 func newMCPBuiltInInstaller(
 	documents providerapi.ExpectedCanonicalizer,
-	bundles *mcpStore.API,
+	bundles *mcpStore.StoreAPI,
 	overlays mcpOverlay.OverlayRepository,
 ) (artifactbuiltin.HydrationInstaller, error) {
 	registry, packages, err := mcpSchemaadapter.LoadEmbeddedRegistry()
@@ -202,7 +217,7 @@ func newMCPBuiltInInstaller(
 
 func ensureDefaultMCPBundle(
 	ctx context.Context,
-	api *mcpStore.API,
+	api *mcpStore.StoreAPI,
 ) error {
 	if ctx == nil {
 		return fmt.Errorf("%w: default MCP Bundle context is nil", basespec.ErrInvalid)
@@ -235,7 +250,7 @@ func ensureDefaultMCPBundle(
 	if err != nil {
 		return fmt.Errorf("encode default MCP Bundle document: %w", err)
 	}
-	_, err = api.Create(ctx, mcpStore.CreateRequest{
+	_, err = api.Create(ctx, mcpStore.CreateMCPBundleBody{
 		RootID:           artifactbuiltin.MCPUserRootID,
 		CollectionID:     artifactbuiltin.DefaultMCPBundleCollectionID,
 		SourceID:         artifactbuiltin.DefaultMCPBundleSourceID,

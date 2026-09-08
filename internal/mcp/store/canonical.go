@@ -226,7 +226,7 @@ func CanonicalizeBundle(
 // MCP Bundle bytes. The input remains raw until Artifact Store dispatches the
 // expected registered codec, executes JSON Schema validation, verifies
 // canonical JSON, and invokes MCP semantic canonicalization.
-func (a *API) canonicalizeBundleBytes(
+func (a *StoreAPI) canonicalizeBundleBytes(
 	ctx context.Context,
 	raw []byte,
 ) (BundleDocument, schema.ParsedDocument, error) {
@@ -237,7 +237,7 @@ func (a *API) canonicalizeBundleBytes(
 		)
 	}
 
-	parsed, err := a.dependencies.Schemas.CanonicalizeExpected(
+	parsed, err := a.schemas.CanonicalizeExpected(
 		ctx,
 		artifactbuiltin.MCPBundleSchemaKey,
 		raw,

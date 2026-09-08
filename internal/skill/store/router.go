@@ -9,8 +9,21 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 )
+
+type ArtifactReader interface {
+	Get(
+		ctx context.Context,
+		ref artifact.ArtifactRef,
+	) (artifact.Artifact, error)
+}
+
+type CollectionReader interface {
+	Get(
+		ctx context.Context,
+		ref collection.CollectionRef,
+	) (collection.Collection, error)
+}
 
 type ResolvedArtifactSkill struct {
 	Artifact   artifact.ArtifactRef     `json:"artifact"`
@@ -35,15 +48,15 @@ type ArtifactSkillLoader interface {
 }
 
 type ArtifactRouter struct {
-	artifacts   compositionapi.ArtifactAPI
-	collections compositionapi.CollectionAPI
+	artifacts   ArtifactReader
+	collections CollectionReader
 	mu          sync.RWMutex
 	loaders     map[collection.CollectionKind]ArtifactSkillLoader
 }
 
 func NewArtifactRouter(
-	artifacts compositionapi.ArtifactAPI,
-	collections compositionapi.CollectionAPI,
+	artifacts ArtifactReader,
+	collections CollectionReader,
 ) (*ArtifactRouter, error) {
 	if artifacts == nil || collections == nil {
 		return nil, fmt.Errorf(
@@ -51,6 +64,7 @@ func NewArtifactRouter(
 			basespec.ErrInvalid,
 		)
 	}
+
 	return &ArtifactRouter{
 		artifacts:   artifacts,
 		collections: collections,

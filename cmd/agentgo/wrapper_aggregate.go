@@ -58,7 +58,7 @@ func InitAggregrateWrapper(
 	ts *toolStore.ToolStore,
 	artifactSkills *skillAggregate.Service,
 	mr *mcpConnection.MCPRuntimeManager,
-	workspaceAPI *workspace.API,
+	workspaceAPI workspace.ConversationSource,
 ) error {
 	if agg == nil || ts == nil || mps == nil || ss == nil || artifactSkills == nil || workspaceAPI == nil {
 		panic("initializing aggregate store wrapper on nil receivers")

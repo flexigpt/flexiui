@@ -3,15 +3,31 @@ package bundle
 import (
 	"fmt"
 
+	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 )
 
+type CreateSkillBundleBody struct {
+	RootID                  root.RootID
+	CollectionID            collection.CollectionID
+	ManagedSourceID         source.SourceID
+	ManagedSourceStorageKey basespec.StorageKey
+	DisplayName             string
+	Description             string
+	Enabled                 bool
+	LogicalName             basespec.LogicalName
+	LogicalVersion          basespec.LogicalVersion
+	Labels                  map[string]string
+	Attachments             []AttachmentDraft
+}
+
 type CreateSkillBundleRequest struct {
-	Body *CreateBundleRequest `json:"body"`
+	Body *CreateSkillBundleBody `json:"body"`
 }
 
 type CreateSkillBundleResponse struct {
@@ -38,8 +54,16 @@ type ListSkillBundlesResponse struct {
 	Body *ListSkillBundlesResponseBody `json:"body"`
 }
 
+type UpdateSkillBundleBody struct {
+	Bundle           collection.CollectionRef
+	ExpectedRevision uint64
+	DisplayName      string
+	Description      string
+	Enabled          bool
+}
+
 type UpdateSkillBundleRequest struct {
-	Body *UpdateBundleRequest `json:"body"`
+	Body *UpdateSkillBundleBody `json:"body"`
 }
 
 type UpdateSkillBundleResponse struct {
@@ -64,14 +88,14 @@ type PurgeSkillBundleResponse struct {
 	Bundle collection.CollectionRef `json:"bundle"`
 }
 
-type AttachSkillBundleSourceRequestBody struct {
-	Bundle                     collection.CollectionRef `json:"bundle"`
-	ExpectedCollectionRevision uint64                   `json:"expectedCollectionRevision"`
-	Attachment                 AttachmentDraft          `json:"attachment"`
+type AttachSkillBundleSourceBody struct {
+	Bundle                     collection.CollectionRef
+	ExpectedCollectionRevision uint64
+	Attachment                 AttachmentDraft
 }
 
 type AttachSkillBundleSourceRequest struct {
-	Body *AttachSkillBundleSourceRequestBody `json:"body"`
+	Body *AttachSkillBundleSourceBody `json:"body"`
 }
 
 type AttachSkillBundleSourceResponse struct {
@@ -86,8 +110,25 @@ type RefreshSkillBundleResponse struct {
 	Body *catalog.RefreshCollectionResult `json:"body"`
 }
 
-type CreateManagedSkillStoreRequest struct {
-	Body *CreateManagedSkillRequest `json:"body"`
+type CreateManagedSkillBody struct {
+	Bundle                     collection.CollectionRef
+	ExpectedCollectionRevision uint64
+	ArtifactID                 artifact.ArtifactID
+	SkillName                  string
+	SKILLMD                    []byte
+	ExpectedArtifactRevision   uint64
+	Document                   *document.SkillDocument
+	Files                      []source.ManagedPackageFile
+	Enabled                    bool
+}
+
+type CreateManagedSkillRequest struct {
+	Body *CreateManagedSkillBody `json:"body"`
+}
+
+type CreateManagedSkillResponse struct {
+	Artifact artifact.Artifact
+	Address  artifact.ArtifactAddress
 }
 
 type CreateManagedSkillStoreResponse struct {
@@ -102,19 +143,37 @@ type GetManagedSkillDocumentResponse struct {
 	Body *ManagedSkillDocument `json:"body"`
 }
 
-type AdoptSkillStoreRequest struct {
-	Body *AdoptSkillRequest `json:"body"`
+type AdoptSkillBody struct {
+	Bundle                  collection.CollectionRef
+	Occurrence              catalog.OccurrenceKey
+	ArtifactID              artifact.ArtifactID
+	ExpectedCatalogRevision uint64
+	Name                    string
+	Enabled                 bool
 }
 
-type AdoptSkillStoreResponse struct {
+type AdoptSkillRequest struct {
+	Body *AdoptSkillBody `json:"body"`
+}
+
+type AdoptSkillResponse struct {
 	Body *artifact.Artifact `json:"body"`
 }
 
-type PinSkillStoreRequest struct {
-	Body *PinSkillRequest `json:"body"`
+type PinSkillBody struct {
+	Bundle                     collection.CollectionRef
+	ExpectedCollectionRevision uint64
+	ArtifactID                 artifact.ArtifactID
+	Binding                    artifact.SourceBinding
+	Name                       string
+	Enabled                    bool
 }
 
-type PinSkillStoreResponse struct {
+type PinSkillRequest struct {
+	Body *PinSkillBody `json:"body"`
+}
+
+type PinSkillResponse struct {
 	Body *artifact.Artifact `json:"body"`
 }
 
@@ -138,14 +197,14 @@ type ListBundleSkillsResponse struct {
 	Body *ListBundleSkillsResponseBody `json:"body"`
 }
 
-type SetSkillEnabledRequestBody struct {
-	Artifact         artifact.ArtifactRef `json:"artifact"`
-	ExpectedRevision uint64               `json:"expectedRevision"`
-	Enabled          bool                 `json:"enabled"`
+type SetSkillEnabledBody struct {
+	Artifact         artifact.ArtifactRef
+	ExpectedRevision uint64
+	Enabled          bool
 }
 
 type SetSkillEnabledRequest struct {
-	Body *SetSkillEnabledRequestBody `json:"body"`
+	Body *SetSkillEnabledBody `json:"body"`
 }
 
 type SetSkillEnabledResponse struct {
@@ -171,15 +230,10 @@ type PurgeSkillResponse struct {
 	Artifact artifact.ArtifactRef `json:"artifact"`
 }
 
-// requireRequestBody performs only transport-shape validation.
-//
-// Domain semantic validation remains in bundle.API. Generic lifecycle,
-// persistence, revision, and source/package validation remain in Artifact
-// Store.
-func requireRequestBody[T any](
+func requireStoreRequest[T any](
 	request *T,
-	bodyPresent bool,
 	requireBody bool,
+	bodyPresent bool,
 	subject string,
 ) error {
 	if request == nil {

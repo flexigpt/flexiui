@@ -30,7 +30,7 @@ type ReplaceDocumentRequest struct {
 
 // ReplaceDocument publishes the canonical document-only package used by
 // user-managed MCP Bundles.
-func (a *API) ReplaceDocument(
+func (a *StoreAPI) ReplaceDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
 ) (Bundle, error) {
@@ -52,7 +52,7 @@ func (a *API) ReplaceDocument(
 // replaceCanonicalDocument is shared by user-managed Bundle updates and
 // protected hydration after the portable document has passed through the
 // Artifact Store expected-schema registry exactly once.
-func (a *API) replaceCanonicalDocument(
+func (a *StoreAPI) replaceCanonicalDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
 	parsed schema.ParsedDocument,
@@ -93,7 +93,7 @@ func (a *API) replaceCanonicalDocument(
 		plan.document,
 		plan.collectionData,
 	) {
-		updated, err := a.dependencies.Collections.Update(
+		updated, err := a.collections.Update(
 			ctx,
 			plan.bundle.Collection.Ref(),
 			collection.Update{
@@ -151,7 +151,7 @@ func (a *API) replaceCanonicalDocument(
 		return Bundle{}, err
 	}
 
-	if _, err := a.dependencies.ManagedArtifacts.PublishCollection(
+	if _, err := a.managedArtifacts.PublishCollection(
 		ctx,
 		collection.PublishCollectionRequest{
 			Collection: plan.bundle.Collection.Ref(),
@@ -173,7 +173,7 @@ func (a *API) replaceCanonicalDocument(
 	for _, subresource := range plan.orderedSubresources {
 		registration := plan.registrations[subresource]
 		expectedDefinition := plan.definitions[subresource]
-		resolved, err := a.dependencies.Artifacts.Get(
+		resolved, err := a.artifacts.Get(
 			ctx,
 			artifact.ArtifactRef{
 				RootID:     plan.bundle.Collection.RootID,
@@ -195,7 +195,7 @@ func (a *API) replaceCanonicalDocument(
 	}
 
 	for _, current := range plan.removed {
-		current, err := a.dependencies.Artifacts.Get(ctx, current.Ref())
+		current, err := a.artifacts.Get(ctx, current.Ref())
 		if err != nil {
 			return Bundle{}, err
 		}
@@ -213,7 +213,7 @@ func (a *API) replaceCanonicalDocument(
 		if err := a.deleteProtectedOverlayIfPresent(ctx, current); err != nil {
 			return Bundle{}, err
 		}
-		if err := a.dependencies.Artifacts.Purge(
+		if err := a.artifacts.Purge(
 			ctx,
 			current.Ref(),
 			current.Revision,
@@ -273,7 +273,7 @@ func documentPackageFiles(
 	return publication.Files, nil
 }
 
-func (a *API) pinRegisteredArtifact(
+func (a *StoreAPI) pinRegisteredArtifact(
 	ctx context.Context,
 	bundle Bundle,
 	registration Registration,
@@ -285,7 +285,7 @@ func (a *API) pinRegisteredArtifact(
 		name = string(expected.LogicalName)
 	}
 
-	return a.dependencies.Artifacts.Pin(
+	return a.artifacts.Pin(
 		ctx,
 		catalog.PinRequest{
 			ArtifactID:                 registration.ArtifactID,
@@ -304,7 +304,7 @@ func (a *API) pinRegisteredArtifact(
 	)
 }
 
-func (a *API) updateRegisteredArtifact(
+func (a *StoreAPI) updateRegisteredArtifact(
 	ctx context.Context,
 	bundle Bundle,
 	current artifact.Artifact,
@@ -339,7 +339,7 @@ func (a *API) updateRegisteredArtifact(
 	next := current
 	var err error
 	if next.Name != name {
-		next, err = a.dependencies.Artifacts.SetName(
+		next, err = a.artifacts.SetName(
 			ctx,
 			next.Ref(),
 			next.Revision,
@@ -350,7 +350,7 @@ func (a *API) updateRegisteredArtifact(
 		}
 	}
 	if !jsonutil.Equal(next.Data, data) {
-		next, err = a.dependencies.Artifacts.UpdateData(
+		next, err = a.artifacts.UpdateData(
 			ctx,
 			next.Ref(),
 			next.Revision,
@@ -361,7 +361,7 @@ func (a *API) updateRegisteredArtifact(
 		}
 	}
 	if next.Enabled != registration.Enabled {
-		next, err = a.dependencies.Artifacts.SetEnabled(
+		next, err = a.artifacts.SetEnabled(
 			ctx,
 			next.Ref(),
 			next.Revision,
@@ -489,33 +489,33 @@ func registrationData(value Registration) (json.RawMessage, error) {
 	}
 }
 
-func (a *API) deleteProtectedOverlayIfPresent(
+func (a *StoreAPI) deleteProtectedOverlayIfPresent(
 	ctx context.Context,
 	record artifact.Artifact,
 ) error {
 	if record.Kind != artifactbuiltin.ServerKind {
 		return nil
 	}
-	if a.dependencies.Overlays == nil ||
-		!a.dependencies.Protection.IsProtectedRoot(record.RootID) {
+	if a.overlays == nil ||
+		!a.protection.IsProtectedRoot(record.RootID) {
 		return nil
 	}
 
-	ovr, found, err := a.dependencies.Overlays.GetServerOverlay(
+	ovr, found, err := a.overlays.GetServerOverlay(
 		ctx,
 		record.Ref(),
 	)
 	if err != nil || !found {
 		return err
 	}
-	return a.dependencies.Overlays.DeleteServerOverlay(
+	return a.overlays.DeleteServerOverlay(
 		ctx,
 		record.Ref(),
 		ovr.Revision,
 	)
 }
 
-func (a *API) requireBundleMutation(
+func (a *StoreAPI) requireBundleMutation(
 	ctx context.Context,
 	rootID root.RootID,
 	allowProtected bool,
@@ -523,7 +523,7 @@ func (a *API) requireBundleMutation(
 	if err := rootID.Validate(); err != nil {
 		return err
 	}
-	if !a.dependencies.Protection.IsProtectedRoot(rootID) {
+	if !a.protection.IsProtectedRoot(rootID) {
 		return nil
 	}
 	if !allowProtected {
@@ -532,10 +532,10 @@ func (a *API) requireBundleMutation(
 			basespec.ErrProtected,
 		)
 	}
-	return a.dependencies.Protection.RequirePrivilegedInstaller(ctx)
+	return a.protection.RequirePrivilegedInstaller(ctx)
 }
 
-func (a *API) UpdateServerInstallation(
+func (a *StoreAPI) UpdateServerInstallation(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedArtifactRevision uint64,
@@ -554,11 +554,11 @@ func (a *API) UpdateServerInstallation(
 		)
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
-	if a.dependencies.Protection.IsProtectedRoot(record.RootID) {
+	if a.protection.IsProtectedRoot(record.RootID) {
 		return artifact.Artifact{}, fmt.Errorf(
 			"%w: protected MCP Server installation data belongs in an overlay",
 			basespec.ErrProtected,
@@ -598,7 +598,7 @@ func (a *API) UpdateServerInstallation(
 			data,
 		)
 	}
-	updated, err := a.dependencies.Artifacts.UpdateData(
+	updated, err := a.artifacts.UpdateData(
 		ctx,
 		ref,
 		expectedArtifactRevision,
@@ -618,7 +618,7 @@ func (a *API) UpdateServerInstallation(
 	return updated, nil
 }
 
-func (a *API) UpdateProtectedServerInstallation(
+func (a *StoreAPI) UpdateProtectedServerInstallation(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	expectedOverlayRevision uint64,
@@ -631,20 +631,20 @@ func (a *API) UpdateProtectedServerInstallation(
 	if err := ref.Validate(); err != nil {
 		return err
 	}
-	if !a.dependencies.Protection.IsProtectedRoot(ref.RootID) {
+	if !a.protection.IsProtectedRoot(ref.RootID) {
 		return fmt.Errorf(
 			"%w: MCP Server is not in a protected Root",
 			basespec.ErrProtected,
 		)
 	}
-	if a.dependencies.Overlays == nil {
+	if a.overlays == nil {
 		return fmt.Errorf(
 			"%w: protected MCP installation overlay store is unavailable",
 			basespec.ErrReferenceUnresolved,
 		)
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -672,7 +672,7 @@ func (a *API) UpdateProtectedServerInstallation(
 		return err
 	}
 
-	current, found, err := a.dependencies.Overlays.GetServerOverlay(
+	current, found, err := a.overlays.GetServerOverlay(
 		ctx,
 		ref,
 	)
@@ -690,7 +690,7 @@ func (a *API) UpdateProtectedServerInstallation(
 	if found {
 		nextRevision = current.Revision + 1
 	}
-	if err := a.dependencies.Overlays.PutServerOverlay(
+	if err := a.overlays.PutServerOverlay(
 		ctx,
 		ref,
 		expectedOverlayRevision,
@@ -739,7 +739,7 @@ func serverDocumentFromDefinition(
 	}, nil
 }
 
-func (a *API) currentDefinitionForArtifact(
+func (a *StoreAPI) currentDefinitionForArtifact(
 	ctx context.Context,
 	record artifact.Artifact,
 ) (definition.Definition, error) {

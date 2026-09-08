@@ -4,7 +4,6 @@ import (
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -25,91 +24,29 @@ type AttachmentDraft struct {
 	DiscoveryRoot         basespec.Locator
 	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
 }
-type CreateBundleRequest struct {
-	RootID                  root.RootID
-	CollectionID            collection.CollectionID
-	ManagedSourceID         source.SourceID
-	ManagedSourceStorageKey basespec.StorageKey
-	DisplayName             string
-	Description             string
-	Enabled                 bool
-	LogicalName             basespec.LogicalName
-	LogicalVersion          basespec.LogicalVersion
-	Labels                  map[string]string
-	Attachments             []AttachmentDraft
-}
-
-type UpdateBundleRequest struct {
-	Bundle           collection.CollectionRef
-	ExpectedRevision uint64
-	DisplayName      string
-	Description      string
-	Enabled          bool
-}
-
-type CreateManagedSkillRequest struct {
-	Bundle                     collection.CollectionRef
-	ExpectedCollectionRevision uint64
-	ArtifactID                 artifact.ArtifactID
-	SkillName                  string
-	SKILLMD                    []byte
-	ExpectedArtifactRevision   uint64
-
-	// Document is an optional structured authoring input. Serialization is
-	// delegated to agentskills-go. It is mutually exclusive with SKILLMD.
-	Document *document.SkillDocument
-	Files    []source.ManagedPackageFile
-	Enabled  bool
-}
-
-type CreateManagedSkillResponse struct {
-	Artifact artifact.Artifact
-	Address  artifact.ArtifactAddress
-}
-
-type AdoptSkillRequest struct {
-	Bundle                  collection.CollectionRef
-	Occurrence              catalog.OccurrenceKey
-	ArtifactID              artifact.ArtifactID
-	ExpectedCatalogRevision uint64
-	Name                    string
-	Enabled                 bool
-}
-
-type PinSkillRequest struct {
-	Bundle                     collection.CollectionRef
-	ExpectedCollectionRevision uint64
-	ArtifactID                 artifact.ArtifactID
-	Binding                    artifact.SourceBinding
-	Name                       string
-	Enabled                    bool
-}
 
 type BuiltInBundleTopology struct {
-	RootID                root.RootID                            `json:"-"`
-	CollectionID          collection.CollectionID                `json:"-"`
-	SourceID              source.SourceID                        `json:"-"`
-	LogicalName           basespec.LogicalName                   `json:"-"`
-	LogicalVersion        basespec.LogicalVersion                `json:"-"`
-	DisplayName           string                                 `json:"-"`
-	Description           string                                 `json:"-"`
-	Labels                map[string]string                      `json:"-"`
-	Enabled               bool                                   `json:"-"`
-	DiscoveryRoot         basespec.Locator                       `json:"-"`
-	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest `json:"-"`
+	RootID                root.RootID
+	CollectionID          collection.CollectionID
+	SourceID              source.SourceID
+	LogicalName           basespec.LogicalName
+	LogicalVersion        basespec.LogicalVersion
+	DisplayName           string
+	Description           string
+	Labels                map[string]string
+	Enabled               bool
+	DiscoveryRoot         basespec.Locator
+	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
 }
 
-// ManagedSkillDocument is the editable projection for a managed Skill.
-// It deliberately contains the canonical SKILL.md document only. It never
-// exposes Source configuration, a native filesystem path, or package internals.
 type ManagedSkillDocument struct {
 	Artifact artifact.Artifact
 	Document document.SkillDocument
 }
 
 type Bundle struct {
-	Collection  collection.Collection   `json:"collection"`
-	Data        CollectionData          `json:"data"`
-	Attachments []collection.Attachment `json:"attachments"`
-	Sources     []source.Summary        `json:"sources"`
+	Collection  collection.Collection
+	Data        CollectionData
+	Attachments []collection.Attachment
+	Sources     []source.Summary
 }

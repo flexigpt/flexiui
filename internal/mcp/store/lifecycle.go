@@ -11,7 +11,7 @@ import (
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 )
 
-func (a *API) UpdateBundleEnabled(
+func (a *StoreAPI) UpdateBundleEnabled(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedRevision uint64,
@@ -41,7 +41,7 @@ func (a *API) UpdateBundleEnabled(
 		return current, nil
 	}
 
-	updated, err := a.dependencies.Collections.Update(
+	updated, err := a.collections.Update(
 		ctx,
 		ref,
 		collection.Update{
@@ -58,7 +58,7 @@ func (a *API) UpdateBundleEnabled(
 	return a.Get(ctx, updated.Ref())
 }
 
-func (a *API) Retire(
+func (a *StoreAPI) Retire(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedRevision uint64,
@@ -70,7 +70,7 @@ func (a *API) Retire(
 		return collection.Collection{}, err
 	}
 
-	records, err := a.dependencies.Artifacts.ListByCollection(ctx, ref)
+	records, err := a.artifacts.ListByCollection(ctx, ref)
 	if err != nil {
 		return collection.Collection{}, err
 	}
@@ -81,14 +81,14 @@ func (a *API) Retire(
 		)
 	}
 
-	return a.dependencies.Collections.Retire(
+	return a.collections.Retire(
 		ctx,
 		ref,
 		expectedRevision,
 	)
 }
 
-func (a *API) Purge(
+func (a *StoreAPI) Purge(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedRevision uint64,
@@ -100,7 +100,7 @@ func (a *API) Purge(
 		return err
 	}
 
-	retired, err := a.dependencies.Collections.GetRetired(ctx, ref)
+	retired, err := a.collections.GetRetired(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (a *API) Purge(
 
 	var owned source.Summary
 	if data.ManagedSourceID != "" {
-		owned, err = a.dependencies.Sources.Get(
+		owned, err = a.sources.Get(
 			ctx,
 			ref.RootID,
 			data.ManagedSourceID,
@@ -128,7 +128,7 @@ func (a *API) Purge(
 		}
 	}
 
-	if err := a.dependencies.Collections.Purge(
+	if err := a.collections.Purge(
 		ctx,
 		ref,
 		expectedRevision,
@@ -139,7 +139,7 @@ func (a *API) Purge(
 		return nil
 	}
 
-	if err := a.dependencies.Sources.Discard(
+	if err := a.sources.Discard(
 		ctx,
 		ref.RootID,
 		owned.ID,
@@ -153,7 +153,7 @@ func (a *API) Purge(
 	return nil
 }
 
-func (a *API) UpdateProtectedBundleInstallation(
+func (a *StoreAPI) UpdateProtectedBundleInstallation(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	expectedOverlayRevision uint64,
@@ -163,7 +163,7 @@ func (a *API) UpdateProtectedBundleInstallation(
 		return basespec.ErrClosed
 	}
 
-	if !a.dependencies.Protection.IsProtectedRoot(ref.RootID) {
+	if !a.protection.IsProtectedRoot(ref.RootID) {
 		return fmt.Errorf(
 			"%w: MCP Bundle is not in a protected Root",
 			basespec.ErrProtected,
@@ -172,7 +172,7 @@ func (a *API) UpdateProtectedBundleInstallation(
 	if err := ref.Validate(); err != nil {
 		return err
 	}
-	if a.dependencies.Overlays == nil {
+	if a.overlays == nil {
 		return fmt.Errorf(
 			"%w: protected MCP Bundle overlay store is unavailable",
 			basespec.ErrReferenceUnresolved,
@@ -182,7 +182,7 @@ func (a *API) UpdateProtectedBundleInstallation(
 		return err
 	}
 
-	current, found, err := a.dependencies.Overlays.GetBundleOverlay(
+	current, found, err := a.overlays.GetBundleOverlay(
 		ctx,
 		ref.RootID,
 		ref.CollectionID,
@@ -202,7 +202,7 @@ func (a *API) UpdateProtectedBundleInstallation(
 		nextRevision = current.Revision + 1
 	}
 
-	return a.dependencies.Overlays.PutBundleOverlay(
+	return a.overlays.PutBundleOverlay(
 		ctx,
 		ref.RootID,
 		ref.CollectionID,

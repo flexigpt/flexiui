@@ -67,14 +67,32 @@ type ContextInspection struct {
 	Diagnostics     []diagnostic.Diagnostic  `json:"diagnostics,omitempty"`
 }
 
+type WorkspaceDataSource interface {
+	GetWorkspace(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+	) (spec.Workspace, error)
+
+	Catalog(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+	) (spec.CatalogView, error)
+
+	ComposeLoadPlan(
+		ctx context.Context,
+		workspace collection.CollectionRef,
+		artifactRefs []artifact.ArtifactRef,
+	) (spec.LoadPlan, error)
+}
+
 type Adapter struct {
-	query             *artifactadapter.QueryService
+	query             WorkspaceDataSource
 	runtimePolicy     artifactadapter.SourceUsePolicy
 	compositionPolicy CompositionPolicy
 }
 
 func NewAdapter(
-	query *artifactadapter.QueryService,
+	query WorkspaceDataSource,
 	runtimePolicy artifactadapter.SourceUsePolicy,
 	compositionPolicy CompositionPolicy,
 ) (*Adapter, error) {
@@ -84,6 +102,7 @@ func NewAdapter(
 			spec.ErrInvalidWorkspace,
 		)
 	}
+
 	compositionPolicy = compositionPolicy.Normalized()
 	if err := compositionPolicy.Validate(); err != nil {
 		return nil, err

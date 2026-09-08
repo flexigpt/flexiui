@@ -20,26 +20,26 @@ import (
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
 
-func (a *API) ResolveMCPServer(
+func (a *StoreAPI) ResolveMCPServer(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (mcpStoreServer.Resolved, error) {
 	return a.resolveMCPServer(ctx, ref, true)
 }
 
-// InspectMCPServer establishes Artifact, Collection, Catalog, Definition,
+// InspectMCPServerForRuntime establishes Artifact, Collection, Catalog, Definition,
 // installation, and policy validity without opening a Source snapshot or
 // resolving a secret. It is deliberately for read-only status and setup
 // projections. Connection and explicit runtime refresh must use
 // ResolveMCPServer, which verifies exact current source bytes.
-func (a *API) InspectMCPServer(
+func (a *StoreAPI) InspectMCPServerForRuntime(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (mcpStoreServer.Resolved, error) {
 	return a.resolveMCPServer(ctx, ref, false)
 }
 
-func (a *API) resolveMCPServer(
+func (a *StoreAPI) resolveMCPServer(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 	verifySource bool,
@@ -51,7 +51,7 @@ func (a *API) resolveMCPServer(
 		return mcpStoreServer.Resolved{}, err
 	}
 
-	record, err := a.dependencies.Artifacts.Get(ctx, ref)
+	record, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return mcpStoreServer.Resolved{}, err
 	}
@@ -114,7 +114,7 @@ func (a *API) resolveMCPServer(
 		)
 	}
 
-	resolvedResource, err := a.dependencies.Resources.ResolveArtifact(
+	resolvedResource, err := a.resources.ResolveArtifact(
 		ctx,
 		ref,
 		resource.ResolveOptions{
@@ -196,7 +196,7 @@ func (a *API) resolveMCPServer(
 		Policy:               policyValue,
 		InstallationRevision: installationRevision,
 		RuntimeEnabled:       runtimeEnabled,
-		BuiltIn: a.dependencies.Protection.IsProtectedRoot(
+		BuiltIn: a.protection.IsProtectedRoot(
 			ref.RootID,
 		),
 		Version: version,
@@ -207,11 +207,11 @@ func (a *API) resolveMCPServer(
 	return resolved, nil
 }
 
-func (a *API) currentCatalog(
+func (a *StoreAPI) currentCatalog(
 	ctx context.Context,
 	bundle Bundle,
 ) (catalog.Snapshot, error) {
-	return a.dependencies.Catalogs.CurrentCatalog(
+	return a.catalogs.CurrentCatalog(
 		ctx,
 		bundle.Collection.Ref(),
 	)
@@ -247,7 +247,7 @@ func currentServerOccurrence(
 	)
 }
 
-func (a *API) effectiveInstallation(
+func (a *StoreAPI) effectiveInstallation(
 	ctx context.Context,
 	bundle Bundle,
 	record artifact.Artifact,
@@ -259,7 +259,7 @@ func (a *API) effectiveInstallation(
 	runtimeEnabled bool,
 	err error,
 ) {
-	if !a.dependencies.Protection.IsProtectedRoot(record.RootID) {
+	if !a.protection.IsProtectedRoot(record.RootID) {
 		data, err := mcpStoreServer.DecodeServerData(record.Data)
 		if err != nil {
 			return mcpStoreServer.ServerData{}, 0, false, false, err
@@ -274,7 +274,7 @@ func (a *API) effectiveInstallation(
 			nil
 	}
 
-	if a.dependencies.Overlays == nil {
+	if a.overlays == nil {
 		return mcpStoreServer.ServerData{},
 			0,
 			false,
@@ -285,7 +285,7 @@ func (a *API) effectiveInstallation(
 			)
 	}
 
-	serverOverlay, found, err := a.dependencies.Overlays.GetServerOverlay(
+	serverOverlay, found, err := a.overlays.GetServerOverlay(
 		ctx,
 		record.Ref(),
 	)
@@ -302,7 +302,7 @@ func (a *API) effectiveInstallation(
 	); err != nil {
 		return mcpStoreServer.ServerData{}, 0, false, false, err
 	}
-	bundleOverlay, bundleFound, err := a.dependencies.Overlays.GetBundleOverlay(
+	bundleOverlay, bundleFound, err := a.overlays.GetBundleOverlay(
 		ctx,
 		record.RootID,
 		record.CollectionID,
@@ -327,7 +327,7 @@ func (a *API) effectiveInstallation(
 		nil
 }
 
-func (a *API) effectivePolicy(
+func (a *StoreAPI) effectivePolicy(
 	ctx context.Context,
 	bundle Bundle,
 	serverDocument mcpStoreServer.ServerDocument,
@@ -371,7 +371,7 @@ func (a *API) effectivePolicy(
 				basespec.ErrInvalid,
 			)
 		}
-		record, err := a.dependencies.Artifacts.Get(ctx, ref)
+		record, err := a.artifacts.Get(ctx, ref)
 		if err != nil {
 			return mcpPolicy.Effective{}, err
 		}
@@ -403,7 +403,7 @@ func (a *API) effectivePolicy(
 	// policy already replaces it. Apply the same rule when the installation
 	// explicitly selects only additional policy Artifacts, otherwise allow,
 	// trusted, auto, and Apps-enabled effects can never become effective.
-	baseline := a.dependencies.BaselinePolicy
+	baseline := a.baselinePolicy
 	if len(values) != 0 {
 		baseline = values[0]
 		values = values[1:]
@@ -411,12 +411,12 @@ func (a *API) effectivePolicy(
 	return mcpPolicy.Compose(baseline, values...)
 }
 
-func (a *API) policyBodiesByLogicalName(
+func (a *StoreAPI) policyBodiesByLogicalName(
 	ctx context.Context,
 	ref collection.CollectionRef,
 	name basespec.LogicalName,
 ) ([]mcpPolicy.MCPPolicy, error) {
-	records, err := a.dependencies.Artifacts.ListByCollection(ctx, ref)
+	records, err := a.artifacts.ListByCollection(ctx, ref)
 	if err != nil {
 		return nil, err
 	}

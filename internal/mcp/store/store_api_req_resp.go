@@ -1,17 +1,28 @@
 package store
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
 
+type CreateMCPBundleBody struct {
+	RootID           root.RootID
+	CollectionID     collection.CollectionID
+	SourceID         source.SourceID
+	SourceStorageKey basespec.StorageKey
+	Document         json.RawMessage
+	Registrations    []Registration
+}
+
 type CreateMCPBundleRequest struct {
-	Body *CreateRequest `json:"body"`
+	Body *CreateMCPBundleBody `json:"body"`
 }
 
 type CreateMCPBundleResponse struct {
@@ -102,15 +113,10 @@ type GetMCPBundleInstallationResponse struct {
 	Body *BundleInstallationView `json:"body"`
 }
 
-// requireRequestBody performs transport-shape checks only.
-//
-// MCP document, registration, secret-reference, installation, and runtime
-// semantics remain MCP domain responsibilities. Generic persistence and
-// lifecycle remain Artifact Store responsibilities.
-func requireRequestBody[T any](
+func requireStoreRequest[T any](
 	request *T,
-	bodyPresent bool,
 	requireBody bool,
+	bodyPresent bool,
 	subject string,
 ) error {
 	if request == nil {

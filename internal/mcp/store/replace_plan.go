@@ -36,7 +36,7 @@ type documentReplacePlan struct {
 	removed []artifact.Artifact
 }
 
-func (a *API) prepareDocumentReplace(
+func (a *StoreAPI) prepareDocumentReplace(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
 	parsed schema.ParsedDocument,
@@ -109,7 +109,7 @@ func (a *API) prepareDocumentReplace(
 		return documentReplacePlan{}, err
 	}
 
-	existing, err := a.dependencies.Artifacts.ListByCollection(
+	existing, err := a.artifacts.ListByCollection(
 		ctx,
 		bundle.Collection.Ref(),
 	)

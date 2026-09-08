@@ -204,14 +204,3 @@ func validateWorkspaceState(
 		)
 	}
 }
-
-func validateRole(role collection.AttachmentRole) error {
-	if _, supported := attachmentdata.AttachmentOperationFor(role); supported {
-		return nil
-	}
-	return fmt.Errorf(
-		"%w: unsupported attachment role %q",
-		spec.ErrInvalidWorkspace,
-		role,
-	)
-}

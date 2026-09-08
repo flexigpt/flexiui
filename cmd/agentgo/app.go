@@ -8,9 +8,6 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
-	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
-	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
-	"github.com/flexigpt/flexigpt-app/internal/workspace"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/adrg/xdg"
@@ -36,7 +33,9 @@ type App struct {
 	mcpAggregateAPI         *MCPAggregateWrapper
 	aggregateAPI            *AggregrateWrapper
 	assistantPresetStoreAPI *AssistantPresetStoreWrapper
-	workspaceAPI            *WorkspaceWrapper
+	workspaceStoreAPI       *WorkspaceStoreWrapper
+	workspaceRuntimeAPI     *WorkspaceRuntimeWrapper
+	workspaceAggregateAPI   *WorkspaceAggregateWrapper
 
 	artifactStoreComposition *compositionapi.Store
 
@@ -128,7 +127,9 @@ func NewApp() *App {
 	app.mcpAggregateAPI = &MCPAggregateWrapper{}
 	app.toolRuntimeAPI = &ToolRuntimeWrapper{}
 	app.aggregateAPI = &AggregrateWrapper{}
-	app.workspaceAPI = &WorkspaceWrapper{}
+	app.workspaceStoreAPI = &WorkspaceStoreWrapper{}
+	app.workspaceRuntimeAPI = &WorkspaceRuntimeWrapper{}
+	app.workspaceAggregateAPI = &WorkspaceAggregateWrapper{}
 
 	app.assistantPresetStoreAPI = &AssistantPresetStoreWrapper{}
 
@@ -264,39 +265,37 @@ func (a *App) initManagers() {
 
 	slog.Info("artifact store initialized", "directory", a.artifactStoreDirPath)
 
-	err = InitWorkspaceWrapper(
-		a.workspaceAPI,
-		workspace.Dependencies{
-			Sources:     artifactComposition.Sources,
-			Collections: artifactComposition.Collections,
-			Artifacts:   artifactComposition.Artifacts,
-			Catalogs:    artifactComposition.Catalogs,
-			Resources:   artifactComposition.Resources,
-		},
+	err = InitWorkspaceWrappers(
+		a.workspaceStoreAPI,
+		a.workspaceRuntimeAPI,
+		a.workspaceAggregateAPI,
+		artifactComposition.Sources,
+		artifactComposition.Collections,
+		artifactComposition.Artifacts,
+		artifactComposition.Catalogs,
+		artifactComposition.Resources,
 	)
 	if err != nil {
 		slog.Error(
-			"couldn't initialize Workspace",
+			"couldn't initialize Workspace APIs",
 			"directory", a.artifactStoreDirPath,
 			"error", err,
 		)
 		panic("failed to initialize managers: workspace initialization failed\n" + err.Error())
 	}
-	slog.Info("workspace initialized")
+	slog.Info("workspace Store, Runtime, and Aggregate APIs initialized")
 
 	err = InitSkillStoreWrapper(
 		a.skillStoreAPI,
-		skillBundle.Dependencies{
-			Sources:          artifactComposition.Sources,
-			Collections:      artifactComposition.Collections,
-			Artifacts:        artifactComposition.Artifacts,
-			Catalogs:         artifactComposition.Catalogs,
-			Resources:        artifactComposition.Resources,
-			Schemas:          artifactComposition.Schemas,
-			ManagedArtifacts: artifactComposition.ManagedArtifacts,
-			Protection:       artifactComposition.Protection,
-		},
-		a.workspaceAPI.api.SkillAdapter(),
+		artifactComposition.Sources,
+		artifactComposition.Collections,
+		artifactComposition.Artifacts,
+		artifactComposition.Catalogs,
+		artifactComposition.Resources,
+		artifactComposition.Schemas,
+		artifactComposition.ManagedArtifacts,
+		artifactComposition.Protection,
+		a.workspaceRuntimeAPI.api.SkillAdapter(),
 	)
 	if err != nil {
 		slog.Error(
@@ -340,17 +339,15 @@ func (a *App) initManagers() {
 		a.mcpStoreAPI,
 		a.mcpRuntimeAPI,
 		a.mcpAggregateAPI,
-		mcpStore.Dependencies{
-			Sources:          artifactComposition.Sources,
-			Collections:      artifactComposition.Collections,
-			Artifacts:        artifactComposition.Artifacts,
-			Catalogs:         artifactComposition.Catalogs,
-			Resources:        artifactComposition.Resources,
-			Schemas:          artifactComposition.Schemas,
-			ManagedArtifacts: artifactComposition.ManagedArtifacts,
-			Protection:       artifactComposition.Protection,
-			UserRootID:       artifactbuiltin.MCPUserRootID,
-		},
+		artifactComposition.Sources,
+		artifactComposition.Collections,
+		artifactComposition.Artifacts,
+		artifactComposition.Catalogs,
+		artifactComposition.Resources,
+		artifactComposition.Schemas,
+		artifactComposition.ManagedArtifacts,
+		artifactComposition.Protection,
+		artifactbuiltin.MCPUserRootID,
 		a.settingStoreAPI.store,
 	)
 	if err != nil {
@@ -425,7 +422,7 @@ func (a *App) initManagers() {
 		a.toolStoreAPI.store,
 		a.skillAggregateAPI.service,
 		a.mcpRuntimeAPI.runtime,
-		a.workspaceAPI.api,
+		a.workspaceAggregateAPI.api,
 	)
 	if err != nil {
 		slog.Error(
@@ -488,8 +485,14 @@ func (a *App) shutdown(ctx context.Context) { //nolint:all
 	if a.skillRuntimeAPI != nil {
 		a.skillRuntimeAPI.close()
 	}
-	if a.workspaceAPI != nil {
-		a.workspaceAPI.close()
+	if a.workspaceAggregateAPI != nil {
+		a.workspaceAggregateAPI.close()
+	}
+	if a.workspaceRuntimeAPI != nil {
+		a.workspaceRuntimeAPI.close()
+	}
+	if a.workspaceStoreAPI != nil {
+		a.workspaceStoreAPI.close()
 	}
 	if a.skillStoreAPI != nil {
 		a.skillStoreAPI.close()

@@ -31,7 +31,7 @@ type EnsureBuiltInRequest struct {
 // EnsureBuiltIn creates or verifies one protected MCP Bundle topology and
 // installs its complete canonical document through the protected managed
 // source path. It is only callable from trusted hydration composition.
-func (a *API) EnsureBuiltIn(
+func (a *StoreAPI) EnsureBuiltIn(
 	ctx context.Context,
 	request EnsureBuiltInRequest,
 ) (Bundle, error) {
@@ -53,7 +53,7 @@ func (a *API) EnsureBuiltIn(
 	if err := validateBundlePackageAddress(request.PackageAddress); err != nil {
 		return Bundle{}, err
 	}
-	if !a.dependencies.Protection.IsProtectedRoot(request.RootID) {
+	if !a.protection.IsProtectedRoot(request.RootID) {
 		return Bundle{}, fmt.Errorf(
 			"%w: MCP built-in Root %q is not protected",
 			basespec.ErrProtected,
@@ -82,7 +82,7 @@ func (a *API) EnsureBuiltIn(
 		)
 	}
 
-	sourceValue, err := a.dependencies.Sources.Get(
+	sourceValue, err := a.sources.Get(
 		ctx,
 		request.RootID,
 		request.SourceID,
@@ -116,7 +116,7 @@ func (a *API) EnsureBuiltIn(
 		return Bundle{}, err
 	}
 
-	created, _, err := a.dependencies.Collections.Create(
+	created, _, err := a.collections.Create(
 		ctx,
 		request.RootID,
 		collection.Draft{

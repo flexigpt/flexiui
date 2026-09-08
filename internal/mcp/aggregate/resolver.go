@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	mcpServer "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/server"
+	mcpStore "github.com/flexigpt/flexigpt-app/internal/mcp/store"
 	mcpStoreServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/server"
 )
 
@@ -19,8 +20,8 @@ type ServerStore interface {
 
 	InspectMCPServer(
 		ctx context.Context,
-		ref artifact.ArtifactRef,
-	) (mcpStoreServer.Resolved, error)
+		ref *mcpStore.InspectMCPServerRequest,
+	) (*mcpStore.InspectMCPServerResponse, error)
 }
 
 // ArtifactServerResolver translates a runtime-owned opaque ServerID only at
@@ -60,5 +61,12 @@ func (r *ArtifactServerResolver) InspectMCPServer(
 	if r == nil || r.store == nil {
 		return mcpStoreServer.Resolved{}, mcpServer.ErrClosed
 	}
-	return r.store.InspectMCPServer(ctx, ref)
+	resp, err := r.store.InspectMCPServer(ctx, &mcpStore.InspectMCPServerRequest{Server: ref})
+	if err != nil {
+		return mcpStoreServer.Resolved{}, err
+	}
+	if resp == nil || resp.Body == nil {
+		return mcpStoreServer.Resolved{}, errors.New("got nil mcp inspection")
+	}
+	return *resp.Body, nil
 }

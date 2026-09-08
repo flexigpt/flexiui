@@ -3,6 +3,7 @@ package workspace
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
@@ -12,42 +13,45 @@ type components struct {
 	workspaceRootID root.RootID
 	service         *artifactadapter.Service
 	query           *artifactadapter.QueryService
+	contextAdapter  *contextadapter.Adapter
+	skillAdapter    *workspaceadapter.Adapter
 	supportedKinds  map[artifact.ArtifactKind]struct{}
-
-	contextAdapter *contextadapter.Adapter
-	skillAdapter   *workspaceadapter.Adapter
 }
 
 func newComponents(
-	dependencies Dependencies,
+	sources compositionapi.SourceAPI,
+	collections compositionapi.CollectionAPI,
+	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
+	resources compositionapi.ResourceAPI,
 	config Config,
 ) (*components, error) {
-	if err := dependencies.Validate(); err != nil {
-		return nil, err
-	}
 	supports, err := config.normalizedSupports()
 	if err != nil {
 		return nil, err
 	}
 
 	service, err := artifactadapter.NewService(
-		dependencies.Collections,
-		dependencies.Sources,
+		collections,
+		sources,
 		config.WorkspaceRootID,
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	query, err := artifactadapter.NewQueryService(
 		service,
-		dependencies.Artifacts,
-		dependencies.Catalogs,
+		artifacts,
+		catalogs,
 		supports...,
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	runtimePolicy := config.runtimePolicy()
+
 	contextAdapter, err := contextadapter.NewAdapter(
 		query,
 		runtimePolicy,
@@ -56,10 +60,11 @@ func newComponents(
 	if err != nil {
 		return nil, err
 	}
+
 	skillAdapter, err := workspaceadapter.NewAdapter(
 		query,
 		runtimePolicy,
-		dependencies.Resources,
+		resources,
 	)
 	if err != nil {
 		return nil, err
@@ -77,8 +82,8 @@ func newComponents(
 		workspaceRootID: config.WorkspaceRootID,
 		service:         service,
 		query:           query,
-		supportedKinds:  supportedKinds,
 		contextAdapter:  contextAdapter,
 		skillAdapter:    skillAdapter,
+		supportedKinds:  supportedKinds,
 	}, nil
 }

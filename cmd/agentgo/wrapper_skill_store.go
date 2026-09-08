@@ -6,6 +6,7 @@ import (
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 	skillBundle "github.com/flexigpt/flexigpt-app/internal/skill/store/bundle"
@@ -22,47 +23,60 @@ type SkillStoreWrapper struct {
 
 func InitSkillStoreWrapper(
 	wrapper *SkillStoreWrapper,
-	dependencies skillBundle.Dependencies,
+	sources compositionapi.SourceAPI,
+	collections compositionapi.CollectionAPI,
+	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
+	resources compositionapi.ResourceAPI,
+	schemas compositionapi.SchemaAPI,
+	managedArtifacts compositionapi.ManagedArtifactAPI,
+	protection compositionapi.ProtectionAPI,
 	workspaceSkills *workspaceadapter.Adapter,
 ) error {
 	if wrapper == nil || workspaceSkills == nil {
 		return errors.New("skill store wrapper dependencies are incomplete")
 	}
-	if err := dependencies.Validate(); err != nil {
-		return err
-	}
 
-	service, err := skillBundle.New(dependencies)
-	if err != nil {
-		return err
-	}
-	api, err := skillBundle.NewStoreAPI(service)
-	if err != nil {
-		return err
-	}
-
-	router, err := skillStore.NewArtifactRouter(
-		dependencies.Artifacts,
-		dependencies.Collections,
+	storeAPI, err := skillBundle.NewStoreAPI(
+		sources,
+		collections,
+		artifacts,
+		catalogs,
+		resources,
+		managedArtifacts,
+		protection,
 	)
 	if err != nil {
 		return err
 	}
 
-	workspaceResolver, err := workspaceadapter.NewStoreLoader(workspaceSkills)
+	router, err := skillStore.NewArtifactRouter(
+		artifacts,
+		collections,
+	)
 	if err != nil {
 		return err
 	}
-	bundleResolver, err := skillBundle.NewStoreLoader(service)
+
+	workspaceResolver, err := workspaceadapter.NewStoreLoader(
+		workspaceSkills,
+	)
 	if err != nil {
 		return err
 	}
+
+	bundleResolver, err := skillBundle.NewStoreLoader(storeAPI)
+	if err != nil {
+		return err
+	}
+
 	if err := router.Register(
 		artifactbuiltin.WorkspaceCollectionV1Kind,
 		workspaceResolver,
 	); err != nil {
 		return err
 	}
+
 	if err := router.Register(
 		artifactbuiltin.SkillCollectionV1Kind,
 		bundleResolver,
@@ -74,23 +88,25 @@ func InitSkillStoreWrapper(
 	if err != nil {
 		return err
 	}
+
 	packages, err := artifactbuiltin.EmbeddedSkillPackages()
 	if err != nil {
 		return err
 	}
+
 	builtIns, err := schemaadapter.NewInstaller(
 		schemaadapter.InstallerDependencies{
-			Skills:                 service,
+			Skills:                 storeAPI,
 			SkillRegistry:          skillRegistry,
 			Packages:               packages,
-			ShareableCanonicalizer: dependencies.Schemas,
+			ShareableCanonicalizer: schemas,
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	wrapper.api = api
+	wrapper.api = storeAPI
 	wrapper.router = router
 	wrapper.builtInInstaller = builtIns
 	return nil
@@ -193,7 +209,7 @@ func (w *SkillStoreWrapper) RefreshSkillBundle(
 }
 
 func (w *SkillStoreWrapper) CreateManagedSkill(
-	request *skillBundle.CreateManagedSkillStoreRequest,
+	request *skillBundle.CreateManagedSkillRequest,
 ) (*skillBundle.CreateManagedSkillStoreResponse, error) {
 	ctx := context.Background()
 
@@ -217,24 +233,24 @@ func (w *SkillStoreWrapper) GetManagedSkillDocument(
 }
 
 func (w *SkillStoreWrapper) AdoptSkill(
-	request *skillBundle.AdoptSkillStoreRequest,
-) (*skillBundle.AdoptSkillStoreResponse, error) {
+	request *skillBundle.AdoptSkillRequest,
+) (*skillBundle.AdoptSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.AdoptSkillStoreResponse, error) {
+		func() (*skillBundle.AdoptSkillResponse, error) {
 			return w.api.AdoptSkill(ctx, request)
 		},
 	)
 }
 
 func (w *SkillStoreWrapper) PinSkill(
-	request *skillBundle.PinSkillStoreRequest,
-) (*skillBundle.PinSkillStoreResponse, error) {
+	request *skillBundle.PinSkillRequest,
+) (*skillBundle.PinSkillResponse, error) {
 	ctx := context.Background()
 
 	return middleware.WithRecoveryResp(
-		func() (*skillBundle.PinSkillStoreResponse, error) {
+		func() (*skillBundle.PinSkillResponse, error) {
 			return w.api.PinSkill(ctx, request)
 		},
 	)

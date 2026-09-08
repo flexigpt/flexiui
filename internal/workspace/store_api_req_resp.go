@@ -39,12 +39,6 @@ type WorkspaceArtifactSettings struct {
 	RuntimeDisabled bool `json:"runtimeDisabled"`
 }
 
-type WorkspaceOccurrenceRef struct {
-	SourceID           source.SourceID             `json:"sourceID"`
-	Locator            basespec.Locator            `json:"locator"`
-	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
-}
-
 type WorkspaceAttachmentView struct {
 	SourceID          source.SourceID             `json:"sourceID"`
 	Revision          uint64                      `json:"revision"`
@@ -89,14 +83,6 @@ type WorkspaceArtifactView struct {
 	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
 	RuntimeDisabled    bool                        `json:"runtimeDisabled"`
 	Diagnostics        []diagnostic.Diagnostic     `json:"diagnostics,omitempty"`
-}
-
-type WorkspaceSuppressionView struct {
-	Workspace  WorkspaceRef           `json:"workspace"`
-	Binding    artifact.SourceBinding `json:"binding"`
-	Revision   uint64                 `json:"revision"`
-	CreatedAt  time.Time              `json:"createdAt"`
-	ModifiedAt time.Time              `json:"modifiedAt"`
 }
 
 type WorkspaceResourceView struct {
@@ -145,15 +131,6 @@ type WorkspaceCatalogView struct {
 	UnresolvedArtifacts     []WorkspaceArtifactView      `json:"unresolvedArtifacts"`
 	UnrecordedCount         int                          `json:"unrecordedCount"`
 	UnresolvedArtifactCount int                          `json:"unresolvedArtifactCount"`
-}
-
-type WorkspaceRefreshResult struct {
-	Workspace        WorkspaceRef            `json:"workspace"`
-	CatalogRevision  uint64                  `json:"catalogRevision"`
-	CreatedArtifacts []artifact.ArtifactRef  `json:"createdArtifacts"`
-	UpdatedArtifacts []artifact.ArtifactRef  `json:"updatedArtifacts"`
-	Diagnostics      []diagnostic.Diagnostic `json:"diagnostics,omitempty"`
-	Candidates       int                     `json:"candidates"`
 }
 
 type WorkspaceContextContribution struct {
@@ -258,39 +235,6 @@ type WorkspaceSkillLoadView struct {
 	Diagnostics     []diagnostic.Diagnostic `json:"diagnostics,omitempty"`
 }
 
-type CreateFilesystemWorkspaceRequestBody struct {
-	WorkspaceID      collection.CollectionID `json:"workspaceID"           required:"true"`
-	SourceID         source.SourceID         `json:"sourceID"              required:"true"`
-	SourceStorageKey basespec.StorageKey     `json:"sourceStorageKey"      required:"true"`
-	DisplayName      string                  `json:"displayName"           required:"true"`
-	Description      string                  `json:"description,omitempty"`
-	RootPath         string                  `json:"rootPath"              required:"true"`
-	Discovery        WorkspaceDiscovery      `json:"discovery"`
-}
-
-type CreateFilesystemWorkspaceRequest struct {
-	Body *CreateFilesystemWorkspaceRequestBody
-}
-
-type CreateFilesystemWorkspaceResponse struct {
-	Body *WorkspaceView
-}
-
-type CreateEmptyWorkspaceRequestBody struct {
-	WorkspaceID collection.CollectionID `json:"workspaceID"           required:"true"`
-	DisplayName string                  `json:"displayName"           required:"true"`
-	Description string                  `json:"description,omitempty"`
-	Discovery   WorkspaceDiscovery      `json:"discovery"`
-}
-
-type CreateEmptyWorkspaceRequest struct {
-	Body *CreateEmptyWorkspaceRequestBody
-}
-
-type CreateEmptyWorkspaceResponse struct {
-	Body *WorkspaceView
-}
-
 type GetWorkspaceRequest struct {
 	Workspace WorkspaceRef `json:"workspace" required:"true"`
 }
@@ -307,121 +251,6 @@ type ListWorkspacesResponseBody struct {
 
 type ListWorkspacesResponse struct {
 	Body *ListWorkspacesResponseBody
-}
-
-type UpdateWorkspaceRequestBody struct {
-	ExpectedRevision uint64             `json:"expectedRevision"      required:"true"`
-	DisplayName      string             `json:"displayName"           required:"true"`
-	Description      string             `json:"description,omitempty"`
-	Enabled          bool               `json:"enabled"               required:"true"`
-	Discovery        WorkspaceDiscovery `json:"discovery"`
-}
-
-type UpdateWorkspaceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *UpdateWorkspaceRequestBody
-}
-
-type UpdateWorkspaceResponse struct {
-	Body *WorkspaceView
-}
-
-type SetWorkspacePrimarySourceRequestBody struct {
-	ExpectedCollectionRevision         uint64          `json:"expectedCollectionRevision"                   required:"true"`
-	PreviousSourceID                   source.SourceID `json:"previousSourceID,omitempty"`
-	ExpectedPreviousAttachmentRevision uint64          `json:"expectedPreviousAttachmentRevision,omitempty"`
-	SourceID                           source.SourceID `json:"sourceID,omitempty"`
-	Clear                              bool            `json:"clear,omitempty"`
-}
-
-type SetWorkspacePrimarySourceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *SetWorkspacePrimarySourceRequestBody
-}
-
-type SetWorkspacePrimarySourceResponse struct {
-	Body *WorkspaceView
-}
-
-type RetireWorkspaceRequest struct {
-	Workspace        WorkspaceRef `json:"workspace"        required:"true"`
-	ExpectedRevision uint64       `json:"expectedRevision" required:"true"`
-}
-
-type RetireWorkspaceResponseBody struct {
-	Workspace WorkspaceRef `json:"workspace"`
-	Revision  uint64       `json:"revision"`
-}
-
-type RetireWorkspaceResponse struct {
-	Body *RetireWorkspaceResponseBody
-}
-
-type PurgeWorkspaceRequest struct {
-	Workspace        WorkspaceRef `json:"workspace"        required:"true"`
-	ExpectedRevision uint64       `json:"expectedRevision" required:"true"`
-}
-
-type PurgeWorkspaceResponseBody struct {
-	Workspace WorkspaceRef `json:"workspace"`
-}
-
-type PurgeWorkspaceResponse struct {
-	Body *PurgeWorkspaceResponseBody
-}
-
-type AttachWorkspaceSourceRequestBody struct {
-	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision" required:"true"`
-	SourceID                   source.SourceID             `json:"sourceID"                   required:"true"`
-	Role                       collection.AttachmentRole   `json:"role"                       required:"true"`
-	Enabled                    bool                        `json:"enabled"                    required:"true"`
-	Settings                   WorkspaceAttachmentSettings `json:"settings"`
-}
-
-type AttachWorkspaceSourceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *AttachWorkspaceSourceRequestBody
-}
-
-type AttachWorkspaceSourceResponse struct {
-	Body *WorkspaceView
-}
-
-type UpdateWorkspaceAttachmentRequestBody struct {
-	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision" required:"true"`
-	ExpectedAttachmentRevision uint64                      `json:"expectedAttachmentRevision" required:"true"`
-	Role                       collection.AttachmentRole   `json:"role"                       required:"true"`
-	Enabled                    bool                        `json:"enabled"                    required:"true"`
-	Settings                   WorkspaceAttachmentSettings `json:"settings"`
-}
-
-type UpdateWorkspaceAttachmentRequest struct {
-	Workspace WorkspaceRef    `json:"workspace" required:"true"`
-	SourceID  source.SourceID `json:"sourceID"  required:"true"`
-	Body      *UpdateWorkspaceAttachmentRequestBody
-}
-
-type UpdateWorkspaceAttachmentResponse struct {
-	Body *WorkspaceView
-}
-
-type DetachWorkspaceSourceRequest struct {
-	Workspace                  WorkspaceRef    `json:"workspace"                  required:"true"`
-	SourceID                   source.SourceID `json:"sourceID"                   required:"true"`
-	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision" required:"true"`
-	ExpectedAttachmentRevision uint64          `json:"expectedAttachmentRevision" required:"true"`
-}
-
-type DetachWorkspaceSourceResponse struct {
-	Body *WorkspaceView
-}
-
-type RefreshWorkspaceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-}
-
-type RefreshWorkspaceResponse struct {
-	Body *WorkspaceRefreshResult
 }
 
 type GetWorkspaceCatalogRequest struct {
@@ -451,68 +280,6 @@ type ListWorkspaceArtifactsResponseBody struct {
 
 type ListWorkspaceArtifactsResponse struct {
 	Body *ListWorkspaceArtifactsResponseBody
-}
-
-type AdoptWorkspaceOccurrenceRequestBody struct {
-	ExpectedCatalogRevision uint64                    `json:"expectedCatalogRevision" required:"true"`
-	Occurrence              WorkspaceOccurrenceRef    `json:"occurrence"              required:"true"`
-	ArtifactID              artifact.ArtifactID       `json:"artifactID"              required:"true"`
-	Name                    string                    `json:"name,omitempty"`
-	Enabled                 bool                      `json:"enabled"                 required:"true"`
-	Settings                WorkspaceArtifactSettings `json:"settings"`
-}
-
-type AdoptWorkspaceOccurrenceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *AdoptWorkspaceOccurrenceRequestBody
-}
-
-type AdoptWorkspaceOccurrenceResponse struct {
-	Body *WorkspaceArtifactView
-}
-
-type PinWorkspaceArtifactRequestBody struct {
-	ExpectedCollectionRevision uint64                    `json:"expectedCollectionRevision" required:"true"`
-	Binding                    artifact.SourceBinding    `json:"binding"                    required:"true"`
-	ArtifactID                 artifact.ArtifactID       `json:"artifactID"                 required:"true"`
-	Name                       string                    `json:"name"                       required:"true"`
-	Enabled                    bool                      `json:"enabled"                    required:"true"`
-	Settings                   WorkspaceArtifactSettings `json:"settings"`
-}
-
-type PinWorkspaceArtifactRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *PinWorkspaceArtifactRequestBody
-}
-
-type PinWorkspaceArtifactResponse struct {
-	Body *WorkspaceArtifactView
-}
-
-type ListWorkspaceSuppressionsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-}
-
-type ListWorkspaceSuppressionsResponseBody struct {
-	Suppressions []WorkspaceSuppressionView `json:"suppressions"`
-}
-
-type ListWorkspaceSuppressionsResponse struct {
-	Body *ListWorkspaceSuppressionsResponseBody
-}
-
-type SuppressWorkspaceBindingRequestBody struct {
-	ExpectedCollectionRevision uint64                 `json:"expectedCollectionRevision" required:"true"`
-	Binding                    artifact.SourceBinding `json:"binding"                    required:"true"`
-}
-
-type SuppressWorkspaceBindingRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
-	Body      *SuppressWorkspaceBindingRequestBody
-}
-
-type SuppressWorkspaceBindingResponse struct {
-	Body *WorkspaceSuppressionView
 }
 
 type ListWorkspaceContextsRequest struct {
@@ -576,65 +343,6 @@ type LoadWorkspaceSkillsRequest struct {
 
 type LoadWorkspaceSkillsResponse struct {
 	Body *WorkspaceSkillLoadView
-}
-
-type SetWorkspaceArtifactEnabledRequestBody struct {
-	ExpectedRevision uint64 `json:"expectedRevision" required:"true"`
-	Enabled          bool   `json:"enabled"          required:"true"`
-}
-
-type SetWorkspaceArtifactEnabledRequest struct {
-	Workspace WorkspaceRef         `json:"workspace" required:"true"`
-	Artifact  artifact.ArtifactRef `json:"artifact"  required:"true"`
-	Body      *SetWorkspaceArtifactEnabledRequestBody
-}
-
-type SetWorkspaceArtifactEnabledResponse struct {
-	Body *WorkspaceArtifactView
-}
-
-type UnadoptWorkspaceArtifactRequest struct {
-	Workspace        WorkspaceRef         `json:"workspace"        required:"true"`
-	Artifact         artifact.ArtifactRef `json:"artifact"         required:"true"`
-	ExpectedRevision uint64               `json:"expectedRevision" required:"true"`
-	Suppress         bool                 `json:"suppress"`
-}
-
-type UnadoptWorkspaceArtifactResponseBody struct {
-	Artifact artifact.ArtifactRef `json:"artifact"`
-}
-
-type UnadoptWorkspaceArtifactResponse struct {
-	Body *UnadoptWorkspaceArtifactResponseBody
-}
-
-type PurgeWorkspaceArtifactRequest struct {
-	Workspace        WorkspaceRef         `json:"workspace"        required:"true"`
-	Artifact         artifact.ArtifactRef `json:"artifact"         required:"true"`
-	ExpectedRevision uint64               `json:"expectedRevision" required:"true"`
-}
-
-type PurgeWorkspaceArtifactResponseBody struct {
-	Artifact artifact.ArtifactRef `json:"artifact"`
-}
-
-type PurgeWorkspaceArtifactResponse struct {
-	Body *PurgeWorkspaceArtifactResponseBody
-}
-
-type UnsuppressWorkspaceBindingRequest struct {
-	Workspace        WorkspaceRef           `json:"workspace"        required:"true"`
-	Binding          artifact.SourceBinding `json:"binding"          required:"true"`
-	ExpectedRevision uint64                 `json:"expectedRevision" required:"true"`
-}
-
-type UnsuppressWorkspaceBindingResponseBody struct {
-	Workspace WorkspaceRef           `json:"workspace"`
-	Binding   artifact.SourceBinding `json:"binding"`
-}
-
-type UnsuppressWorkspaceBindingResponse struct {
-	Body *UnsuppressWorkspaceBindingResponseBody
 }
 
 type SetWorkspaceArtifactRuntimeDisabledRequestBody struct {

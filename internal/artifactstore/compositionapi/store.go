@@ -35,8 +35,6 @@ type Store struct {
 	closeErr   error
 }
 
-var _ installerapi.API = (*Store)(nil)
-
 type protectionAPI struct {
 	policy root.RootPolicy
 }

@@ -11,24 +11,36 @@ import (
 	skillStore "github.com/flexigpt/flexigpt-app/internal/skill/store"
 )
 
-// StoreLoader is the Skill Bundle feature adapter registered with the generic
-// Artifact Skill router. It owns skill.bundle projection only.
-type StoreLoader struct {
-	api *API
+type RuntimeSkillSource interface {
+	ResolveSkill(
+		ctx context.Context,
+		ref artifact.ArtifactRef,
+	) (ResolvedSkill, error)
+
+	ListResolvedSkills(
+		ctx context.Context,
+		ref collection.CollectionRef,
+	) ([]ResolvedSkill, error)
 }
 
-func NewStoreLoader(api *API) (*StoreLoader, error) {
-	if api == nil {
-		return nil, errors.New("skill bundle store loader API is nil")
+type StoreLoader struct {
+	source RuntimeSkillSource
+}
+
+func NewStoreLoader(
+	source RuntimeSkillSource,
+) (*StoreLoader, error) {
+	if source == nil {
+		return nil, errors.New("skill bundle runtime source is nil")
 	}
-	return &StoreLoader{api: api}, nil
+	return &StoreLoader{source: source}, nil
 }
 
 func (r *StoreLoader) ResolveArtifactSkill(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
 ) (skillStore.ResolvedArtifactSkill, error) {
-	value, err := r.api.ResolveSkill(ctx, ref)
+	value, err := r.source.ResolveSkill(ctx, ref)
 	if err != nil {
 		return skillStore.ResolvedArtifactSkill{}, err
 	}
@@ -39,7 +51,7 @@ func (r *StoreLoader) ListCollectionSkills(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) ([]skillStore.ResolvedArtifactSkill, error) {
-	values, err := r.api.ListResolvedSkills(ctx, ref)
+	values, err := r.source.ListResolvedSkills(ctx, ref)
 	if err != nil {
 		return nil, err
 	}

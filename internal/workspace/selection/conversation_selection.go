@@ -105,10 +105,12 @@ type ConversationResolution struct {
 }
 
 type ConversationResolver struct {
-	workspaceAPI *workspace.API
+	workspaceAPI workspace.ConversationSource
 }
 
-func NewConversationResolver(workspaceAPI *workspace.API) (*ConversationResolver, error) {
+func NewConversationResolver(
+	workspaceAPI workspace.ConversationSource,
+) (*ConversationResolver, error) {
 	if workspaceAPI == nil {
 		return nil, errors.New("nil workspace API provider")
 	}

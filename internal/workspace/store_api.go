@@ -12,131 +12,69 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/contextadapter"
-	"github.com/flexigpt/flexigpt-app/internal/workspace/provision"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/spec"
 )
 
-// API is the workspace aggregate boundary for HTTP, Wails, CLI, and other
-// application transports. It owns API-safe projections and never exposes raw
-// source configuration or artifact-store composition details.
-type API struct {
-	dependencies Dependencies
-	workspace    *components
-	provisioner  *provision.Service
+type StoreAPI struct {
+	sources     compositionapi.SourceAPI
+	collections compositionapi.CollectionAPI
+	artifacts   compositionapi.ArtifactAPI
+	catalogs    compositionapi.CatalogAPI
+	resources   compositionapi.ResourceAPI
+
+	workspace *components
 }
 
-func New(
-	dependencies Dependencies,
+func NewStoreAPI(
+	sources compositionapi.SourceAPI,
+	collections compositionapi.CollectionAPI,
+	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
+	resources compositionapi.ResourceAPI,
 	config Config,
-) (*API, error) {
-	if err := dependencies.Validate(); err != nil {
-		return nil, err
+) (*StoreAPI, error) {
+	if sources == nil ||
+		collections == nil ||
+		artifacts == nil ||
+		catalogs == nil ||
+		resources == nil {
+		return nil, fmt.Errorf(
+			"%w: Workspace Store dependencies are incomplete",
+			spec.ErrInvalidWorkspace,
+		)
 	}
 	config = config.normalized()
 
-	workspaceComponents, err := newComponents(dependencies, config)
-	if err != nil {
-		return nil, err
-	}
-	provisioner, err := provision.NewService(
-		workspaceComponents.service,
-		dependencies.Sources,
+	workspaceComponents, err := newComponents(
+
+		sources,
+		collections,
+		artifacts,
+		catalogs,
+		resources,
+		config,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &API{
-		dependencies: dependencies,
-		workspace:    workspaceComponents,
-		provisioner:  provisioner,
+
+	return &StoreAPI{
+		sources:     sources,
+		collections: collections,
+		artifacts:   artifacts,
+		catalogs:    catalogs,
+		resources:   resources,
+		workspace:   workspaceComponents,
 	}, nil
 }
 
-// SkillAdapter returns the Workspace-owned Skill source adapter. Consumers may
-// list or load Workspace Skills, but lifecycle policy remains outside workspace.
-func (a *API) SkillAdapter() *workspaceadapter.Adapter {
-	return a.workspace.skillAdapter
-}
-
-func (a *API) CreateFilesystemWorkspace(
-	ctx context.Context,
-	request *CreateFilesystemWorkspaceRequest,
-) (*CreateFilesystemWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"filesystem Workspace creation",
-	); err != nil {
-		return nil, err
-	}
-
-	// Workspace is composed with one application-owned Root. Root selection
-	// is not a client-controlled part of Workspace creation.
-	rootID := a.workspace.workspaceRootID
-	value, err := a.provisioner.CreateFilesystem(ctx, provision.Request{
-		DisplayName:      request.Body.DisplayName,
-		Description:      request.Body.Description,
-		RootPath:         request.Body.RootPath,
-		CollectionID:     request.Body.WorkspaceID,
-		SourceID:         request.Body.SourceID,
-		SourceStorageKey: request.Body.SourceStorageKey,
-		RootID:           rootID,
-		Discovery:        discoveryPreferencesOf(request.Body.Discovery),
-	})
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &CreateFilesystemWorkspaceResponse{Body: &view}, nil
-}
-
-func (a *API) CreateEmptyWorkspace(
-	ctx context.Context,
-	request *CreateEmptyWorkspaceRequest,
-) (*CreateEmptyWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"empty Workspace creation",
-	); err != nil {
-		return nil, err
-	}
-
-	// Keep empty and filesystem Workspaces in the same configured namespace,
-	// independently of any Root currently selected by a client.
-	rootID := a.workspace.workspaceRootID
-	value, err := a.workspace.service.CreateEmpty(
-		ctx,
-		spec.EmptyWorkspaceRequest{
-			CollectionID: request.Body.WorkspaceID,
-			RootID:       rootID,
-			DisplayName:  request.Body.DisplayName,
-			Description:  request.Body.Description,
-			Discovery:    discoveryPreferencesOf(request.Body.Discovery),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &CreateEmptyWorkspaceResponse{Body: &view}, nil
-}
-
-func (a *API) GetWorkspace(
+func (a *StoreAPI) GetWorkspace(
 	ctx context.Context,
 	request *GetWorkspaceRequest,
 ) (*GetWorkspaceResponse, error) {
@@ -159,7 +97,7 @@ func (a *API) GetWorkspace(
 	return &GetWorkspaceResponse{Body: &view}, nil
 }
 
-func (a *API) ListWorkspaces(
+func (a *StoreAPI) ListWorkspaces(
 	ctx context.Context,
 	request *ListWorkspacesRequest,
 ) (*ListWorkspacesResponse, error) {
@@ -191,256 +129,7 @@ func (a *API) ListWorkspaces(
 	}, nil
 }
 
-func (a *API) UpdateWorkspace(
-	ctx context.Context,
-	request *UpdateWorkspaceRequest,
-) (*UpdateWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace update",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.Update(ctx, spec.UpdateRequest{
-		Workspace:        request.Workspace,
-		ExpectedRevision: request.Body.ExpectedRevision,
-		DisplayName:      request.Body.DisplayName,
-		Description:      request.Body.Description,
-		Enabled:          request.Body.Enabled,
-		Discovery:        discoveryPreferencesOf(request.Body.Discovery),
-	})
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &UpdateWorkspaceResponse{Body: &view}, nil
-}
-
-func (a *API) SetWorkspacePrimarySource(
-	ctx context.Context,
-	request *SetWorkspacePrimarySourceRequest,
-) (*SetWorkspacePrimarySourceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace primary Source update",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.SetPrimary(
-		ctx,
-		spec.SetPrimaryRequest{
-			Workspace:                  request.Workspace,
-			ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
-			PreviousSourceID:           request.Body.PreviousSourceID,
-			PreviousAttachmentRevision: request.Body.ExpectedPreviousAttachmentRevision,
-			SourceID:                   request.Body.SourceID,
-			Clear:                      request.Body.Clear,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &SetWorkspacePrimarySourceResponse{Body: &view}, nil
-}
-
-func (a *API) RetireWorkspace(
-	ctx context.Context,
-	request *RetireWorkspaceRequest,
-) (*RetireWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace retirement",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.Retire(
-		ctx,
-		request.Workspace,
-		request.ExpectedRevision,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &RetireWorkspaceResponse{
-		Body: &RetireWorkspaceResponseBody{
-			Workspace: value.Ref(),
-			Revision:  value.Revision,
-		},
-	}, nil
-}
-
-func (a *API) PurgeWorkspace(
-	ctx context.Context,
-	request *PurgeWorkspaceRequest,
-) (*PurgeWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace purge",
-	); err != nil {
-		return nil, err
-	}
-	if err := a.workspace.service.Purge(
-		ctx,
-		request.Workspace,
-		request.ExpectedRevision,
-	); err != nil {
-		return nil, err
-	}
-	return &PurgeWorkspaceResponse{
-		Body: &PurgeWorkspaceResponseBody{
-			Workspace: request.Workspace,
-		},
-	}, nil
-}
-
-func (a *API) AttachWorkspaceSource(
-	ctx context.Context,
-	request *AttachWorkspaceSourceRequest,
-) (*AttachWorkspaceSourceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Source attachment",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.Attach(ctx, spec.AttachRequest{
-		Workspace:                  request.Workspace,
-		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
-		SourceID:                   request.Body.SourceID,
-		Role:                       request.Body.Role,
-		Enabled:                    request.Body.Enabled,
-		Data:                       attachmentDataOf(request.Body.Settings),
-	})
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &AttachWorkspaceSourceResponse{Body: &view}, nil
-}
-
-func (a *API) UpdateWorkspaceAttachment(
-	ctx context.Context,
-	request *UpdateWorkspaceAttachmentRequest,
-) (*UpdateWorkspaceAttachmentResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace attachment update",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.UpdateAttachment(
-		ctx,
-		spec.UpdateAttachmentRequest{
-			Workspace:                  request.Workspace,
-			SourceID:                   request.SourceID,
-			ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
-			ExpectedAttachmentRevision: request.Body.ExpectedAttachmentRevision,
-			Role:                       request.Body.Role,
-			Enabled:                    request.Body.Enabled,
-			Data:                       attachmentDataOf(request.Body.Settings),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &UpdateWorkspaceAttachmentResponse{Body: &view}, nil
-}
-
-func (a *API) DetachWorkspaceSource(
-	ctx context.Context,
-	request *DetachWorkspaceSourceRequest,
-) (*DetachWorkspaceSourceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace Source detach",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.service.Detach(
-		ctx,
-		request.Workspace,
-		request.SourceID,
-		request.ExpectedCollectionRevision,
-		request.ExpectedAttachmentRevision,
-	)
-	if err != nil {
-		return nil, err
-	}
-	view, err := a.workspaceViewForAPI(ctx, value)
-	if err != nil {
-		return nil, err
-	}
-	return &DetachWorkspaceSourceResponse{Body: &view}, nil
-}
-
-func (a *API) RefreshWorkspace(
-	ctx context.Context,
-	request *RefreshWorkspaceRequest,
-) (*RefreshWorkspaceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace refresh",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
-		return nil, err
-	}
-	value, err := a.dependencies.Catalogs.RefreshCollection(
-		ctx,
-		request.Workspace,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := WorkspaceRefreshResult{
-		Workspace:       request.Workspace,
-		CatalogRevision: value.Catalog.Revision,
-		CreatedArtifacts: append(
-			make([]artifact.ArtifactRef, 0, len(value.CreatedArtifacts)),
-			artifactRefsOf(request.Workspace.RootID, value.CreatedArtifacts)...,
-		),
-		UpdatedArtifacts: append(
-			make([]artifact.ArtifactRef, 0, len(value.UpdatedArtifacts)),
-			artifactRefsOf(request.Workspace.RootID, value.UpdatedArtifacts)...,
-		),
-		Diagnostics: diagnostic.Clone(value.Diagnostics),
-		Candidates:  value.Candidates,
-	}
-	return &RefreshWorkspaceResponse{Body: &output}, nil
-}
-
-func (a *API) GetWorkspaceCatalog(
+func (a *StoreAPI) GetWorkspaceCatalog(
 	ctx context.Context,
 	request *GetWorkspaceCatalogRequest,
 ) (*GetWorkspaceCatalogResponse, error) {
@@ -463,7 +152,7 @@ func (a *API) GetWorkspaceCatalog(
 	return &GetWorkspaceCatalogResponse{Body: &output}, nil
 }
 
-func (a *API) GetWorkspaceArtifact(
+func (a *StoreAPI) GetWorkspaceArtifact(
 	ctx context.Context,
 	request *GetWorkspaceArtifactRequest,
 ) (*GetWorkspaceArtifactResponse, error) {
@@ -487,7 +176,7 @@ func (a *API) GetWorkspaceArtifact(
 	return &GetWorkspaceArtifactResponse{Body: &output}, nil
 }
 
-func (a *API) ListWorkspaceArtifacts(
+func (a *StoreAPI) ListWorkspaceArtifacts(
 	ctx context.Context,
 	request *ListWorkspaceArtifactsRequest,
 ) (*ListWorkspaceArtifactsResponse, error) {
@@ -502,7 +191,7 @@ func (a *API) ListWorkspaceArtifacts(
 	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
 		return nil, err
 	}
-	values, err := a.dependencies.Artifacts.ListByCollection(
+	values, err := a.artifacts.ListByCollection(
 		ctx,
 		request.Workspace,
 	)
@@ -524,457 +213,51 @@ func (a *API) ListWorkspaceArtifacts(
 	}, nil
 }
 
-func (a *API) AdoptWorkspaceOccurrence(
-	ctx context.Context,
-	request *AdoptWorkspaceOccurrenceRequest,
-) (*AdoptWorkspaceOccurrenceResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace occurrence adoption",
-	); err != nil {
-		return nil, err
-	}
-
-	key := catalog.OccurrenceKey{
-		CollectionID:       request.Workspace.CollectionID,
-		SourceID:           request.Body.Occurrence.SourceID,
-		Locator:            request.Body.Occurrence.Locator,
-		SubresourceLocator: request.Body.Occurrence.SubresourceLocator,
-	}
-	if err := key.Validate(); err != nil {
-		return nil, err
-	}
-	occurrence, err := a.workspaceOccurrence(ctx, request.Workspace, key)
-	if err != nil {
-		return nil, err
-	}
-	if err := a.requireWorkspaceArtifactKind(occurrence.Kind); err != nil {
-		return nil, err
-	}
-
-	data, err := workspaceArtifactDataOf(request.Body.Settings)
-	if err != nil {
-		return nil, err
-	}
-	value, err := a.dependencies.Artifacts.Adopt(ctx, catalog.AdoptRequest{
-		ArtifactID:              request.Body.ArtifactID,
-		Collection:              request.Workspace,
-		Occurrence:              key,
-		ExpectedCatalogRevision: request.Body.ExpectedCatalogRevision,
-		Name:                    request.Body.Name,
-		Enabled:                 request.Body.Enabled,
-		Data:                    data,
-	})
-	if err != nil {
-		return nil, err
-	}
-	output := workspaceArtifactViewOf(value)
-	return &AdoptWorkspaceOccurrenceResponse{Body: &output}, nil
+func (a *StoreAPI) ContextRuntime() WorkspaceContextRuntime {
+	return a.workspace.contextAdapter
 }
 
-func (a *API) PinWorkspaceArtifact(
+func (a *StoreAPI) SkillAdapter() *workspaceadapter.Adapter {
+	return a.workspace.skillAdapter
+}
+
+func (a *StoreAPI) SetArtifactRuntimeDisabled(
 	ctx context.Context,
-	request *PinWorkspaceArtifactRequest,
-) (*PinWorkspaceArtifactResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Artifact pin",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
-		return nil, err
-	}
-	if err := a.requireWorkspaceArtifactKind(
-		request.Body.Binding.ExpectedKind,
-	); err != nil {
-		return nil, err
-	}
-	data, err := workspaceArtifactDataOf(request.Body.Settings)
+	workspace WorkspaceRef,
+	ref artifact.ArtifactRef,
+	expectedRevision uint64,
+	runtimeDisabled bool,
+) (WorkspaceArtifactView, error) {
+	current, err := a.workspaceArtifact(ctx, workspace, ref)
 	if err != nil {
-		return nil, err
+		return WorkspaceArtifactView{}, err
 	}
-	value, err := a.dependencies.Artifacts.Pin(ctx, catalog.PinRequest{
-		ArtifactID:                 request.Body.ArtifactID,
-		Collection:                 request.Workspace,
-		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
-		Binding:                    request.Body.Binding,
-		Name:                       request.Body.Name,
-		Enabled:                    request.Body.Enabled,
-		Data:                       data,
-	})
-	if err != nil {
-		return nil, err
-	}
-	output := workspaceArtifactViewOf(value)
-	return &PinWorkspaceArtifactResponse{Body: &output}, nil
-}
 
-func (a *API) ListWorkspaceSuppressions(
-	ctx context.Context,
-	request *ListWorkspaceSuppressionsRequest,
-) (*ListWorkspaceSuppressionsResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace suppression list",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
-		return nil, err
-	}
-	values, err := a.dependencies.Artifacts.ListSuppressions(
-		ctx,
-		request.Workspace,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := make([]WorkspaceSuppressionView, 0, len(values))
-	for _, value := range values {
-		output = append(output, workspaceSuppressionViewOf(value))
-	}
-	return &ListWorkspaceSuppressionsResponse{
-		Body: &ListWorkspaceSuppressionsResponseBody{Suppressions: output},
-	}, nil
-}
-
-func (a *API) SuppressWorkspaceBinding(
-	ctx context.Context,
-	request *SuppressWorkspaceBindingRequest,
-) (*SuppressWorkspaceBindingResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace suppression",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
-		return nil, err
-	}
-	if err := a.requireWorkspaceArtifactKind(
-		request.Body.Binding.ExpectedKind,
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.dependencies.Artifacts.Suppress(ctx, catalog.SuppressRequest{
-		Collection:                 request.Workspace,
-		ExpectedCollectionRevision: request.Body.ExpectedCollectionRevision,
-		Binding:                    request.Body.Binding,
-	})
-	if err != nil {
-		return nil, err
-	}
-	output := workspaceSuppressionViewOf(value)
-	return &SuppressWorkspaceBindingResponse{Body: &output}, nil
-}
-
-func (a *API) UnsuppressWorkspaceBinding(
-	ctx context.Context,
-	request *UnsuppressWorkspaceBindingRequest,
-) (*UnsuppressWorkspaceBindingResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace unsuppression",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspace.service.Get(ctx, request.Workspace); err != nil {
-		return nil, err
-	}
-	if err := a.dependencies.Artifacts.Unsuppress(
-		ctx,
-		request.Workspace,
-		request.Binding,
-		request.ExpectedRevision,
-	); err != nil {
-		return nil, err
-	}
-	return &UnsuppressWorkspaceBindingResponse{
-		Body: &UnsuppressWorkspaceBindingResponseBody{
-			Workspace: request.Workspace,
-			Binding:   request.Binding,
-		},
-	}, nil
-}
-
-func (a *API) ListWorkspaceContexts(
-	ctx context.Context,
-	request *ListWorkspaceContextsRequest,
-) (*ListWorkspaceContextsResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace Context list",
-	); err != nil {
-		return nil, err
-	}
-	values, err := a.workspace.contextAdapter.List(ctx, request.Workspace)
-	if err != nil {
-		return nil, err
-	}
-	output := make([]WorkspaceContextView, 0, len(values))
-	for _, value := range values {
-		output = append(output, contextViewOf(value))
-	}
-	return &ListWorkspaceContextsResponse{
-		Body: &ListWorkspaceContextsResponseBody{Contexts: output},
-	}, nil
-}
-
-func (a *API) LoadWorkspaceContexts(
-	ctx context.Context,
-	request *LoadWorkspaceContextsRequest,
-) (*LoadWorkspaceContextsResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Context load",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.contextAdapter.Load(
-		ctx,
-		request.Workspace,
-		request.Body.Artifacts,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := WorkspaceContextInspectionView{
-		Workspace:       value.Workspace,
-		CatalogRevision: value.CatalogRevision,
-		Diagnostics:     diagnostic.Clone(value.Diagnostics),
-		Contributions: make(
-			[]WorkspaceContextContribution,
-			0,
-			len(value.Contributions),
-		),
-	}
-	for _, contribution := range value.Contributions {
-		output.Contributions = append(
-			output.Contributions,
-			contextContributionViewOf(contribution),
-		)
-	}
-	return &LoadWorkspaceContextsResponse{Body: &output}, nil
-}
-
-func (a *API) ComposeWorkspaceContext(
-	ctx context.Context,
-	request *ComposeWorkspaceContextRequest,
-) (*ComposeWorkspaceContextResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Context composition",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.contextAdapter.Compose(
-		ctx,
-		request.Workspace,
-		request.Body.Artifacts,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := contextLoadPlanViewOf(value)
-	return &ComposeWorkspaceContextResponse{Body: &output}, nil
-}
-
-func (a *API) ListWorkspaceSkills(
-	ctx context.Context,
-	request *ListWorkspaceSkillsRequest,
-) (*ListWorkspaceSkillsResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace Skill list",
-	); err != nil {
-		return nil, err
-	}
-	values, err := a.workspace.skillAdapter.List(ctx, request.Workspace)
-	if err != nil {
-		return nil, err
-	}
-	output := make([]WorkspaceSkillView, 0, len(values))
-	for _, value := range values {
-		output = append(output, workspaceSkillViewOf(value))
-	}
-	return &ListWorkspaceSkillsResponse{
-		Body: &ListWorkspaceSkillsResponseBody{Skills: output},
-	}, nil
-}
-
-func (a *API) LoadWorkspaceSkills(
-	ctx context.Context,
-	request *LoadWorkspaceSkillsRequest,
-) (*LoadWorkspaceSkillsResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Skill load",
-	); err != nil {
-		return nil, err
-	}
-	value, err := a.workspace.skillAdapter.Load(
-		ctx,
-		request.Workspace,
-		request.Body.Artifacts,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := workspaceSkillLoadViewOf(value)
-	return &LoadWorkspaceSkillsResponse{Body: &output}, nil
-}
-
-func (a *API) SetWorkspaceArtifactEnabled(
-	ctx context.Context,
-	request *SetWorkspaceArtifactEnabledRequest,
-) (*SetWorkspaceArtifactEnabledResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Artifact enabled update",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact); err != nil {
-		return nil, err
-	}
-	value, err := a.dependencies.Artifacts.SetEnabled(
-		ctx,
-		request.Artifact,
-		request.Body.ExpectedRevision,
-		request.Body.Enabled,
-	)
-	if err != nil {
-		return nil, err
-	}
-	output := workspaceArtifactViewOf(value)
-	return &SetWorkspaceArtifactEnabledResponse{Body: &output}, nil
-}
-
-func (a *API) UnadoptWorkspaceArtifact(
-	ctx context.Context,
-	request *UnadoptWorkspaceArtifactRequest,
-) (*UnadoptWorkspaceArtifactResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace Artifact unadopt",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact); err != nil {
-		return nil, err
-	}
-	if err := a.dependencies.Artifacts.Unadopt(
-		ctx,
-		request.Artifact,
-		request.ExpectedRevision,
-		request.Suppress,
-	); err != nil {
-		return nil, err
-	}
-	return &UnadoptWorkspaceArtifactResponse{
-		Body: &UnadoptWorkspaceArtifactResponseBody{
-			Artifact: request.Artifact,
-		},
-	}, nil
-}
-
-func (a *API) PurgeWorkspaceArtifact(
-	ctx context.Context,
-	request *PurgeWorkspaceArtifactRequest,
-) (*PurgeWorkspaceArtifactResponse, error) {
-	if err := requireRequestBody(
-		request,
-		false,
-		false,
-		"Workspace Artifact purge",
-	); err != nil {
-		return nil, err
-	}
-	if _, err := a.workspaceArtifact(
-		ctx,
-		request.Workspace,
-		request.Artifact,
-	); err != nil {
-		return nil, err
-	}
-	if err := a.dependencies.Artifacts.Purge(
-		ctx,
-		request.Artifact,
-		request.ExpectedRevision,
-	); err != nil {
-		return nil, err
-	}
-	return &PurgeWorkspaceArtifactResponse{
-		Body: &PurgeWorkspaceArtifactResponseBody{
-			Artifact: request.Artifact,
-		},
-	}, nil
-}
-
-func (a *API) SetWorkspaceArtifactRuntimeDisabled(
-	ctx context.Context,
-	request *SetWorkspaceArtifactRuntimeDisabledRequest,
-) (*SetWorkspaceArtifactRuntimeDisabledResponse, error) {
-	if err := requireRequestBody(
-		request,
-		request != nil && request.Body != nil,
-		true,
-		"Workspace Artifact runtime settings update",
-	); err != nil {
-		return nil, err
-	}
-	current, err := a.workspaceArtifact(ctx, request.Workspace, request.Artifact)
-	if err != nil {
-		return nil, err
-	}
 	artifactData, err := artifactadapter.DecodeArtifactData(current.Data)
 	if err != nil {
-		return nil, err
+		return WorkspaceArtifactView{}, err
 	}
-	artifactData.RuntimeDisabled = request.Body.RuntimeDisabled
+	artifactData.RuntimeDisabled = runtimeDisabled
+
 	data, err := artifactadapter.EncodeArtifactData(artifactData)
 	if err != nil {
-		return nil, err
+		return WorkspaceArtifactView{}, err
 	}
-	value, err := a.dependencies.Artifacts.UpdateData(
+
+	value, err := a.artifacts.UpdateData(
 		ctx,
-		request.Artifact,
-		request.Body.ExpectedRevision,
+		ref,
+		expectedRevision,
 		data,
 	)
 	if err != nil {
-		return nil, err
+		return WorkspaceArtifactView{}, err
 	}
-	output := workspaceArtifactViewOf(value)
-	return &SetWorkspaceArtifactRuntimeDisabledResponse{Body: &output}, nil
+
+	return workspaceArtifactViewOf(value), nil
 }
 
-func (a *API) workspaceArtifact(
+func (a *StoreAPI) workspaceArtifact(
 	ctx context.Context,
 	workspace collection.CollectionRef,
 	ref artifact.ArtifactRef,
@@ -982,7 +265,7 @@ func (a *API) workspaceArtifact(
 	if _, err := a.workspace.service.Get(ctx, workspace); err != nil {
 		return artifact.Artifact{}, err
 	}
-	value, err := a.dependencies.Artifacts.Get(ctx, ref)
+	value, err := a.artifacts.Get(ctx, ref)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
@@ -1001,36 +284,7 @@ func (a *API) workspaceArtifact(
 	return value, nil
 }
 
-func (a *API) workspaceOccurrence(
-	ctx context.Context,
-	workspace collection.CollectionRef,
-	key catalog.OccurrenceKey,
-) (catalog.Occurrence, error) {
-	view, err := a.workspace.query.Catalog(ctx, workspace)
-	if err != nil {
-		return catalog.Occurrence{}, err
-	}
-	if !view.CatalogCurrent {
-		return catalog.Occurrence{}, fmt.Errorf(
-			"%w: Workspace catalog must be refreshed before an occurrence can be adopted",
-			basespec.ErrCatalogStale,
-		)
-	}
-	for _, occurrence := range view.Catalog.Occurrences {
-		if occurrence.Key == key {
-			return occurrence.Clone(), nil
-		}
-	}
-
-	return catalog.Occurrence{}, fmt.Errorf(
-		"%w: Workspace occurrence %q/%q is unavailable",
-		spec.ErrReferenceUnresolved,
-		key.SourceID,
-		key.Locator,
-	)
-}
-
-func (a *API) requireWorkspaceArtifactKind(
+func (a *StoreAPI) requireWorkspaceArtifactKind(
 	kind artifact.ArtifactKind,
 ) error {
 	if err := kind.Validate(); err != nil {
@@ -1046,21 +300,7 @@ func (a *API) requireWorkspaceArtifactKind(
 	return nil
 }
 
-func artifactRefsOf(
-	rootID root.RootID,
-	ids []artifact.ArtifactID,
-) []artifact.ArtifactRef {
-	output := make([]artifact.ArtifactRef, 0, len(ids))
-	for _, id := range ids {
-		output = append(output, artifact.ArtifactRef{
-			RootID:     rootID,
-			ArtifactID: id,
-		})
-	}
-	return output
-}
-
-func (a *API) workspaceViewForAPI(
+func (a *StoreAPI) workspaceViewForAPI(
 	ctx context.Context,
 	value spec.Workspace,
 ) (WorkspaceView, error) {
@@ -1074,7 +314,7 @@ func (a *API) workspaceViewForAPI(
 	return output, nil
 }
 
-func (a *API) workspaceCatalogViewForAPI(
+func (a *StoreAPI) workspaceCatalogViewForAPI(
 	ctx context.Context,
 	value spec.CatalogView,
 ) (WorkspaceCatalogView, error) {
@@ -1092,7 +332,7 @@ func (a *API) workspaceCatalogViewForAPI(
 	return output, nil
 }
 
-func (a *API) enrichWorkspaceSourcePresentation(
+func (a *StoreAPI) enrichWorkspaceSourcePresentation(
 	ctx context.Context,
 	output *WorkspaceView,
 	value spec.Workspace,
@@ -1118,14 +358,14 @@ func (a *API) enrichWorkspaceSourcePresentation(
 			)
 		}
 		sourceKind := source.SourceKind(attachment.SourceKind)
-		if !a.dependencies.Resources.SupportsLocalPath(sourceKind) {
+		if !a.resources.SupportsLocalPath(sourceKind) {
 			continue
 		}
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 
-		pathValue, err := a.dependencies.Resources.ResolveSourceLocalPath(
+		pathValue, err := a.resources.ResolveSourceLocalPath(
 			ctx,
 			value.Collection.RootID,
 			attachment.SourceID,
@@ -1157,45 +397,6 @@ func workspaceSourcePresentationDiagnostic(
 		Severity: diagnostic.SeverityWarning,
 		Code:     code,
 		Message:  message,
-	}
-}
-
-func discoveryPreferencesOf(value WorkspaceDiscovery) spec.DiscoveryPreferences {
-	output := spec.DiscoveryPreferences{
-		AdditionalLocators: append(
-			[]basespec.Locator(nil),
-			value.AdditionalLocators...,
-		),
-		IncludeReadme: value.IncludeReadme,
-	}
-	for _, root := range value.AdditionalRoots {
-		output.AdditionalRoots = append(output.AdditionalRoots, spec.DiscoveryRoot{
-			Root:            root.Root,
-			Recursive:       root.Recursive,
-			IncludePatterns: append([]string(nil), root.IncludePatterns...),
-		})
-	}
-	return output
-}
-
-func attachmentDataOf(value WorkspaceAttachmentSettings) spec.AttachmentData {
-	return spec.AttachmentData{
-		Recursive:     cloneBool(value.Recursive),
-		Authoritative: cloneBool(value.Authoritative),
-	}
-}
-
-func workspaceSuppressionViewOf(
-	value artifact.Suppression,
-) WorkspaceSuppressionView {
-	return WorkspaceSuppressionView{
-		Workspace: collection.CollectionRef{
-			RootID: value.RootID, CollectionID: value.CollectionID,
-		},
-		Binding:    value.Binding,
-		Revision:   value.Revision,
-		CreatedAt:  value.CreatedAt,
-		ModifiedAt: value.ModifiedAt,
 	}
 }
 
@@ -1532,14 +733,6 @@ func workspaceSkillViewOf(value workspaceadapter.WorkspaceSkill) WorkspaceSkillV
 		RuntimeDisabled:  value.RuntimeDisabled,
 		Diagnostics:      diagnostic.Clone(value.Diagnostics),
 	}
-}
-
-func workspaceArtifactDataOf(
-	value WorkspaceArtifactSettings,
-) (json.RawMessage, error) {
-	return artifactadapter.EncodeArtifactData(spec.ArtifactData{
-		RuntimeDisabled: value.RuntimeDisabled,
-	})
 }
 
 func workspaceArtifactViewOf(value artifact.Artifact) WorkspaceArtifactView {
