@@ -22,7 +22,7 @@ export function newArtifactStorageKey(): ArtifactStorageKey {
  */
 export type ArtifactKind = string;
 type ArtifactCollectionKind = string;
-export type ArtifactSourceKind = string;
+type ArtifactSourceKind = string;
 type ArtifactAttachmentRole = string;
 export type ArtifactLocator = string;
 export type ArtifactDigest = string;
@@ -66,15 +66,6 @@ export interface ArtifactAddress extends ArtifactRef {
 	kind: ArtifactKind;
 }
 
-export interface PurgeArtifactRootResult {
-	rootID: ArtifactRootID;
-}
-
-export interface PurgeArtifactSourceResult {
-	rootID: ArtifactRootID;
-	sourceID: ArtifactSourceID;
-}
-
 interface ArtifactDiagnosticLocation {
 	locator?: ArtifactLocator;
 	subresourceLocator?: ArtifactLocator;
@@ -87,17 +78,6 @@ export interface ArtifactDiagnostic {
 	code: string;
 	message: string;
 	location?: ArtifactDiagnosticLocation;
-}
-
-export interface ArtifactRoot {
-	id: ArtifactRootID;
-	storageKey: ArtifactStorageKey;
-	displayName: string;
-	description?: string;
-	revision: number;
-	createdAt: string;
-	modifiedAt: string;
-	retiredAt?: string;
 }
 
 export interface ArtifactCollection {
@@ -141,19 +121,6 @@ export interface ArtifactRecord {
 	modifiedAt: string;
 }
 
-export interface CreateArtifactRootBody {
-	id: ArtifactRootID;
-	storageKey: ArtifactStorageKey;
-	displayName: string;
-	description?: string;
-}
-
-export interface UpdateArtifactRootBody {
-	expectedRevision: number;
-	displayName: string;
-	description?: string;
-}
-
 export interface ArtifactSourceSummary {
 	id: ArtifactSourceID;
 	rootID: ArtifactRootID;
@@ -166,27 +133,6 @@ export interface ArtifactSourceSummary {
 	createdAt: string;
 	modifiedAt: string;
 	retiredAt?: string;
-}
-
-export interface ArtifactSourceDraft {
-	id: ArtifactSourceID;
-	storageKey: ArtifactStorageKey;
-	kind: ArtifactSourceKind;
-	displayName: string;
-	enabled: boolean;
-	config: JSONRawString;
-}
-
-export interface UpdateArtifactSourceBody {
-	expectedRevision: number;
-	displayName: string;
-	enabled: boolean;
-
-	/**
-	 * Omitting config preserves the private existing source configuration.
-	 * Providing config replaces it atomically after adapter normalization.
-	 */
-	config?: JSONRawString;
 }
 
 /**

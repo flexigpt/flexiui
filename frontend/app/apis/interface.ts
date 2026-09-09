@@ -3,18 +3,9 @@ import type {
 	ArtifactCollectionRef,
 	ArtifactRecord,
 	ArtifactRef,
-	ArtifactRoot,
 	ArtifactRootID,
 	ArtifactSourceBinding,
-	ArtifactSourceDraft,
 	ArtifactSourceID,
-	ArtifactSourceKind,
-	ArtifactSourceSummary,
-	CreateArtifactRootBody,
-	PurgeArtifactRootResult,
-	PurgeArtifactSourceResult,
-	UpdateArtifactRootBody,
-	UpdateArtifactSourceBody,
 } from '@/spec/artifact';
 import type {
 	AssistantPreset,
@@ -62,6 +53,7 @@ import type {
 	MCPServerInstallation,
 	MCPServerResolved,
 	MCPServerRuntimeSnapshot,
+	MCPServerSchemaIdentity,
 	MCPToolCapability,
 } from '@/spec/mcp_artifact';
 import type {
@@ -75,13 +67,13 @@ import type {
 import type { AppTheme, AuthKey, AuthKeyName, AuthKeyType, DebugSettings, SettingsSchema } from '@/spec/setting';
 import type {
 	AdoptSkillBody,
-	AttachSkillBundleSourceBody,
 	CreateManagedSkillBody,
 	CreateManagedSkillResult,
 	CreateSkillBundleBody,
 	InvokeSkillToolResponse,
 	ManagedSkillDocumentView,
 	PinSkillBody,
+	RegisterSkillBundleDirectoryInput,
 	ResolvedSkillRuntime,
 	RetireSkillBundleResult,
 	RuntimeSkillDefinition,
@@ -103,10 +95,11 @@ import type { ApplyUnifiedDiffArgs, ApplyUnifiedDiffOut } from '@/spec/unified_d
 import type {
 	AdoptWorkspaceOccurrenceBody,
 	AttachWorkspaceSourceBody,
-	CreateEmptyWorkspaceBody,
-	CreateFilesystemWorkspaceBody,
+	CreateEmptyWorkspaceInput,
+	CreateFilesystemWorkspaceInput,
 	DetachWorkspaceSourceBody,
 	PinWorkspaceArtifactBody,
+	RegisterWorkspaceDirectoryInput,
 	RetireWorkspaceResult,
 	SetWorkspaceArtifactEnabledBody,
 	SetWorkspaceArtifactRuntimeDisabledBody,
@@ -122,10 +115,12 @@ import type {
 	WorkspaceContextInspectionView,
 	WorkspaceContextLoadPlan,
 	WorkspaceContextView,
+	WorkspaceDirectoryRegistrationResult,
 	WorkspaceRef,
 	WorkspaceRefreshResult,
 	WorkspaceSkillLoadView,
 	WorkspaceSkillView,
+	WorkspaceSourceSummary,
 	WorkspaceSuppressionView,
 	WorkspaceView,
 } from '@/spec/workspace';
@@ -269,8 +264,6 @@ export interface ISkillStoreAPI {
 
 	purgeSkillBundle(bundle: SkillBundleRef, expectedRevision: number): Promise<SkillBundleRef>;
 
-	attachSkillBundleSource(bundle: SkillBundleRef, body: AttachSkillBundleSourceBody): Promise<SkillBundleView>;
-
 	refreshSkillBundle(bundle: SkillBundleRef): Promise<void>;
 
 	listSkillBundleArtifacts(bundle: SkillBundleRef): Promise<SkillArtifactView[]>;
@@ -289,11 +282,18 @@ export interface ISkillStoreAPI {
 
 	purgeSkill(artifact: ArtifactRef, expectedRevision: number): Promise<ArtifactRef>;
 
-	resolveArtifactSkill(artifact: ArtifactRef): Promise<ResolvedSkillRuntime>;
+	registerSkillBundleDirectory(
+		bundle: SkillBundleRef,
+		input: RegisterSkillBundleDirectoryInput
+	): Promise<SkillBundleView>;
+
+	listSkillBundlesForManagement(): Promise<SkillBundleView[]>;
 }
 
 export interface ISkillAggregateAPI {
 	runtimeCatalogIDForCollection(bundle: SkillBundleRef): Promise<SkillRuntimeCatalogID>;
+
+	resolveArtifactSkill(artifact: ArtifactRef): Promise<ResolvedSkillRuntime>;
 }
 
 export interface ISkillRuntimeAPI {
@@ -314,54 +314,14 @@ export interface ISkillRuntimeAPI {
 	invokeSkillTool(sessionID: string, toolName: string, args?: JSONRawString): Promise<InvokeSkillToolResponse>;
 }
 
-export interface IArtifactStoreAPI {
-	createArtifactRoot(body: CreateArtifactRootBody): Promise<ArtifactRoot>;
+export interface IWorkspaceStoreAPI {
+	createFilesystemWorkspace(input: CreateFilesystemWorkspaceInput): Promise<WorkspaceView>;
 
-	getArtifactRoot(rootID: ArtifactRootID): Promise<ArtifactRoot>;
-
-	listArtifactRoots(): Promise<ArtifactRoot[]>;
-
-	updateArtifactRoot(rootID: ArtifactRootID, body: UpdateArtifactRootBody): Promise<ArtifactRoot>;
-
-	retireArtifactRoot(rootID: ArtifactRootID, expectedRevision: number): Promise<ArtifactRoot>;
-
-	purgeArtifactRoot(rootID: ArtifactRootID, expectedRevision: number): Promise<PurgeArtifactRootResult>;
-
-	createArtifactSource(rootID: ArtifactRootID, body: ArtifactSourceDraft): Promise<ArtifactSourceSummary>;
-
-	getArtifactSource(rootID: ArtifactRootID, sourceID: ArtifactSourceID): Promise<ArtifactSourceSummary>;
-
-	listArtifactSources(rootID: ArtifactRootID): Promise<ArtifactSourceSummary[]>;
-
-	updateArtifactSource(
-		rootID: ArtifactRootID,
-		sourceID: ArtifactSourceID,
-		body: UpdateArtifactSourceBody
-	): Promise<ArtifactSourceSummary>;
-
-	retireArtifactSource(
-		rootID: ArtifactRootID,
-		sourceID: ArtifactSourceID,
-		expectedRevision: number
-	): Promise<ArtifactSourceSummary>;
-
-	purgeArtifactSource(
-		rootID: ArtifactRootID,
-		sourceID: ArtifactSourceID,
-		expectedRevision: number
-	): Promise<PurgeArtifactSourceResult>;
-
-	listArtifactSourceKinds(): Promise<ArtifactSourceKind[]>;
-}
-
-export interface IWorkspaceAPI {
-	createFilesystemWorkspace(rootID: ArtifactRootID, body: CreateFilesystemWorkspaceBody): Promise<WorkspaceView>;
-
-	createEmptyWorkspace(rootID: ArtifactRootID, body: CreateEmptyWorkspaceBody): Promise<WorkspaceView>;
+	createEmptyWorkspace(input: CreateEmptyWorkspaceInput): Promise<WorkspaceView>;
 
 	getWorkspace(workspace: WorkspaceRef): Promise<WorkspaceView>;
 
-	listWorkspaces(rootID: ArtifactRootID): Promise<WorkspaceView[]>;
+	listWorkspaces(): Promise<WorkspaceView[]>;
 
 	updateWorkspace(workspace: WorkspaceRef, body: UpdateWorkspaceBody): Promise<WorkspaceView>;
 
@@ -399,26 +359,18 @@ export interface IWorkspaceAPI {
 
 	listWorkspaceSuppressions(workspace: WorkspaceRef): Promise<WorkspaceSuppressionView[]>;
 
-	suppressWorkspaceBinding(
+	listWorkspaceSourcesForManagement(): Promise<WorkspaceSourceSummary[]>;
+
+	registerWorkspaceDirectory(
 		workspace: WorkspaceRef,
-		body: SuppressWorkspaceBindingBody
-	): Promise<WorkspaceSuppressionView>;
+		input: RegisterWorkspaceDirectoryInput
+	): Promise<WorkspaceDirectoryRegistrationResult>;
 
-	unsuppressWorkspaceBinding(
-		workspace: WorkspaceRef,
-		binding: ArtifactSourceBinding,
-		expectedRevision: number
-	): Promise<UnsuppressWorkspaceBindingResult>;
-
-	listWorkspaceContexts(workspace: WorkspaceRef): Promise<WorkspaceContextView[]>;
-
-	loadWorkspaceContexts(workspace: WorkspaceRef, artifacts?: ArtifactRef[]): Promise<WorkspaceContextInspectionView>;
-
-	composeWorkspaceContext(workspace: WorkspaceRef, artifacts?: ArtifactRef[]): Promise<WorkspaceContextLoadPlan>;
-
-	listWorkspaceSkills(workspace: WorkspaceRef): Promise<WorkspaceSkillView[]>;
-
-	loadWorkspaceSkills(workspace: WorkspaceRef, artifacts: ArtifactRef[]): Promise<WorkspaceSkillLoadView>;
+	setWorkspaceSourceEnabled(
+		sourceID: ArtifactSourceID,
+		expectedRevision: number,
+		enabled: boolean
+	): Promise<WorkspaceSourceSummary>;
 
 	setWorkspaceArtifactEnabled(
 		workspace: WorkspaceRef,
@@ -438,6 +390,31 @@ export interface IWorkspaceAPI {
 		expectedRevision: number
 	): Promise<ArtifactRef>;
 
+	suppressWorkspaceBinding(
+		workspace: WorkspaceRef,
+		body: SuppressWorkspaceBindingBody
+	): Promise<WorkspaceSuppressionView>;
+
+	unsuppressWorkspaceBinding(
+		workspace: WorkspaceRef,
+		binding: ArtifactSourceBinding,
+		expectedRevision: number
+	): Promise<UnsuppressWorkspaceBindingResult>;
+}
+
+export interface IWorkspaceRuntimeAPI {
+	listWorkspaceContexts(workspace: WorkspaceRef): Promise<WorkspaceContextView[]>;
+
+	loadWorkspaceContexts(workspace: WorkspaceRef, artifacts?: ArtifactRef[]): Promise<WorkspaceContextInspectionView>;
+
+	composeWorkspaceContext(workspace: WorkspaceRef, artifacts?: ArtifactRef[]): Promise<WorkspaceContextLoadPlan>;
+
+	listWorkspaceSkills(workspace: WorkspaceRef): Promise<WorkspaceSkillView[]>;
+
+	loadWorkspaceSkills(workspace: WorkspaceRef, artifacts: ArtifactRef[]): Promise<WorkspaceSkillLoadView>;
+}
+
+export interface IWorkspaceAggregateAPI {
 	setWorkspaceArtifactRuntimeDisabled(
 		workspace: WorkspaceRef,
 		artifact: ArtifactRef,
@@ -578,14 +555,9 @@ export interface IAssistantPresetStoreAPI {
 	): Promise<AssistantPreset | undefined>;
 }
 
-export interface IMCPAPI {
-	/**
-	 * Aggregate-bound identity translation between durable Artifact Store
-	 * identities and Runtime-owned opaque identities.
-	 */
-	runtimeServerIDForArtifact(artifact: ArtifactRef): Promise<MCPRuntimeServerID>;
-
-	artifactRefForRuntimeServerID(server: MCPRuntimeServerID): Promise<ArtifactRef>;
+export interface IMCPStoreAPI {
+	listMCPBundlesForManagement(): Promise<MCPBundle[]>;
+	getMCPServerSchemaIdentity(): Promise<MCPServerSchemaIdentity>;
 
 	createMCPBundle(input: MCPCreateBundleInput): Promise<MCPBundle>;
 	getMCPBundle(bundle: ArtifactCollectionRef): Promise<MCPBundle>;
@@ -594,20 +566,42 @@ export interface IMCPAPI {
 	listMCPBundleServers(bundle: ArtifactCollectionRef): Promise<ArtifactRecord[]>;
 	listMCPBundlePolicies(bundle: ArtifactCollectionRef): Promise<ArtifactRecord[]>;
 	getMCPBundleInstallation(bundle: ArtifactCollectionRef): Promise<MCPBundleInstallation>;
+	updateMCPBundleEnabled(bundle: ArtifactCollectionRef, expectedRevision: number, enabled: boolean): Promise<MCPBundle>;
+
+	getMCPServerInstallation(server: ArtifactRef): Promise<MCPServerInstallation>;
+	inspectMCPServer(server: ArtifactRef): Promise<MCPServerResolved>;
+	inspectMCPPolicy(policy: ArtifactRef): Promise<MCPPolicyView>;
+}
+
+export interface IMCPAggregateAPI {
+	/**
+	 * Aggregate-bound identity translation between durable Artifact Store
+	 * identities and Runtime-owned opaque identities.
+	 */
+
+	runtimeServerIDForArtifact(artifact: ArtifactRef): Promise<MCPRuntimeServerID>;
+
+	artifactRefForRuntimeServerID(server: MCPRuntimeServerID): Promise<ArtifactRef>;
+
 	replaceMCPBundleDocument(input: MCPReplaceBundleDocumentInput): Promise<MCPBundle>;
 	refreshMCPBundle(bundle: ArtifactCollectionRef): Promise<MCPBundle>;
-	updateMCPBundleEnabled(bundle: ArtifactCollectionRef, expectedRevision: number, enabled: boolean): Promise<MCPBundle>;
+	retireMCPBundle(bundle: ArtifactCollectionRef, expectedRevision: number): Promise<ArtifactCollection>;
+	purgeMCPBundle(bundle: ArtifactCollectionRef, expectedRevision: number): Promise<void>;
+
 	updateProtectedMCPBundleInstallation(
 		bundle: ArtifactCollectionRef,
 		expectedOverlayRevision: number,
 		runtimeEnabled: boolean
 	): Promise<void>;
-	retireMCPBundle(bundle: ArtifactCollectionRef, expectedRevision: number): Promise<ArtifactCollection>;
-	purgeMCPBundle(bundle: ArtifactCollectionRef, expectedRevision: number): Promise<void>;
+	putMCPServerSecret(
+		server: ArtifactRef,
+		kind: MCPSecretKind,
+		slot: string,
+		secret: string
+	): Promise<MCPSecretWriteResult>;
+	deleteMCPServerSecret(server: ArtifactRef, kind: MCPSecretKind, slot: string): Promise<void>;
+	getMCPServerAuthHealth(server: ArtifactRef): Promise<MCPAuthHealth>;
 
-	getMCPServerInstallation(server: ArtifactRef): Promise<MCPServerInstallation>;
-	inspectMCPServer(server: ArtifactRef): Promise<MCPServerResolved>;
-	inspectMCPPolicy(policy: ArtifactRef): Promise<MCPPolicyView>;
 	updateMCPServerInstallation(
 		server: ArtifactRef,
 		expectedArtifactRevision: number,
@@ -619,7 +613,9 @@ export interface IMCPAPI {
 		runtimeEnabled: boolean,
 		data: MCPServerData
 	): Promise<void>;
+}
 
+export interface IMCPRuntimeAPI {
 	connectMCPServer(server: MCPRuntimeServerID): Promise<MCPServerRuntimeSnapshot>;
 	disconnectMCPServer(server: MCPRuntimeServerID): Promise<void>;
 	refreshMCPServer(server: MCPRuntimeServerID): Promise<MCPServerRuntimeSnapshot>;
@@ -656,16 +652,8 @@ export interface IMCPAPI {
 	): Promise<MCPInvokeToolResponseBody>;
 	resolveMCPApproval(approvalID: string, resolution: MCPApprovalResolution): Promise<MCPApprovalResolutionResult>;
 
-	getMCPServerAuthHealth(server: ArtifactRef): Promise<MCPAuthHealth>;
 	listPendingMCPOAuthAuthorizations(): Promise<MCPOAuthAuthorization[]>;
 	cancelPendingMCPOAuthAuthorization(server: MCPRuntimeServerID): Promise<boolean>;
-	putMCPServerSecret(
-		server: ArtifactRef,
-		kind: MCPSecretKind,
-		slot: string,
-		secret: string
-	): Promise<MCPSecretWriteResult>;
-	deleteMCPServerSecret(server: ArtifactRef, kind: MCPSecretKind, slot: string): Promise<void>;
 
 	getMCPGlobalSettings(): Promise<MCPGlobalSettings>;
 	updateMCPGlobalSettings(expectedRevision: number, oauthLoopbackListenAddr?: string): Promise<number>;

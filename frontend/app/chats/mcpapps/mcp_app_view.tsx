@@ -8,7 +8,7 @@ import { MCP_APP_HTML_MIME_TYPE, MCPContentType } from '@/spec/mcp_artifact';
 
 import { isJSONObject } from '@/lib/jsonschema_utils';
 
-import { backendAPI, mcpAPI } from '@/apis/baseapi';
+import { backendAPI, mcpManagementAPI, mcpRuntimeAPI } from '@/apis/baseapi';
 
 import { ActionDeniedAlertModal } from '@/components/action_denied_modal';
 import { DeleteConfirmationModal } from '@/components/delete_confirmation_modal';
@@ -220,7 +220,7 @@ export function MCPAppView({ instance, toolInput, toolResult, height = 480 }: MC
 		// oxlint-disable-next-line react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
 		setViewInitialized(false);
 
-		void mcpAPI
+		void mcpRuntimeAPI
 			.readMCPResource(server, instance.resourceUri)
 			.then(resp => {
 				if (cancelled) {
@@ -254,11 +254,11 @@ export function MCPAppView({ instance, toolInput, toolResult, height = 480 }: MC
 		// oxlint-disable-next-line react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
 		setServerArtifact(null);
 
-		void mcpAPI
+		void mcpManagementAPI
 			.artifactRefForRuntimeServerID(server)
 			.then(async artifact => ({
 				artifact,
-				resolved: await mcpAPI.inspectMCPServer(artifact),
+				resolved: await mcpManagementAPI.inspectMCPServer(artifact),
 			}))
 			.then(({ artifact, resolved }) => {
 				if (cancelled) {

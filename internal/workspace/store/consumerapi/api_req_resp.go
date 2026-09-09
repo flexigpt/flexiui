@@ -17,6 +17,143 @@ import (
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 )
 
+type (
+	WorkspaceRef           = collection.CollectionRef
+	WorkspaceSourceSummary = source.Summary
+)
+
+type CreateFilesystemWorkspaceInput struct {
+	DisplayName string             `json:"displayName"`
+	Description string             `json:"description,omitempty"`
+	RootPath    string             `json:"rootPath"`
+	Discovery   WorkspaceDiscovery `json:"discovery"`
+}
+
+type CreateEmptyWorkspaceInput struct {
+	DisplayName string             `json:"displayName"`
+	Description string             `json:"description,omitempty"`
+	Discovery   WorkspaceDiscovery `json:"discovery"`
+}
+
+type UpdateWorkspaceInput struct {
+	ExpectedRevision uint64             `json:"expectedRevision"`
+	DisplayName      string             `json:"displayName"`
+	Description      string             `json:"description,omitempty"`
+	Enabled          bool               `json:"enabled"`
+	Discovery        WorkspaceDiscovery `json:"discovery"`
+}
+
+type SetWorkspacePrimarySourceInput struct {
+	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision"`
+	SourceID                   source.SourceID `json:"sourceID,omitempty"`
+	Clear                      bool            `json:"clear,omitempty"`
+}
+
+type AttachWorkspaceSourceInput struct {
+	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision"`
+	SourceID                   source.SourceID             `json:"sourceID"`
+	Role                       collection.AttachmentRole   `json:"role"`
+	Enabled                    bool                        `json:"enabled"`
+	Settings                   WorkspaceAttachmentSettings `json:"settings"`
+}
+
+type UpdateWorkspaceAttachmentInput struct {
+	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision"`
+	ExpectedAttachmentRevision uint64                      `json:"expectedAttachmentRevision"`
+	SourceID                   source.SourceID             `json:"sourceID"`
+	Role                       collection.AttachmentRole   `json:"role"`
+	Enabled                    bool                        `json:"enabled"`
+	Settings                   WorkspaceAttachmentSettings `json:"settings"`
+}
+
+type DetachWorkspaceSourceInput struct {
+	ExpectedCollectionRevision uint64          `json:"expectedCollectionRevision"`
+	ExpectedAttachmentRevision uint64          `json:"expectedAttachmentRevision"`
+	SourceID                   source.SourceID `json:"sourceID"`
+}
+
+type WorkspaceOccurrenceRef struct {
+	SourceID           source.SourceID             `json:"sourceID"`
+	Locator            basespec.Locator            `json:"locator"`
+	SubresourceLocator basespec.SubresourceLocator `json:"subresourceLocator,omitempty"`
+}
+
+type WorkspaceArtifactSettings struct {
+	RuntimeDisabled bool `json:"runtimeDisabled"`
+}
+
+type AdoptWorkspaceOccurrenceInput struct {
+	ExpectedCatalogRevision uint64                    `json:"expectedCatalogRevision"`
+	Occurrence              WorkspaceOccurrenceRef    `json:"occurrence"`
+	ArtifactID              artifact.ArtifactID       `json:"artifactID"`
+	Name                    string                    `json:"name,omitempty"`
+	Enabled                 bool                      `json:"enabled"`
+	Settings                WorkspaceArtifactSettings `json:"settings"`
+}
+
+type PinWorkspaceArtifactInput struct {
+	ExpectedCollectionRevision uint64                    `json:"expectedCollectionRevision"`
+	ArtifactID                 artifact.ArtifactID       `json:"artifactID"`
+	Binding                    artifact.SourceBinding    `json:"binding"`
+	Name                       string                    `json:"name"`
+	Enabled                    bool                      `json:"enabled"`
+	Settings                   WorkspaceArtifactSettings `json:"settings"`
+}
+
+type SuppressWorkspaceBindingInput struct {
+	ExpectedCollectionRevision uint64                 `json:"expectedCollectionRevision"`
+	Binding                    artifact.SourceBinding `json:"binding"`
+}
+
+type UnadoptWorkspaceArtifactInput struct {
+	ExpectedRevision uint64 `json:"expectedRevision"`
+	Suppress         bool   `json:"suppress"`
+}
+
+type WorkspaceRefreshResult struct {
+	Workspace        WorkspaceRef            `json:"workspace"`
+	CatalogRevision  uint64                  `json:"catalogRevision"`
+	CreatedArtifacts []artifact.ArtifactRef  `json:"createdArtifacts"`
+	UpdatedArtifacts []artifact.ArtifactRef  `json:"updatedArtifacts"`
+	Diagnostics      []diagnostic.Diagnostic `json:"diagnostics,omitempty"`
+	Candidates       int                     `json:"candidates"`
+}
+
+type RetireWorkspaceResult struct {
+	Workspace WorkspaceRef `json:"workspace"`
+	Revision  uint64       `json:"revision"`
+}
+
+type WorkspaceSuppressionView struct {
+	Workspace  WorkspaceRef           `json:"workspace"`
+	Binding    artifact.SourceBinding `json:"binding"`
+	Revision   uint64                 `json:"revision"`
+	CreatedAt  time.Time              `json:"createdAt"`
+	ModifiedAt time.Time              `json:"modifiedAt"`
+}
+
+type UnadoptWorkspaceArtifactResult struct {
+	Artifact artifact.ArtifactRef `json:"artifact"`
+}
+
+type UnsuppressWorkspaceBindingResult struct {
+	Workspace WorkspaceRef           `json:"workspace"`
+	Binding   artifact.SourceBinding `json:"binding"`
+}
+
+type RegisterWorkspaceDirectoryInput struct {
+	ExpectedCollectionRevision uint64                      `json:"expectedCollectionRevision"`
+	DisplayName                string                      `json:"displayName"`
+	RootPath                   string                      `json:"rootPath"`
+	Role                       collection.AttachmentRole   `json:"role"`
+	Settings                   WorkspaceAttachmentSettings `json:"settings"`
+}
+
+type WorkspaceDirectoryRegistrationResult struct {
+	Source    WorkspaceSourceSummary `json:"source"`
+	Workspace WorkspaceView          `json:"workspace"`
+}
+
 type WorkspaceDiscoveryRoot struct {
 	Root            basespec.Locator `json:"root"`
 	Recursive       bool             `json:"recursive"`

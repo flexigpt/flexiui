@@ -9,6 +9,7 @@ import (
 	"io"
 	"maps"
 	"sort"
+	"strings"
 
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
@@ -24,6 +25,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
+	"github.com/flexigpt/flexigpt-app/internal/uuidutil"
 )
 
 type API struct {
@@ -225,6 +227,32 @@ func (a *API) AttachSkillBundleSource(
 		return nil, wrapStoreError("attach Source", err)
 	}
 	return &AttachSkillBundleSourceResponse{Body: &value}, nil
+}
+
+func (a *API) RegisterSkillBundleDirectory(
+	ctx context.Context,
+	request *RegisterSkillBundleDirectoryRequest,
+) (*RegisterSkillBundleDirectoryResponse, error) {
+	if err := requireStoreRequest(
+		request,
+		false,
+		false,
+		"Skill Bundle directory registration",
+	); err != nil {
+		return nil, err
+	}
+
+	value, err := a.RegisterBundleDirectory(
+		ctx,
+		request.Bundle,
+		request.ExpectedCollectionRevision,
+		request.RootPath,
+		request.SourceDisplayName,
+	)
+	if err != nil {
+		return nil, wrapStoreError("register directory", err)
+	}
+	return &RegisterSkillBundleDirectoryResponse{Body: &value}, nil
 }
 
 func (a *API) RefreshSkillBundle(
@@ -454,20 +482,20 @@ func (a *API) PurgeSkill(
 func (a *API) CreateBundle(
 	ctx context.Context,
 	request CreateSkillBundleBody,
-) (Bundle, error) {
+) (skillDomain.SkillBundle, error) {
 	return a.createBundle(ctx, request, false)
 }
 
 func (a *API) ListBundles(
 	ctx context.Context,
 	rootID root.RootID,
-) ([]Bundle, error) {
+) ([]skillDomain.SkillBundle, error) {
 	values, err := a.collections.ListByRoot(ctx, rootID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := make([]Bundle, 0)
+	output := make([]skillDomain.SkillBundle, 0)
 	for _, value := range values {
 		if value.Kind != artifactbuiltin.SkillCollectionV1Kind {
 			continue
@@ -484,22 +512,22 @@ func (a *API) ListBundles(
 func (a *API) UpdateBundle(
 	ctx context.Context,
 	request UpdateSkillBundleBody,
-) (Bundle, error) {
+) (skillDomain.SkillBundle, error) {
 	if err := a.requireBundleMutation(ctx, request.Bundle.RootID, false); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	current, err := a.GetBundle(ctx, request.Bundle)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if request.ExpectedRevision == 0 ||
 		current.Collection.Revision != request.ExpectedRevision {
-		return Bundle{}, basespec.ErrConflict
+		return skillDomain.SkillBundle{}, basespec.ErrConflict
 	}
 
 	data, err := skillDomain.EncodeCollectionData(current.Data)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	updated, err := a.collections.Update(
 		ctx,
@@ -513,11 +541,11 @@ func (a *API) UpdateBundle(
 		},
 	)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	value, err := a.GetBundle(ctx, updated.Ref())
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if updated.Revision == current.Collection.Revision ||
 		!value.Collection.Enabled {
@@ -623,39 +651,39 @@ func (a *API) AttachSource(
 	ctx context.Context,
 	bundle collection.CollectionRef,
 	expectedCollectionRevision uint64,
-	draft AttachmentDraft,
-) (Bundle, error) {
+	draft skillDomain.AttachmentDraft,
+) (skillDomain.SkillBundle, error) {
 	if err := a.requireBundleMutation(ctx, bundle.RootID, false); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if draft.Role == artifactbuiltin.BuiltInAttachmentRole {
-		return Bundle{}, fmt.Errorf(
+		return skillDomain.SkillBundle{}, fmt.Errorf(
 			"%w: skill bundle built-in attachment role is reserved for bootstrap",
 			basespec.ErrInvalid,
 		)
 	}
 	if draft.Role == artifactbuiltin.ManagedAttachmentRole {
-		return Bundle{}, fmt.Errorf(
+		return skillDomain.SkillBundle{}, fmt.Errorf(
 			"%w: managed attachments must be provisioned through managedSourceID when the bundle is created",
 			basespec.ErrInvalid,
 		)
 	}
 	if _, err := a.GetBundle(ctx, bundle); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if err := a.validateAttachmentDraft(ctx, bundle.RootID, draft); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	attachmentData, err := skillDomain.NewAttachmentData(
 		draft.DiscoveryRoot,
 		draft.ExpectedMemberDigests,
 	)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 
 	_, _, err = a.collections.Attach(
@@ -670,11 +698,11 @@ func (a *API) AttachSource(
 		},
 	)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	value, err := a.GetBundle(ctx, bundle)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if !value.Collection.Enabled {
 		return value, nil
@@ -686,6 +714,92 @@ func (a *API) AttachSource(
 		)
 	}
 	return value, nil
+}
+
+// RegisterBundleDirectory owns filesystem Source creation, Bundle attachment,
+// and failed-attachment compensation. The frontend never receives source
+// configuration, source IDs, or source storage keys for this operation.
+func (a *API) RegisterBundleDirectory(
+	ctx context.Context,
+	bundle collection.CollectionRef,
+	expectedCollectionRevision uint64,
+	rootPath string,
+	sourceDisplayName string,
+) (skillDomain.SkillBundle, error) {
+	if err := a.requireBundleMutation(ctx, bundle.RootID, false); err != nil {
+		return skillDomain.SkillBundle{}, err
+	}
+	if _, err := a.GetBundle(ctx, bundle); err != nil {
+		return skillDomain.SkillBundle{}, err
+	}
+	if expectedCollectionRevision == 0 {
+		return skillDomain.SkillBundle{}, fmt.Errorf(
+			"%w: expected Skill Bundle revision is required",
+			basespec.ErrInvalid,
+		)
+	}
+
+	config, err := json.Marshal(struct {
+		RootPath string `json:"rootPath"`
+	}{
+		RootPath: rootPath,
+	})
+	if err != nil {
+		return skillDomain.SkillBundle{}, err
+	}
+
+	sourceID := source.SourceID(uuidutil.NewUUIDv7())
+	created, createdNew, err := a.sources.CreateWithStatus(
+		ctx,
+		bundle.RootID,
+		source.Draft{
+			ID:          sourceID,
+			StorageKey:  skillDirectoryStorageKey(),
+			Kind:        source.SourceKindFilesystemDirectory,
+			DisplayName: sourceDisplayName,
+			Enabled:     true,
+			Config:      config,
+		},
+	)
+	if err != nil {
+		return skillDomain.SkillBundle{}, err
+	}
+
+	attached, attachErr := a.AttachSource(
+		ctx,
+		bundle,
+		expectedCollectionRevision,
+		skillDomain.AttachmentDraft{
+			SourceID:      created.ID,
+			Role:          skillDomain.RoleExternal,
+			Enabled:       true,
+			DiscoveryRoot: ".",
+		},
+	)
+	if attachErr == nil {
+		return attached, nil
+	}
+
+	latest, readErr := a.GetBundle(ctx, bundle)
+	if readErr == nil {
+		for _, attachment := range latest.Attachments {
+			if attachment.SourceID == created.ID {
+				return latest, nil
+			}
+		}
+	}
+
+	if !createdNew {
+		return skillDomain.SkillBundle{}, attachErr
+	}
+
+	cleanupErr := a.sources.Discard(
+		context.WithoutCancel(ctx),
+		bundle.RootID,
+		created.ID,
+		created.Revision,
+	)
+	return skillDomain.SkillBundle{}, errors.Join(attachErr, cleanupErr)
 }
 
 func (a *API) RefreshBundle(
@@ -723,10 +837,10 @@ func (a *API) EnsureBuiltInBundleCurrent(
 
 func (a *API) EnsureBuiltInBundleTopology(
 	ctx context.Context,
-	request BuiltInBundleTopology,
-) (Bundle, error) {
+	request skillDomain.BuiltInBundleTopology,
+) (skillDomain.SkillBundle, error) {
 	if err := installerapi.RequirePrivileged(ctx); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	bundle, err := a.createBundle(ctx, CreateSkillBundleBody{
 		RootID:         request.RootID,
@@ -737,7 +851,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 		Description:    request.Description,
 		Labels:         request.Labels,
 		Enabled:        request.Enabled,
-		Attachments: []AttachmentDraft{{
+		Attachments: []skillDomain.AttachmentDraft{{
 			SourceID:              request.SourceID,
 			Role:                  artifactbuiltin.BuiltInAttachmentRole,
 			Enabled:               true,
@@ -746,7 +860,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 		}},
 	}, true)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if !builtInBundleTopologyMatches(bundle, request) {
 		data, err := skillDomain.EncodeCollectionData(skillDomain.CollectionData{
@@ -757,7 +871,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 			Labels:                  request.Labels,
 		})
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 
 		if bundle.Collection.DisplayName != request.DisplayName ||
@@ -775,7 +889,7 @@ func (a *API) EnsureBuiltInBundleTopology(
 					Data:             data,
 				},
 			); err != nil {
-				return Bundle{}, err
+				return skillDomain.SkillBundle{}, err
 			}
 		}
 
@@ -786,17 +900,17 @@ func (a *API) EnsureBuiltInBundleTopology(
 				request.ExpectedMemberDigests,
 			)
 			if err != nil {
-				return Bundle{}, err
+				return skillDomain.SkillBundle{}, err
 			}
 			encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 			if err != nil {
-				return Bundle{}, err
+				return skillDomain.SkillBundle{}, err
 			}
 			if attachment.Role != artifactbuiltin.BuiltInAttachmentRole || !attachment.Enabled ||
 				!bytes.Equal(attachment.Data, encodedAttachmentData) {
 				currentColl, err := a.collections.Get(ctx, bundle.Collection.Ref())
 				if err != nil {
-					return Bundle{}, err
+					return skillDomain.SkillBundle{}, err
 				}
 				if _, _, err := a.collections.UpdateAttachment(
 					ctx,
@@ -810,17 +924,17 @@ func (a *API) EnsureBuiltInBundleTopology(
 						Data:                       encodedAttachmentData,
 					},
 				); err != nil {
-					return Bundle{}, err
+					return skillDomain.SkillBundle{}, err
 				}
 			}
 		}
 
 		bundle, err = a.GetBundle(ctx, bundle.Collection.Ref())
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		if !builtInBundleTopologyMatches(bundle, request) {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: built-in bundle %q differs from the protected registry declaration",
 				basespec.ErrConflict,
 				request.LogicalName,
@@ -834,17 +948,17 @@ func (a *API) EnsureBuiltInBundleTopology(
 func (a *API) GetBundle(
 	ctx context.Context,
 	ref collection.CollectionRef,
-) (Bundle, error) {
+) (skillDomain.SkillBundle, error) {
 	if err := ref.Validate(); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 
 	value, err := a.collections.Get(ctx, ref)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if value.Kind != artifactbuiltin.SkillCollectionV1Kind {
-		return Bundle{}, fmt.Errorf(
+		return skillDomain.SkillBundle{}, fmt.Errorf(
 			"%w: collection %q is not a skill bundle",
 			basespec.ErrNotFound,
 			ref.CollectionID,
@@ -853,17 +967,17 @@ func (a *API) GetBundle(
 
 	data, err := skillDomain.DecodeCollectionData(value.Data)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	attachments, err := a.collections.ListAttachments(ctx, ref)
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 
 	sources := make([]source.Summary, 0, len(attachments))
 	for _, attachment := range attachments {
 		if err := a.validateAttachment(ctx, ref.RootID, attachment); err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		value, err := a.sources.Get(
 			ctx,
@@ -871,12 +985,12 @@ func (a *API) GetBundle(
 			attachment.SourceID,
 		)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		sources = append(sources, value)
 	}
 	if err := validateBundleAttachmentTopology(data, attachments); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	sort.Slice(attachments, func(left, right int) bool {
 		return attachments[left].SourceID < attachments[right].SourceID
@@ -885,7 +999,7 @@ func (a *API) GetBundle(
 		return sources[left].ID < sources[right].ID
 	})
 
-	return Bundle{
+	return skillDomain.SkillBundle{
 		Collection:  value,
 		Data:        data,
 		Attachments: attachments,
@@ -919,13 +1033,13 @@ func (a *API) ListSkills(
 func (a *API) getManagedSkillDocument(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
-) (ManagedSkillDocument, error) {
+) (skillDomain.ManagedSkillDocument, error) {
 	value, err := a.getSkill(ctx, ref)
 	if err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	if value.Adoption != artifact.AdoptionPinned {
-		return ManagedSkillDocument{}, fmt.Errorf(
+		return skillDomain.ManagedSkillDocument{}, fmt.Errorf(
 			"%w: only managed Skills can be edited",
 			basespec.ErrUnsupported,
 		)
@@ -937,26 +1051,26 @@ func (a *API) getManagedSkillDocument(
 	}
 	bundle, err := a.GetBundle(ctx, bundleRef)
 	if err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	attachment, _, err := managedAttachmentForRole(bundle, artifactbuiltin.ManagedAttachmentRole)
 	if err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	if err := requireBundleOwnedManagedSource(bundle, attachment.SourceID); err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	if attachment.SourceID != value.Binding.SourceID {
-		return ManagedSkillDocument{}, fmt.Errorf(
+		return skillDomain.ManagedSkillDocument{}, fmt.Errorf(
 			"%w: Skill is not stored in this bundle's managed source",
 			basespec.ErrUnsupported,
 		)
 	}
 	if _, err := managedSkillPackageAddressOf(value.Binding); err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	if value.ResolvedDefinition == nil {
-		return ManagedSkillDocument{}, fmt.Errorf(
+		return skillDomain.ManagedSkillDocument{}, fmt.Errorf(
 			"%w: managed Skill has no current definition",
 			basespec.ErrReferenceUnresolved,
 		)
@@ -964,13 +1078,13 @@ func (a *API) getManagedSkillDocument(
 
 	definitionValue, err := a.currentDefinitionForArtifact(ctx, value)
 	if err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
 	doc, err := skillDomain.DocumentFromDefinition(definitionValue)
 	if err != nil {
-		return ManagedSkillDocument{}, err
+		return skillDomain.ManagedSkillDocument{}, err
 	}
-	return ManagedSkillDocument{Artifact: value.Clone(), Document: doc}, nil
+	return skillDomain.ManagedSkillDocument{Artifact: value.Clone(), Document: doc}, nil
 }
 
 func (a *API) adoptSkill(
@@ -1239,7 +1353,7 @@ func (a *API) getSkill(
 
 func (a *API) currentBundleCatalog(
 	ctx context.Context,
-	bundle Bundle,
+	bundle skillDomain.SkillBundle,
 ) (catalog.Snapshot, error) {
 	return a.catalogs.CurrentCatalog(
 
@@ -1282,24 +1396,24 @@ func (a *API) createBundle(
 	ctx context.Context,
 	request CreateSkillBundleBody,
 	allowBuiltInAttachment bool,
-) (Bundle, error) {
+) (skillDomain.SkillBundle, error) {
 	if err := request.CollectionID.Validate(); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if err := request.RootID.Validate(); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if err := a.requireBundleMutation(
 		ctx,
 		request.RootID,
 		allowBuiltInAttachment,
 	); err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 
 	if request.ManagedSourceID != "" {
 		if err := request.ManagedSourceStorageKey.Validate(); err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 	}
 
@@ -1312,7 +1426,7 @@ func (a *API) createBundle(
 		ManagedSourceID:         request.ManagedSourceID,
 	})
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 
 	attachments := make([]collection.AttachmentDraft, 0, len(request.Attachments))
@@ -1320,20 +1434,20 @@ func (a *API) createBundle(
 	for _, draft := range request.Attachments {
 		if draft.Role == artifactbuiltin.BuiltInAttachmentRole &&
 			!allowBuiltInAttachment {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: skill bundle built-in attachment role is reserved for bootstrap",
 				basespec.ErrInvalid,
 			)
 		}
 		if draft.Role == artifactbuiltin.ManagedAttachmentRole {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: managed attachments must be provisioned through managedSourceID",
 				basespec.ErrInvalid,
 			)
 		}
 		if request.ManagedSourceID != "" &&
 			draft.SourceID == request.ManagedSourceID {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: managedSourceID is provisioned and attached by bundle creation and must not also be an explicit attachment",
 				basespec.ErrInvalid,
 			)
@@ -1342,25 +1456,25 @@ func (a *API) createBundle(
 		if (draft.Role == artifactbuiltin.ManagedAttachmentRole ||
 			draft.Role == artifactbuiltin.BuiltInAttachmentRole) &&
 			roleCounts[draft.Role] > 1 {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: skill bundle can have only one %q attachment",
 				basespec.ErrInvalid,
 				draft.Role,
 			)
 		}
 		if err := a.validateAttachmentDraft(ctx, request.RootID, draft); err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		attachmentData, err := skillDomain.NewAttachmentData(
 			draft.DiscoveryRoot,
 			draft.ExpectedMemberDigests,
 		)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		attachments = append(attachments, collection.AttachmentDraft{
 			SourceID: draft.SourceID,
@@ -1373,7 +1487,7 @@ func (a *API) createBundle(
 	var provisionedSource *source.Summary
 	if request.ManagedSourceID != "" {
 		if allowBuiltInAttachment {
-			return Bundle{}, fmt.Errorf(
+			return skillDomain.SkillBundle{}, fmt.Errorf(
 				"%w: protected bundle topology must declare its attachment explicitly",
 				basespec.ErrInvalid,
 			)
@@ -1392,7 +1506,7 @@ func (a *API) createBundle(
 			},
 		)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		if createdNew {
 			provisionedSource = &value
@@ -1400,11 +1514,11 @@ func (a *API) createBundle(
 
 		attachmentData, err := skillDomain.NewAttachmentData(".", nil)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		encodedAttachmentData, err := skillDomain.EncodeAttachmentData(attachmentData)
 		if err != nil {
-			return Bundle{}, err
+			return skillDomain.SkillBundle{}, err
 		}
 		attachments = append(attachments, collection.AttachmentDraft{
 			SourceID: request.ManagedSourceID,
@@ -1441,11 +1555,11 @@ func (a *API) createBundle(
 		attachments,
 	)
 	if err != nil {
-		return Bundle{}, cleanupProvisionedSource(err)
+		return skillDomain.SkillBundle{}, cleanupProvisionedSource(err)
 	}
 	bundle, err := a.GetBundle(ctx, created.Ref())
 	if err != nil {
-		return Bundle{}, err
+		return skillDomain.SkillBundle{}, err
 	}
 	if provisionedSource != nil {
 		attached := false
@@ -1457,14 +1571,14 @@ func (a *API) createBundle(
 			}
 		}
 		if !attached {
-			return Bundle{}, cleanupProvisionedSource(fmt.Errorf(
+			return skillDomain.SkillBundle{}, cleanupProvisionedSource(fmt.Errorf(
 				"%w: provisioned managed Source was not attached to the bundle",
 				basespec.ErrConflict,
 			))
 		}
 	}
 	if !bundleCreationIntentMatches(bundle, request) {
-		return Bundle{}, cleanupProvisionedSource(fmt.Errorf(
+		return skillDomain.SkillBundle{}, cleanupProvisionedSource(fmt.Errorf(
 			"%w: skill bundle %q creation intent differs",
 			basespec.ErrConflict,
 			request.CollectionID,
@@ -1486,7 +1600,7 @@ func (a *API) createBundle(
 }
 
 func bundleCreationIntentMatches(
-	value Bundle,
+	value skillDomain.SkillBundle,
 	request CreateSkillBundleBody,
 ) bool {
 	if value.Collection.RootID != request.RootID ||
@@ -1505,7 +1619,7 @@ func bundleCreationIntentMatches(
 		return false
 	}
 
-	expected := make(map[source.SourceID]AttachmentDraft)
+	expected := make(map[source.SourceID]skillDomain.AttachmentDraft)
 	for _, draft := range request.Attachments {
 		if _, duplicate := expected[draft.SourceID]; duplicate {
 			return false
@@ -1516,7 +1630,7 @@ func bundleCreationIntentMatches(
 		if _, duplicate := expected[request.ManagedSourceID]; duplicate {
 			return false
 		}
-		expected[request.ManagedSourceID] = AttachmentDraft{
+		expected[request.ManagedSourceID] = skillDomain.AttachmentDraft{
 			SourceID:      request.ManagedSourceID,
 			Role:          artifactbuiltin.ManagedAttachmentRole,
 			Enabled:       true,
@@ -1572,8 +1686,8 @@ func bundleCreationIntentMatches(
 }
 
 func builtInBundleTopologyMatches(
-	value Bundle,
-	request BuiltInBundleTopology,
+	value skillDomain.SkillBundle,
+	request skillDomain.BuiltInBundleTopology,
 ) bool {
 	if value.Collection.RootID != request.RootID ||
 		value.Collection.ID != request.CollectionID ||
@@ -2026,7 +2140,7 @@ func validateBundleAttachmentTopology(
 }
 
 func requireBundleOwnedManagedSource(
-	bundle Bundle,
+	bundle skillDomain.SkillBundle,
 	sourceID source.SourceID,
 ) error {
 	if bundle.Data.ManagedSourceID == "" ||
@@ -2044,7 +2158,7 @@ func requireBundleOwnedManagedSource(
 func (a *API) validateAttachmentDraft(
 	ctx context.Context,
 	rootID root.RootID,
-	draft AttachmentDraft,
+	draft skillDomain.AttachmentDraft,
 ) error {
 	if err := draft.SourceID.Validate(); err != nil {
 		return err
@@ -2088,7 +2202,7 @@ func (a *API) validateAttachment(
 }
 
 func managedAttachmentForRole(
-	value Bundle,
+	value skillDomain.SkillBundle,
 	role collection.AttachmentRole,
 ) (collection.Attachment, source.Summary, error) {
 	sources := make(map[source.SourceID]source.Summary, len(value.Sources))
@@ -2143,7 +2257,7 @@ func managedAttachmentForRole(
 }
 
 func bundleAttachmentRole(
-	value Bundle,
+	value skillDomain.SkillBundle,
 	sourceID source.SourceID,
 ) (collection.AttachmentRole, error) {
 	for _, attachment := range value.Attachments {
@@ -2341,6 +2455,12 @@ func managedSkillPackageDigest(
 		return "", err
 	}
 	return cryptoutil.DigestBytes(canonical), nil
+}
+
+func skillDirectoryStorageKey() basespec.StorageKey {
+	return basespec.StorageKey(
+		"s" + strings.ReplaceAll(uuidutil.NewUUIDv7(), "-", ""),
+	)
 }
 
 func (a *API) managedSkillByID(

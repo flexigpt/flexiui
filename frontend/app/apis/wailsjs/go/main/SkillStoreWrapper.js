@@ -6,8 +6,8 @@ export function AdoptSkill(arg1) {
   return window['go']['main']['SkillStoreWrapper']['AdoptSkill'](arg1);
 }
 
-export function AttachSkillSource(arg1, arg2, arg3) {
-  return window['go']['main']['SkillStoreWrapper']['AttachSkillSource'](arg1, arg2, arg3);
+export function AttachSkillBundleSource(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['AttachSkillBundleSource'](arg1);
 }
 
 export function CreateManagedSkill(arg1) {
@@ -22,6 +22,10 @@ export function GetManagedSkillDocument(arg1) {
   return window['go']['main']['SkillStoreWrapper']['GetManagedSkillDocument'](arg1);
 }
 
+export function GetSkill(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['GetSkill'](arg1);
+}
+
 export function GetSkillBundle(arg1) {
   return window['go']['main']['SkillStoreWrapper']['GetSkillBundle'](arg1);
 }
@@ -34,36 +38,40 @@ export function ListSkillBundles(arg1) {
   return window['go']['main']['SkillStoreWrapper']['ListSkillBundles'](arg1);
 }
 
+export function ListSkillBundlesForManagement() {
+  return window['go']['main']['SkillStoreWrapper']['ListSkillBundlesForManagement']();
+}
+
 export function PinSkill(arg1) {
   return window['go']['main']['SkillStoreWrapper']['PinSkill'](arg1);
 }
 
-export function PurgeSkill(arg1, arg2) {
-  return window['go']['main']['SkillStoreWrapper']['PurgeSkill'](arg1, arg2);
+export function PurgeSkill(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['PurgeSkill'](arg1);
 }
 
-export function PurgeSkillBundle(arg1, arg2) {
-  return window['go']['main']['SkillStoreWrapper']['PurgeSkillBundle'](arg1, arg2);
+export function PurgeSkillBundle(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['PurgeSkillBundle'](arg1);
 }
 
 export function RefreshSkillBundle(arg1) {
   return window['go']['main']['SkillStoreWrapper']['RefreshSkillBundle'](arg1);
 }
 
-export function ResolveArtifactSkill(arg1) {
-  return window['go']['main']['SkillStoreWrapper']['ResolveArtifactSkill'](arg1);
+export function RegisterSkillBundleDirectory(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['RegisterSkillBundleDirectory'](arg1);
 }
 
-export function RetireSkillBundle(arg1, arg2) {
-  return window['go']['main']['SkillStoreWrapper']['RetireSkillBundle'](arg1, arg2);
+export function RetireSkillBundle(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['RetireSkillBundle'](arg1);
 }
 
-export function SetSkillEnabled(arg1, arg2, arg3) {
-  return window['go']['main']['SkillStoreWrapper']['SetSkillEnabled'](arg1, arg2, arg3);
+export function SetSkillEnabled(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['SetSkillEnabled'](arg1);
 }
 
-export function UnadoptSkill(arg1, arg2, arg3) {
-  return window['go']['main']['SkillStoreWrapper']['UnadoptSkill'](arg1, arg2, arg3);
+export function UnadoptSkill(arg1) {
+  return window['go']['main']['SkillStoreWrapper']['UnadoptSkill'](arg1);
 }
 
 export function UpdateSkillBundle(arg1) {

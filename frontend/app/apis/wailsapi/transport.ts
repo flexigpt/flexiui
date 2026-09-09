@@ -113,6 +113,11 @@ export async function collectAllPages<T>(
 	throw new Error(`Pagination exceeded the ${maxPages}-page safety limit.`);
 }
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters
+export function requiredObject<T extends object>(value: unknown, operation: string): T {
+	return requireWailsBody(value as T | null | undefined, operation);
+}
+
 export function requireWailsBody<T>(body: T | null | undefined, operation: string): T {
 	if (body === null || body === undefined) {
 		throw new Error(`${operation} returned an empty response body.`);

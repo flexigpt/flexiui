@@ -8,10 +8,22 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
+
+type MCPDocumentSchemaIdentity struct {
+	Kind          artifact.ArtifactKind `json:"kind"`
+	SchemaID      schema.SchemaID       `json:"schemaID"`
+	SchemaVersion string                `json:"schemaVersion"`
+}
+
+type MCPServerSchemaIdentity struct {
+	Server MCPDocumentSchemaIdentity `json:"server"`
+	Policy MCPDocumentSchemaIdentity `json:"policy"`
+}
 
 type CreateMCPBundleBody struct {
 	RootID           root.RootID

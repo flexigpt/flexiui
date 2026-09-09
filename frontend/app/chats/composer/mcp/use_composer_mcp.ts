@@ -24,7 +24,7 @@ import {
 
 import { areComparableValuesEqual, omitManyKeys } from '@/lib/obj_utils';
 
-import { backendAPI, mcpAPI } from '@/apis/baseapi';
+import { backendAPI, mcpManagementAPI, mcpRuntimeAPI } from '@/apis/baseapi';
 
 import type {
 	MCPComposerServerOption,
@@ -304,7 +304,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 		try {
 			const [bundles, pendingAuthorizations] = await Promise.all([
 				loadMCPBundleViews(),
-				mcpAPI.listPendingMCPOAuthAuthorizations().catch(() => []),
+				mcpRuntimeAPI.listPendingMCPOAuthAuthorizations().catch(() => []),
 			]);
 
 			const nestedOptions = await Promise.all(
@@ -319,8 +319,8 @@ export function useComposerMCP(): UseComposerMCPResult {
 							}
 
 							const [runtime, authHealth] = await Promise.all([
-								mcpAPI.getMCPServerStatus(runtimeServerID).catch(() => undefined),
-								mcpAPI.getMCPServerAuthHealth(server.ref).catch(() => undefined),
+								mcpRuntimeAPI.getMCPServerStatus(runtimeServerID).catch(() => undefined),
+								mcpManagementAPI.getMCPServerAuthHealth(server.ref).catch(() => undefined),
 							]);
 
 							return optionFromServer(
@@ -395,10 +395,10 @@ export function useComposerMCP(): UseComposerMCPResult {
 
 			const promise = (async (): Promise<MCPDiscoveryLoadResult | undefined> => {
 				const [toolsResult, resourcesResult, resourceTemplatesResult, promptsResult] = await Promise.allSettled([
-					mcpAPI.listMCPServerTools(server),
-					mcpAPI.listMCPServerResources(server),
-					mcpAPI.listMCPServerResourceTemplates(server),
-					mcpAPI.listMCPServerPrompts(server),
+					mcpRuntimeAPI.listMCPServerTools(server),
+					mcpRuntimeAPI.listMCPServerResources(server),
+					mcpRuntimeAPI.listMCPServerResourceTemplates(server),
+					mcpRuntimeAPI.listMCPServerPrompts(server),
 				]);
 
 				const toolsDiscovery = normalizeMCPDiscoveryList<MCPToolCapability>(toolsResult, 'tools');
@@ -515,9 +515,9 @@ export function useComposerMCP(): UseComposerMCPResult {
 			}
 
 			const [runtime, authHealth, pendingAuthorizations] = await Promise.all([
-				mcpAPI.getMCPServerStatus(server).catch(() => undefined),
-				mcpAPI.getMCPServerAuthHealth(previous.server.ref).catch(() => undefined),
-				mcpAPI.listPendingMCPOAuthAuthorizations().catch(() => []),
+				mcpRuntimeAPI.getMCPServerStatus(server).catch(() => undefined),
+				mcpManagementAPI.getMCPServerAuthHealth(previous.server.ref).catch(() => undefined),
+				mcpRuntimeAPI.listPendingMCPOAuthAuthorizations().catch(() => []),
 			]);
 
 			if (!mountedRef.current) {
@@ -551,7 +551,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 			});
 
 			try {
-				const runtime = await mcpAPI.refreshMCPServer(server);
+				const runtime = await mcpRuntimeAPI.refreshMCPServer(server);
 
 				if (mountedRef.current) {
 					patchOption(server, { runtime });
@@ -587,7 +587,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 				let runtime =
 					current?.runtime?.status === MCPServerStatus.Connecting
 						? current.runtime
-						: await mcpAPI.connectMCPServer(server);
+						: await mcpRuntimeAPI.connectMCPServer(server);
 
 				if (mountedRef.current) {
 					patchOption(server, {
@@ -634,7 +634,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 	);
 
 	const refreshPendingOAuthAuthorizations = useCallback(async () => {
-		const pendingAuthorizations = await mcpAPI.listPendingMCPOAuthAuthorizations().catch(() => []);
+		const pendingAuthorizations = await mcpRuntimeAPI.listPendingMCPOAuthAuthorizations().catch(() => []);
 		const stalePending = optionsRef.current.filter(option => {
 			if (!hasPendingOAuthHealth(option)) {
 				return false;
@@ -645,7 +645,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 		const freshHealthEntries = await Promise.all(
 			stalePending.map(async option => ({
 				key: optionKey(option),
-				authHealth: await mcpAPI.getMCPServerAuthHealth(option.server.ref).catch(() => undefined),
+				authHealth: await mcpManagementAPI.getMCPServerAuthHealth(option.server.ref).catch(() => undefined),
 			}))
 		);
 
@@ -688,7 +688,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 
 	const disconnectServer = useCallback(
 		async (server: MCPRuntimeServerID) => {
-			await mcpAPI.disconnectMCPServer(server);
+			await mcpRuntimeAPI.disconnectMCPServer(server);
 			await refreshServerStatus(server);
 		},
 		[refreshServerStatus]
@@ -696,7 +696,7 @@ export function useComposerMCP(): UseComposerMCPResult {
 
 	const cancelOAuth = useCallback(
 		async (server: MCPRuntimeServerID) => {
-			await mcpAPI.cancelPendingMCPOAuthAuthorization(server);
+			await mcpRuntimeAPI.cancelPendingMCPOAuthAuthorization(server);
 			await refreshServerStatus(server);
 		},
 		[refreshServerStatus]

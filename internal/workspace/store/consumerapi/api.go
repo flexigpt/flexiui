@@ -22,21 +22,26 @@ import (
 )
 
 type StoreAPI struct {
-	artifacts compositionapi.ArtifactAPI
-	resources compositionapi.ResourceAPI
-	workspace *components
+	sources     compositionapi.SourceAPI
+	collections compositionapi.CollectionAPI
+	artifacts   compositionapi.ArtifactAPI
+	catalogs    compositionapi.CatalogAPI
+	resources   compositionapi.ResourceAPI
+	workspace   *components
 }
 
 func NewStoreAPI(
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
+	catalogs compositionapi.CatalogAPI,
 	resources compositionapi.ResourceAPI,
 	config Config,
 ) (*StoreAPI, error) {
 	if sources == nil ||
 		collections == nil ||
 		artifacts == nil ||
+		catalogs == nil ||
 		resources == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace Store dependencies are incomplete",
@@ -57,9 +62,12 @@ func NewStoreAPI(
 	}
 
 	return &StoreAPI{
-		artifacts: artifacts,
-		resources: resources,
-		workspace: workspaceComponents,
+		sources:     sources,
+		collections: collections,
+		artifacts:   artifacts,
+		catalogs:    catalogs,
+		resources:   resources,
+		workspace:   workspaceComponents,
 	}, nil
 }
 

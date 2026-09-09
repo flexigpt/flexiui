@@ -690,6 +690,75 @@ func (a *API) GetMCPBundleInstallation(
 	return &GetMCPBundleInstallationResponse{Body: &value}, nil
 }
 
+func (a *API) GetMCPServerSchemaIdentity(
+	ctx context.Context,
+) (MCPServerSchemaIdentity, error) {
+	if a == nil {
+		return MCPServerSchemaIdentity{}, basespec.ErrClosed
+	}
+	if ctx == nil {
+		return MCPServerSchemaIdentity{}, fmt.Errorf(
+			"%w: MCP schema identity context is nil",
+			basespec.ErrInvalid,
+		)
+	}
+	if err := ctx.Err(); err != nil {
+		return MCPServerSchemaIdentity{}, err
+	}
+
+	server, err := mcpDocumentSchemaIdentity(
+		artifactbuiltin.MCPServerSchemaKey,
+	)
+	if err != nil {
+		return MCPServerSchemaIdentity{}, err
+	}
+	policy, err := mcpDocumentSchemaIdentity(
+		artifactbuiltin.MCPPolicySchemaKey,
+	)
+	if err != nil {
+		return MCPServerSchemaIdentity{}, err
+	}
+
+	return MCPServerSchemaIdentity{
+		Server: server,
+		Policy: policy,
+	}, nil
+}
+
+func mcpDocumentSchemaIdentity(
+	key schema.Key,
+) (MCPDocumentSchemaIdentity, error) {
+	if err := key.Validate(); err != nil {
+		return MCPDocumentSchemaIdentity{}, err
+	}
+	if key.Entity != schema.EntityArtifact {
+		return MCPDocumentSchemaIdentity{}, fmt.Errorf(
+			"%w: MCP schema identity must describe an Artifact schema",
+			basespec.ErrInvalid,
+		)
+	}
+
+	value := MCPDocumentSchemaIdentity{
+		Kind:          artifact.ArtifactKind(key.Kind),
+		SchemaID:      key.SchemaID,
+		SchemaVersion: key.SchemaVersion,
+	}
+	if err := value.Kind.Validate(); err != nil {
+		return MCPDocumentSchemaIdentity{}, err
+	}
+	if err := value.SchemaID.Validate(); err != nil {
+		return MCPDocumentSchemaIdentity{}, err
+	}
+	if err := basespec.ValidateRequiredText(
+		"MCP schema version",
+		value.SchemaVersion,
+		basespec.MaxVersionBytes,
+	); err != nil {
+		return MCPDocumentSchemaIdentity{}, err
+	}
+	return value, nil
+}
+
 func (a *API) canonicalizeBundleBytes(
 	ctx context.Context,
 	raw []byte,

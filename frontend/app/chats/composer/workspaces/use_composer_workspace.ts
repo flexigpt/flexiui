@@ -20,7 +20,7 @@ import { throwIfAborted } from '@/lib/async_utils';
 
 import { useAsyncResource } from '@/hooks/use_async_resource';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import type { LoadedWorkspaceSelectionCatalog } from '@/chats/composer/workspaces/workspace_selection_loader';
 import { loadWorkspaceSelectionCatalog } from '@/chats/composer/workspaces/workspace_selection_loader';
@@ -571,7 +571,7 @@ export function useComposerWorkspace({
 		setSelectionLoading(true);
 		setSelectionError(null);
 		try {
-			await workspaceAPI.refreshWorkspace(current.workspace);
+			await workspaceManagementAPI.refreshWorkspace(current.workspace);
 			if (
 				!mountedRef.current ||
 				loadVersionRef.current !== refreshVersion ||
@@ -610,8 +610,7 @@ export function useComposerWorkspace({
 				return;
 			}
 
-			const preferredRootID = workspace?.workspace.rootID ?? workspaces[0]?.workspace.rootID;
-			const created = await createFilesystemWorkspaceCollection(payload, preferredRootID);
+			const created = await createFilesystemWorkspaceCollection(payload);
 			const createdKey = workspaceRefKey(created.workspace);
 			setWorkspaces(previous =>
 				sortWorkspaces([...previous.filter(w => workspaceRefKey(w.workspace) !== createdKey), created])
@@ -619,8 +618,8 @@ export function useComposerWorkspace({
 			await refreshWorkspaces();
 
 			try {
-				await workspaceAPI.refreshWorkspace(created.workspace);
-				const refreshed = await workspaceAPI.getWorkspace(created.workspace);
+				await workspaceManagementAPI.refreshWorkspace(created.workspace);
+				const refreshed = await workspaceManagementAPI.getWorkspace(created.workspace);
 				await attachWorkspace(refreshed);
 			} catch (error) {
 				const fallbackSelection: WorkspaceConversationSelection = {
@@ -646,15 +645,7 @@ export function useComposerWorkspace({
 				);
 			}
 		},
-		[
-			applyResolvedWorkspaceSkillRefs,
-			attachWorkspace,
-			setWorkspaces,
-			refreshWorkspaces,
-			replaceSelection,
-			workspace?.workspace.rootID,
-			workspaces,
-		]
+		[applyResolvedWorkspaceSkillRefs, attachWorkspace, setWorkspaces, refreshWorkspaces, replaceSelection, workspaces]
 	);
 
 	const selectedContextIDs = useMemo(

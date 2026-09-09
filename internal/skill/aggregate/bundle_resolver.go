@@ -173,7 +173,7 @@ func (r *BundleResolver) ResolveSkill(
 func (r *BundleResolver) resolvedSkillFromSnapshot(
 	ctx context.Context,
 	record artifact.Artifact,
-	bundle skillConsumerAPI.Bundle,
+	bundle skillDomain.SkillBundle,
 	snapshot catalog.Snapshot,
 ) (ResolvedSkill, error) {
 	bundleRef := bundle.Collection.Ref()

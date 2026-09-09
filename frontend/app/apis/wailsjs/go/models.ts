@@ -1,5 +1,41 @@
 export namespace aggregate {
 	
+	export class ResolvedArtifactSkill {
+	    artifact: artifact.ArtifactRef;
+	    collection: collection.CollectionRef;
+	    definition: provider.SkillDef;
+	    version: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ResolvedArtifactSkill(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
+	        this.definition = this.convertValues(source["definition"], provider.SkillDef);
+	        this.version = source["version"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class SecretWriteResult {
 	    secretRef: string;
 	    sha256?: string;
@@ -128,745 +164,6 @@ export namespace artifact {
 	        this.rootID = source["rootID"];
 	        this.artifactID = source["artifactID"];
 	    }
-	}
-
-}
-
-export namespace artifactstore {
-	
-	export class API {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new API(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
-	}
-	export class ArtifactSourceDraft {
-	    id: string;
-	    storageKey: string;
-	    kind: string;
-	    displayName: string;
-	    enabled: boolean;
-	    config: number[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ArtifactSourceDraft(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.storageKey = source["storageKey"];
-	        this.kind = source["kind"];
-	        this.displayName = source["displayName"];
-	        this.enabled = source["enabled"];
-	        this.config = source["config"];
-	    }
-	}
-	export class CreateArtifactRootRequest {
-	    Body?: root.RootDraft;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateArtifactRootRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], root.RootDraft);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateArtifactRootResponse {
-	    Body?: root.Root;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateArtifactRootResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], root.Root);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateArtifactSourceRequest {
-	    RootID: string;
-	    Body?: ArtifactSourceDraft;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateArtifactSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.Body = this.convertValues(source["Body"], ArtifactSourceDraft);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateArtifactSourceResponse {
-	    Body?: source.Summary;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateArtifactSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetArtifactRootRequest {
-	    RootID: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetArtifactRootRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	    }
-	}
-	export class GetArtifactRootResponse {
-	    Body?: root.Root;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetArtifactRootResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], root.Root);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetArtifactSourceRequest {
-	    RootID: string;
-	    SourceID: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetArtifactSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.SourceID = source["SourceID"];
-	    }
-	}
-	export class GetArtifactSourceResponse {
-	    Body?: source.Summary;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetArtifactSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListArtifactRootsRequest {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactRootsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
-	}
-	export class ListArtifactRootsResponseBody {
-	    roots: root.Root[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactRootsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.roots = this.convertValues(source["roots"], root.Root);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListArtifactRootsResponse {
-	    Body?: ListArtifactRootsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactRootsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListArtifactRootsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListArtifactSourceKindsRequest {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourceKindsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
-	}
-	export class ListArtifactSourceKindsResponseBody {
-	    kinds: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourceKindsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.kinds = source["kinds"];
-	    }
-	}
-	export class ListArtifactSourceKindsResponse {
-	    Body?: ListArtifactSourceKindsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourceKindsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListArtifactSourceKindsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListArtifactSourcesRequest {
-	    RootID: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourcesRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	    }
-	}
-	export class ListArtifactSourcesResponseBody {
-	    sources: source.Summary[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourcesResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sources = this.convertValues(source["sources"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListArtifactSourcesResponse {
-	    Body?: ListArtifactSourcesResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListArtifactSourcesResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListArtifactSourcesResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class PurgeArtifactRootRequest {
-	    RootID: string;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeArtifactRootRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	}
-	export class PurgeArtifactRootResponse {
-	    rootID: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeArtifactRootResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.rootID = source["rootID"];
-	    }
-	}
-	export class PurgeArtifactSourceRequest {
-	    RootID: string;
-	    SourceID: string;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeArtifactSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.SourceID = source["SourceID"];
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	}
-	export class PurgeArtifactSourceResponse {
-	    rootID: string;
-	    sourceID: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeArtifactSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.rootID = source["rootID"];
-	        this.sourceID = source["sourceID"];
-	    }
-	}
-	export class RetireArtifactRootRequest {
-	    RootID: string;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireArtifactRootRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	}
-	export class RetireArtifactRootResponse {
-	    Body?: root.Root;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireArtifactRootResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], root.Root);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RetireArtifactSourceRequest {
-	    RootID: string;
-	    SourceID: string;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireArtifactSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.SourceID = source["SourceID"];
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	}
-	export class RetireArtifactSourceResponse {
-	    Body?: source.Summary;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireArtifactSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateArtifactRootRequest {
-	    RootID: string;
-	    Body?: root.RootUpdate;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateArtifactRootRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.Body = this.convertValues(source["Body"], root.RootUpdate);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateArtifactRootResponse {
-	    Body?: root.Root;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateArtifactRootResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], root.Root);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateArtifactSourceRequestBody {
-	    expectedRevision: number;
-	    displayName: string;
-	    enabled: boolean;
-	    config?: number[];
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateArtifactSourceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.displayName = source["displayName"];
-	        this.enabled = source["enabled"];
-	        this.config = source["config"];
-	    }
-	}
-	export class UpdateArtifactSourceRequest {
-	    RootID: string;
-	    SourceID: string;
-	    Body?: UpdateArtifactSourceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateArtifactSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.SourceID = source["SourceID"];
-	        this.Body = this.convertValues(source["Body"], UpdateArtifactSourceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class UpdateArtifactSourceResponse {
-	    Body?: source.Summary;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateArtifactSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 
 }
@@ -1285,26 +582,18 @@ export namespace auth {
 
 export namespace bundle {
 	
-	export class AdoptSkillRequest {
-	    Bundle: collection.CollectionRef;
-	    Occurrence: catalog.OccurrenceKey;
-	    ArtifactID: string;
-	    ExpectedCatalogRevision: number;
-	    Name: string;
-	    Enabled: boolean;
+	export class BundleExtension {
+	    servers?: Record<string, server.ServerExtension>;
+	    policies?: Record<string, policy.PolicyDocument>;
 	
 	    static createFrom(source: any = {}) {
-	        return new AdoptSkillRequest(source);
+	        return new BundleExtension(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
-	        this.Occurrence = this.convertValues(source["Occurrence"], catalog.OccurrenceKey);
-	        this.ArtifactID = source["ArtifactID"];
-	        this.ExpectedCatalogRevision = source["ExpectedCatalogRevision"];
-	        this.Name = source["Name"];
-	        this.Enabled = source["Enabled"];
+	        this.servers = this.convertValues(source["servers"], server.ServerExtension, true);
+	        this.policies = this.convertValues(source["policies"], policy.PolicyDocument, true);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -1325,26 +614,57 @@ export namespace bundle {
 		    return a;
 		}
 	}
-	export class AttachmentDraft {
-	    SourceID: string;
-	    Role: string;
-	    Enabled: boolean;
-	    DiscoveryRoot: string;
-	    ExpectedMemberDigests: Record<string, string>;
+	export class BundleDocument {
+	    kind: string;
+	    schemaID: string;
+	    schemaVersion: string;
+	    digest?: string;
+	    logicalName: string;
+	    logicalVersion?: string;
+	    displayName?: string;
+	    description?: string;
+	    labels?: Record<string, string>;
+	    mcpServers: Record<string, server.CoreServer>;
+	    bundleExtension: BundleExtension;
 	
 	    static createFrom(source: any = {}) {
-	        return new AttachmentDraft(source);
+	        return new BundleDocument(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.SourceID = source["SourceID"];
-	        this.Role = source["Role"];
-	        this.Enabled = source["Enabled"];
-	        this.DiscoveryRoot = source["DiscoveryRoot"];
-	        this.ExpectedMemberDigests = source["ExpectedMemberDigests"];
+	        this.kind = source["kind"];
+	        this.schemaID = source["schemaID"];
+	        this.schemaVersion = source["schemaVersion"];
+	        this.digest = source["digest"];
+	        this.logicalName = source["logicalName"];
+	        this.logicalVersion = source["logicalVersion"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.labels = source["labels"];
+	        this.mcpServers = this.convertValues(source["mcpServers"], server.CoreServer, true);
+	        this.bundleExtension = this.convertValues(source["bundleExtension"], BundleExtension);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	
 	export class CollectionData {
 	    schemaVersion: string;
 	    discoveryPolicyRevision: string;
@@ -1366,281 +686,6 @@ export namespace bundle {
 	        this.labels = source["labels"];
 	        this.managedSourceID = source["managedSourceID"];
 	    }
-	}
-	export class Bundle {
-	    collection: collection.Collection;
-	    data: CollectionData;
-	    attachments: collection.Attachment[];
-	    sources: source.Summary[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Bundle(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.collection = this.convertValues(source["collection"], collection.Collection);
-	        this.data = this.convertValues(source["data"], CollectionData);
-	        this.attachments = this.convertValues(source["attachments"], collection.Attachment);
-	        this.sources = this.convertValues(source["sources"], source.Summary);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class CreateBundleRequest {
-	    RootID: string;
-	    CollectionID: string;
-	    ManagedSourceID: string;
-	    ManagedSourceStorageKey: string;
-	    DisplayName: string;
-	    Description: string;
-	    Enabled: boolean;
-	    LogicalName: string;
-	    LogicalVersion: string;
-	    Labels: Record<string, string>;
-	    Attachments: AttachmentDraft[];
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateBundleRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.CollectionID = source["CollectionID"];
-	        this.ManagedSourceID = source["ManagedSourceID"];
-	        this.ManagedSourceStorageKey = source["ManagedSourceStorageKey"];
-	        this.DisplayName = source["DisplayName"];
-	        this.Description = source["Description"];
-	        this.Enabled = source["Enabled"];
-	        this.LogicalName = source["LogicalName"];
-	        this.LogicalVersion = source["LogicalVersion"];
-	        this.Labels = source["Labels"];
-	        this.Attachments = this.convertValues(source["Attachments"], AttachmentDraft);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateManagedSkillRequest {
-	    Bundle: collection.CollectionRef;
-	    ExpectedCollectionRevision: number;
-	    ArtifactID: string;
-	    SkillName: string;
-	    SKILLMD: number[];
-	    ExpectedArtifactRevision: number;
-	    Document?: document.SkillDocument;
-	    Files: source.ManagedPackageFile[];
-	    Enabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateManagedSkillRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
-	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
-	        this.ArtifactID = source["ArtifactID"];
-	        this.SkillName = source["SkillName"];
-	        this.SKILLMD = source["SKILLMD"];
-	        this.ExpectedArtifactRevision = source["ExpectedArtifactRevision"];
-	        this.Document = this.convertValues(source["Document"], document.SkillDocument);
-	        this.Files = this.convertValues(source["Files"], source.ManagedPackageFile);
-	        this.Enabled = source["Enabled"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateManagedSkillResponse {
-	    Artifact: artifact.Artifact;
-	    Address: artifact.ArtifactAddress;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateManagedSkillResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Artifact = this.convertValues(source["Artifact"], artifact.Artifact);
-	        this.Address = this.convertValues(source["Address"], artifact.ArtifactAddress);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ManagedSkillDocument {
-	    Artifact: artifact.Artifact;
-	    Document: document.SkillDocument;
-	
-	    static createFrom(source: any = {}) {
-	        return new ManagedSkillDocument(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Artifact = this.convertValues(source["Artifact"], artifact.Artifact);
-	        this.Document = this.convertValues(source["Document"], document.SkillDocument);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PinSkillRequest {
-	    Bundle: collection.CollectionRef;
-	    ExpectedCollectionRevision: number;
-	    ArtifactID: string;
-	    Binding: artifact.SourceBinding;
-	    Name: string;
-	    Enabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new PinSkillRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
-	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
-	        this.ArtifactID = source["ArtifactID"];
-	        this.Binding = this.convertValues(source["Binding"], artifact.SourceBinding);
-	        this.Name = source["Name"];
-	        this.Enabled = source["Enabled"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateBundleRequest {
-	    Bundle: collection.CollectionRef;
-	    ExpectedRevision: number;
-	    DisplayName: string;
-	    Description: string;
-	    Enabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateBundleRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
-	        this.ExpectedRevision = source["ExpectedRevision"];
-	        this.DisplayName = source["DisplayName"];
-	        this.Description = source["Description"];
-	        this.Enabled = source["Enabled"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 
 }
@@ -1908,6 +953,151 @@ export namespace catalog {
 	        this.subresourceLocator = source["subresourceLocator"];
 	    }
 	}
+	export class Occurrence {
+	    rootID: string;
+	    collectionID: string;
+	    key: OccurrenceKey;
+	    kind?: string;
+	    logicalName?: string;
+	    logicalVersion?: string;
+	    definitionDigest?: string;
+	    sourceContentDigest?: string;
+	    decoderID?: string;
+	    state: string;
+	    diagnostics?: diagnostic.Diagnostic[];
+	    // Go type: time
+	    observedAt: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Occurrence(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rootID = source["rootID"];
+	        this.collectionID = source["collectionID"];
+	        this.key = this.convertValues(source["key"], OccurrenceKey);
+	        this.kind = source["kind"];
+	        this.logicalName = source["logicalName"];
+	        this.logicalVersion = source["logicalVersion"];
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceContentDigest = source["sourceContentDigest"];
+	        this.decoderID = source["decoderID"];
+	        this.state = source["state"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.observedAt = this.convertValues(source["observedAt"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class Snapshot {
+	    rootID: string;
+	    collectionID: string;
+	    revision: number;
+	    collectionRevision: number;
+	    attachmentRevisions: Record<string, number>;
+	    sourceRevisions: Record<string, number>;
+	    sourceGenerations: Record<string, string>;
+	    planFingerprint: string;
+	    decoderFingerprint: string;
+	    // Go type: time
+	    publishedAt: any;
+	    diagnostics?: diagnostic.Diagnostic[];
+	    occurrences: Occurrence[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Snapshot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rootID = source["rootID"];
+	        this.collectionID = source["collectionID"];
+	        this.revision = source["revision"];
+	        this.collectionRevision = source["collectionRevision"];
+	        this.attachmentRevisions = source["attachmentRevisions"];
+	        this.sourceRevisions = source["sourceRevisions"];
+	        this.sourceGenerations = source["sourceGenerations"];
+	        this.planFingerprint = source["planFingerprint"];
+	        this.decoderFingerprint = source["decoderFingerprint"];
+	        this.publishedAt = this.convertValues(source["publishedAt"], null);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.occurrences = this.convertValues(source["occurrences"], Occurrence);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RefreshCollectionResult {
+	    catalog: Snapshot;
+	    createdArtifacts: string[];
+	    updatedArtifacts: string[];
+	    diagnostics?: diagnostic.Diagnostic[];
+	    candidates: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RefreshCollectionResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.catalog = this.convertValues(source["catalog"], Snapshot);
+	        this.createdArtifacts = source["createdArtifacts"];
+	        this.updatedArtifacts = source["updatedArtifacts"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.candidates = source["candidates"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 
@@ -2027,8 +1217,4989 @@ export namespace collection {
 
 }
 
+export namespace consumerapi {
+	
+	export class AdoptSkillBody {
+	    Bundle: collection.CollectionRef;
+	    Occurrence: catalog.OccurrenceKey;
+	    ArtifactID: string;
+	    ExpectedCatalogRevision: number;
+	    Name: string;
+	    Enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new AdoptSkillBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.Occurrence = this.convertValues(source["Occurrence"], catalog.OccurrenceKey);
+	        this.ArtifactID = source["ArtifactID"];
+	        this.ExpectedCatalogRevision = source["ExpectedCatalogRevision"];
+	        this.Name = source["Name"];
+	        this.Enabled = source["Enabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AdoptSkillRequest {
+	    body?: AdoptSkillBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new AdoptSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], AdoptSkillBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AdoptSkillResponse {
+	    body?: artifact.Artifact;
+	
+	    static createFrom(source: any = {}) {
+	        return new AdoptSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceArtifactSettings {
+	    runtimeDisabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceArtifactSettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.runtimeDisabled = source["runtimeDisabled"];
+	    }
+	}
+	export class WorkspaceOccurrenceRef {
+	    sourceID: string;
+	    locator: string;
+	    subresourceLocator?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceOccurrenceRef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.subresourceLocator = source["subresourceLocator"];
+	    }
+	}
+	export class AdoptWorkspaceOccurrenceInput {
+	    expectedCatalogRevision: number;
+	    occurrence: WorkspaceOccurrenceRef;
+	    artifactID: string;
+	    name?: string;
+	    enabled: boolean;
+	    settings: WorkspaceArtifactSettings;
+	
+	    static createFrom(source: any = {}) {
+	        return new AdoptWorkspaceOccurrenceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCatalogRevision = source["expectedCatalogRevision"];
+	        this.occurrence = this.convertValues(source["occurrence"], WorkspaceOccurrenceRef);
+	        this.artifactID = source["artifactID"];
+	        this.name = source["name"];
+	        this.enabled = source["enabled"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceArtifactSettings);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AttachSkillBundleSourceBody {
+	    Bundle: collection.CollectionRef;
+	    ExpectedCollectionRevision: number;
+	    Attachment: domain.AttachmentDraft;
+	
+	    static createFrom(source: any = {}) {
+	        return new AttachSkillBundleSourceBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
+	        this.Attachment = this.convertValues(source["Attachment"], domain.AttachmentDraft);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AttachSkillBundleSourceRequest {
+	    body?: AttachSkillBundleSourceBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new AttachSkillBundleSourceRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], AttachSkillBundleSourceBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AttachSkillBundleSourceResponse {
+	    body?: domain.SkillBundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new AttachSkillBundleSourceResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceAttachmentSettings {
+	    recursive?: boolean;
+	    authoritative?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceAttachmentSettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.recursive = source["recursive"];
+	        this.authoritative = source["authoritative"];
+	    }
+	}
+	export class AttachWorkspaceSourceInput {
+	    expectedCollectionRevision: number;
+	    sourceID: string;
+	    role: string;
+	    enabled: boolean;
+	    settings: WorkspaceAttachmentSettings;
+	
+	    static createFrom(source: any = {}) {
+	        return new AttachWorkspaceSourceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.sourceID = source["sourceID"];
+	        this.role = source["role"];
+	        this.enabled = source["enabled"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Bundle {
+	    collection: collection.Collection;
+	    data: bundle.CollectionData;
+	    attachment: collection.Attachment;
+	    source: source.Summary;
+	    packageAddress: source.ManagedPackageAddress;
+	    documentLocator: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Bundle(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collection = this.convertValues(source["collection"], collection.Collection);
+	        this.data = this.convertValues(source["data"], bundle.CollectionData);
+	        this.attachment = this.convertValues(source["attachment"], collection.Attachment);
+	        this.source = this.convertValues(source["source"], source.Summary);
+	        this.packageAddress = this.convertValues(source["packageAddress"], source.ManagedPackageAddress);
+	        this.documentLocator = source["documentLocator"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class BundleInstallationView {
+	    bundle: collection.CollectionRef;
+	    builtIn: boolean;
+	    collectionRevision: number;
+	    overlayRevision: number;
+	    runtimeEnabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new BundleInstallationView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	        this.builtIn = source["builtIn"];
+	        this.collectionRevision = source["collectionRevision"];
+	        this.overlayRevision = source["overlayRevision"];
+	        this.runtimeEnabled = source["runtimeEnabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ComposeWorkspaceContextRequestBody {
+	    artifacts?: artifact.ArtifactRef[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ComposeWorkspaceContextRequestBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ComposeWorkspaceContextRequest {
+	    workspace: collection.CollectionRef;
+	    Body?: ComposeWorkspaceContextRequestBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ComposeWorkspaceContextRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.Body = this.convertValues(source["Body"], ComposeWorkspaceContextRequestBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class WorkspaceContextDecision {
+	    artifact: artifact.ArtifactRef;
+	    status: string;
+	    code?: string;
+	    originalBytes: number;
+	    includedBytes: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceContextDecision(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.status = source["status"];
+	        this.code = source["code"];
+	        this.originalBytes = source["originalBytes"];
+	        this.includedBytes = source["includedBytes"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceContextContribution {
+	    artifact: artifact.ArtifactRef;
+	    recordRevision: number;
+	    definitionDigest: string;
+	    sourceID: string;
+	    locator: string;
+	    name: string;
+	    role: string;
+	    mediaType: string;
+	    content: string;
+	    conventionOrder: number;
+	    originalBytes: number;
+	    includedBytes: number;
+	    truncated: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceContextContribution(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.recordRevision = source["recordRevision"];
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.name = source["name"];
+	        this.role = source["role"];
+	        this.mediaType = source["mediaType"];
+	        this.content = source["content"];
+	        this.conventionOrder = source["conventionOrder"];
+	        this.originalBytes = source["originalBytes"];
+	        this.includedBytes = source["includedBytes"];
+	        this.truncated = source["truncated"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceContextLoadPlan {
+	    workspace: collection.CollectionRef;
+	    catalogRevision: number;
+	    contributions: WorkspaceContextContribution[];
+	    prompt: string;
+	    diagnostics?: diagnostic.Diagnostic[];
+	    decisions: WorkspaceContextDecision[];
+	    promptBytes: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceContextLoadPlan(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
+	        this.prompt = source["prompt"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.decisions = this.convertValues(source["decisions"], WorkspaceContextDecision);
+	        this.promptBytes = source["promptBytes"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ComposeWorkspaceContextResponse {
+	    Body?: WorkspaceContextLoadPlan;
+	
+	    static createFrom(source: any = {}) {
+	        return new ComposeWorkspaceContextResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceContextLoadPlan);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceDiscoveryRoot {
+	    root: string;
+	    recursive: boolean;
+	    includePatterns?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceDiscoveryRoot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.root = source["root"];
+	        this.recursive = source["recursive"];
+	        this.includePatterns = source["includePatterns"];
+	    }
+	}
+	export class WorkspaceDiscovery {
+	    additionalLocators?: string[];
+	    additionalRoots?: WorkspaceDiscoveryRoot[];
+	    includeReadme?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceDiscovery(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.additionalLocators = source["additionalLocators"];
+	        this.additionalRoots = this.convertValues(source["additionalRoots"], WorkspaceDiscoveryRoot);
+	        this.includeReadme = source["includeReadme"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateEmptyWorkspaceInput {
+	    displayName: string;
+	    description?: string;
+	    discovery: WorkspaceDiscovery;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateEmptyWorkspaceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateFilesystemWorkspaceInput {
+	    displayName: string;
+	    description?: string;
+	    rootPath: string;
+	    discovery: WorkspaceDiscovery;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateFilesystemWorkspaceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.rootPath = source["rootPath"];
+	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Registration {
+	    ArtifactID: string;
+	    Subresource: string;
+	    Kind: string;
+	    Enabled: boolean;
+	    Data: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Registration(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ArtifactID = source["ArtifactID"];
+	        this.Subresource = source["Subresource"];
+	        this.Kind = source["Kind"];
+	        this.Enabled = source["Enabled"];
+	        this.Data = source["Data"];
+	    }
+	}
+	export class CreateMCPBundleBody {
+	    RootID: string;
+	    CollectionID: string;
+	    SourceID: string;
+	    SourceStorageKey: string;
+	    Document: number[];
+	    Registrations: Registration[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateMCPBundleBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.RootID = source["RootID"];
+	        this.CollectionID = source["CollectionID"];
+	        this.SourceID = source["SourceID"];
+	        this.SourceStorageKey = source["SourceStorageKey"];
+	        this.Document = source["Document"];
+	        this.Registrations = this.convertValues(source["Registrations"], Registration);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateMCPBundleRequest {
+	    body?: CreateMCPBundleBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateMCPBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], CreateMCPBundleBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateMCPBundleResponse {
+	    body?: Bundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateMCPBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], Bundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateManagedSkillBody {
+	    Bundle: collection.CollectionRef;
+	    ExpectedCollectionRevision: number;
+	    ArtifactID: string;
+	    SkillName: string;
+	    SKILLMD: number[];
+	    ExpectedArtifactRevision: number;
+	    Document?: document.SkillDocument;
+	    Files: source.ManagedPackageFile[];
+	    Enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateManagedSkillBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
+	        this.ArtifactID = source["ArtifactID"];
+	        this.SkillName = source["SkillName"];
+	        this.SKILLMD = source["SKILLMD"];
+	        this.ExpectedArtifactRevision = source["ExpectedArtifactRevision"];
+	        this.Document = this.convertValues(source["Document"], document.SkillDocument);
+	        this.Files = this.convertValues(source["Files"], source.ManagedPackageFile);
+	        this.Enabled = source["Enabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateManagedSkillRequest {
+	    body?: CreateManagedSkillBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateManagedSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], CreateManagedSkillBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateManagedSkillResponse {
+	    Artifact: artifact.Artifact;
+	    Address: artifact.ArtifactAddress;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateManagedSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Artifact = this.convertValues(source["Artifact"], artifact.Artifact);
+	        this.Address = this.convertValues(source["Address"], artifact.ArtifactAddress);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateManagedSkillStoreResponse {
+	    body?: CreateManagedSkillResponse;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateManagedSkillStoreResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], CreateManagedSkillResponse);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateSkillBundleBody {
+	    RootID: string;
+	    CollectionID: string;
+	    ManagedSourceID: string;
+	    ManagedSourceStorageKey: string;
+	    DisplayName: string;
+	    Description: string;
+	    Enabled: boolean;
+	    LogicalName: string;
+	    LogicalVersion: string;
+	    Labels: Record<string, string>;
+	    Attachments: domain.AttachmentDraft[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateSkillBundleBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.RootID = source["RootID"];
+	        this.CollectionID = source["CollectionID"];
+	        this.ManagedSourceID = source["ManagedSourceID"];
+	        this.ManagedSourceStorageKey = source["ManagedSourceStorageKey"];
+	        this.DisplayName = source["DisplayName"];
+	        this.Description = source["Description"];
+	        this.Enabled = source["Enabled"];
+	        this.LogicalName = source["LogicalName"];
+	        this.LogicalVersion = source["LogicalVersion"];
+	        this.Labels = source["Labels"];
+	        this.Attachments = this.convertValues(source["Attachments"], domain.AttachmentDraft);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateSkillBundleRequest {
+	    body?: CreateSkillBundleBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], CreateSkillBundleBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CreateSkillBundleResponse {
+	    body?: domain.SkillBundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class DetachWorkspaceSourceInput {
+	    expectedCollectionRevision: number;
+	    expectedAttachmentRevision: number;
+	    sourceID: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DetachWorkspaceSourceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.expectedAttachmentRevision = source["expectedAttachmentRevision"];
+	        this.sourceID = source["sourceID"];
+	    }
+	}
+	export class GetMCPBundleDocumentRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleDocumentRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPBundleDocumentResponse {
+	    body?: bundle.BundleDocument;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleDocumentResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], bundle.BundleDocument);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPBundleInstallationRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleInstallationRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPBundleInstallationResponse {
+	    body?: BundleInstallationView;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleInstallationResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], BundleInstallationView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPBundleRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPBundleResponse {
+	    body?: Bundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], Bundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPServerInstallationRequest {
+	    server: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPServerInstallationRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.server = this.convertValues(source["server"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ServerInstallationView {
+	    artifact: artifact.Artifact;
+	    collection: collection.CollectionRef;
+	    catalogRevision: number;
+	    document: server.ServerDocument;
+	    installation: server.ServerData;
+	    installationRevision: number;
+	    installationEnabled: boolean;
+	    runtimeEnabled: boolean;
+	    builtIn: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ServerInstallationView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
+	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.document = this.convertValues(source["document"], server.ServerDocument);
+	        this.installation = this.convertValues(source["installation"], server.ServerData);
+	        this.installationRevision = source["installationRevision"];
+	        this.installationEnabled = source["installationEnabled"];
+	        this.runtimeEnabled = source["runtimeEnabled"];
+	        this.builtIn = source["builtIn"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetMCPServerInstallationResponse {
+	    body?: ServerInstallationView;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetMCPServerInstallationResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ServerInstallationView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetManagedSkillDocumentRequest {
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetManagedSkillDocumentRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetManagedSkillDocumentResponse {
+	    body?: domain.ManagedSkillDocument;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetManagedSkillDocumentResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.ManagedSkillDocument);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetSkillBundleRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetSkillBundleResponse {
+	    body?: domain.SkillBundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetSkillRequest {
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetSkillResponse {
+	    body?: artifact.Artifact;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceArtifactRequest {
+	    workspace: collection.CollectionRef;
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceArtifactRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceArtifactView {
+	    artifact: artifact.ArtifactRef;
+	    revision: number;
+	    name: string;
+	    kind: string;
+	    enabled: boolean;
+	    state: string;
+	    adoption: string;
+	    resolvedDefinition?: string;
+	    sourceID: string;
+	    locator: string;
+	    subresourceLocator?: string;
+	    runtimeDisabled: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceArtifactView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.revision = source["revision"];
+	        this.name = source["name"];
+	        this.kind = source["kind"];
+	        this.enabled = source["enabled"];
+	        this.state = source["state"];
+	        this.adoption = source["adoption"];
+	        this.resolvedDefinition = source["resolvedDefinition"];
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.subresourceLocator = source["subresourceLocator"];
+	        this.runtimeDisabled = source["runtimeDisabled"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceArtifactResponse {
+	    Body?: WorkspaceArtifactView;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceArtifactResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceCatalogRequest {
+	    workspace: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceCatalogRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceOccurrenceView {
+	    sourceID: string;
+	    locator: string;
+	    subresourceLocator?: string;
+	    kind?: string;
+	    logicalName?: string;
+	    logicalVersion?: string;
+	    definitionDigest?: string;
+	    sourceContentDigest?: string;
+	    state: string;
+	    recorded: boolean;
+	    artifact?: artifact.ArtifactRef;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceOccurrenceView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.subresourceLocator = source["subresourceLocator"];
+	        this.kind = source["kind"];
+	        this.logicalName = source["logicalName"];
+	        this.logicalVersion = source["logicalVersion"];
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceContentDigest = source["sourceContentDigest"];
+	        this.state = source["state"];
+	        this.recorded = source["recorded"];
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceResourceGroupView {
+	    kind: string;
+	    resources: WorkspaceResourceView[];
+	    unrecorded: WorkspaceOccurrenceView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceResourceGroupView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.resources = this.convertValues(source["resources"], WorkspaceResourceView);
+	        this.unrecorded = this.convertValues(source["unrecorded"], WorkspaceOccurrenceView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceResourceView {
+	    artifact: WorkspaceArtifactView;
+	    definitionDigest: string;
+	    sourceID: string;
+	    locator: string;
+	    catalogCurrent: boolean;
+	    projectionValid: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceResourceView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], WorkspaceArtifactView);
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.catalogCurrent = source["catalogCurrent"];
+	        this.projectionValid = source["projectionValid"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceAttachmentView {
+	    sourceID: string;
+	    revision: number;
+	    role: string;
+	    enabled: boolean;
+	    sourceDisplayName?: string;
+	    sourceKind?: string;
+	    path?: string;
+	    settings: WorkspaceAttachmentSettings;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceAttachmentView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourceID = source["sourceID"];
+	        this.revision = source["revision"];
+	        this.role = source["role"];
+	        this.enabled = source["enabled"];
+	        this.sourceDisplayName = source["sourceDisplayName"];
+	        this.sourceKind = source["sourceKind"];
+	        this.path = source["path"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceView {
+	    workspace: collection.CollectionRef;
+	    revision: number;
+	    displayName: string;
+	    description?: string;
+	    enabled: boolean;
+	    mode: string;
+	    primarySourceID?: string;
+	    primaryPath?: string;
+	    discovery: WorkspaceDiscovery;
+	    attachments: WorkspaceAttachmentView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.revision = source["revision"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.enabled = source["enabled"];
+	        this.mode = source["mode"];
+	        this.primarySourceID = source["primarySourceID"];
+	        this.primaryPath = source["primaryPath"];
+	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
+	        this.attachments = this.convertValues(source["attachments"], WorkspaceAttachmentView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceCatalogView {
+	    workspace: WorkspaceView;
+	    catalogRevision: number;
+	    catalogCurrent: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	    resources: WorkspaceResourceView[];
+	    groups: WorkspaceResourceGroupView[];
+	    occurrences: WorkspaceOccurrenceView[];
+	    validOccurrences: WorkspaceOccurrenceView[];
+	    invalidOccurrences: WorkspaceOccurrenceView[];
+	    missingOccurrences: WorkspaceOccurrenceView[];
+	    unrecordedOccurrences: WorkspaceOccurrenceView[];
+	    unresolvedArtifacts: WorkspaceArtifactView[];
+	    unrecordedCount: number;
+	    unresolvedArtifactCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceCatalogView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], WorkspaceView);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.catalogCurrent = source["catalogCurrent"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.resources = this.convertValues(source["resources"], WorkspaceResourceView);
+	        this.groups = this.convertValues(source["groups"], WorkspaceResourceGroupView);
+	        this.occurrences = this.convertValues(source["occurrences"], WorkspaceOccurrenceView);
+	        this.validOccurrences = this.convertValues(source["validOccurrences"], WorkspaceOccurrenceView);
+	        this.invalidOccurrences = this.convertValues(source["invalidOccurrences"], WorkspaceOccurrenceView);
+	        this.missingOccurrences = this.convertValues(source["missingOccurrences"], WorkspaceOccurrenceView);
+	        this.unrecordedOccurrences = this.convertValues(source["unrecordedOccurrences"], WorkspaceOccurrenceView);
+	        this.unresolvedArtifacts = this.convertValues(source["unresolvedArtifacts"], WorkspaceArtifactView);
+	        this.unrecordedCount = source["unrecordedCount"];
+	        this.unresolvedArtifactCount = source["unresolvedArtifactCount"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceCatalogResponse {
+	    Body?: WorkspaceCatalogView;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceCatalogResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceCatalogView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceRequest {
+	    workspace: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GetWorkspaceResponse {
+	    Body?: WorkspaceView;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetWorkspaceResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class InspectMCPPolicyRequest {
+	    policy: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new InspectMCPPolicyRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.policy = this.convertValues(source["policy"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PolicyView {
+	    artifact: artifact.Artifact;
+	    collection: collection.CollectionRef;
+	    catalogRevision: number;
+	    definition: definition.Definition;
+	    body: policy.MCPPolicy;
+	    effectiveEnabled: boolean;
+	    builtIn: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PolicyView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
+	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.definition = this.convertValues(source["definition"], definition.Definition);
+	        this.body = this.convertValues(source["body"], policy.MCPPolicy);
+	        this.effectiveEnabled = source["effectiveEnabled"];
+	        this.builtIn = source["builtIn"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class InspectMCPPolicyResponse {
+	    body?: PolicyView;
+	
+	    static createFrom(source: any = {}) {
+	        return new InspectMCPPolicyResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], PolicyView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class InspectMCPServerRequest {
+	    server: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new InspectMCPServerRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.server = this.convertValues(source["server"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class InspectMCPServerResponse {
+	    body?: server.Resolved;
+	
+	    static createFrom(source: any = {}) {
+	        return new InspectMCPServerResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], server.Resolved);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListBundleSkillsRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBundleSkillsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListBundleSkillsResponseBody {
+	    skills: artifact.Artifact[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBundleSkillsResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.skills = this.convertValues(source["skills"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListBundleSkillsResponse {
+	    body?: ListBundleSkillsResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBundleSkillsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ListBundleSkillsResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListMCPBundlePoliciesRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlePoliciesRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListMCPBundlePoliciesResponseBody {
+	    policies: artifact.Artifact[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlePoliciesResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.policies = this.convertValues(source["policies"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListMCPBundlePoliciesResponse {
+	    body?: ListMCPBundlePoliciesResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlePoliciesResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ListMCPBundlePoliciesResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListMCPBundleServersRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundleServersRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListMCPBundleServersResponseBody {
+	    servers: artifact.Artifact[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundleServersResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.servers = this.convertValues(source["servers"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListMCPBundleServersResponse {
+	    body?: ListMCPBundleServersResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundleServersResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ListMCPBundleServersResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListMCPBundlesRequest {
+	    rootID: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlesRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rootID = source["rootID"];
+	    }
+	}
+	export class ListMCPBundlesResponseBody {
+	    bundles: Bundle[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlesResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundles = this.convertValues(source["bundles"], Bundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListMCPBundlesResponse {
+	    body?: ListMCPBundlesResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMCPBundlesResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ListMCPBundlesResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListSkillBundlesRequest {
+	    rootID: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListSkillBundlesRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rootID = source["rootID"];
+	    }
+	}
+	export class ListSkillBundlesResponseBody {
+	    bundles: domain.SkillBundle[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListSkillBundlesResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundles = this.convertValues(source["bundles"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListSkillBundlesResponse {
+	    body?: ListSkillBundlesResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListSkillBundlesResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], ListSkillBundlesResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListWorkspaceArtifactsRequest {
+	    workspace: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceArtifactsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceArtifactsResponseBody {
+	    artifacts: WorkspaceArtifactView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceArtifactsResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifacts = this.convertValues(source["artifacts"], WorkspaceArtifactView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceArtifactsResponse {
+	    Body?: ListWorkspaceArtifactsResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceArtifactsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], ListWorkspaceArtifactsResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListWorkspaceContextsRequest {
+	    workspace: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceContextsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceContextView {
+	    artifact: artifact.ArtifactRef;
+	    recordRevision: number;
+	    definitionDigest: string;
+	    sourceID: string;
+	    locator: string;
+	    name: string;
+	    role: string;
+	    mediaType: string;
+	    enabled: boolean;
+	    state: string;
+	    catalogCurrent: boolean;
+	    projectionValid: boolean;
+	    runtimeDisabled: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceContextView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.recordRevision = source["recordRevision"];
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.name = source["name"];
+	        this.role = source["role"];
+	        this.mediaType = source["mediaType"];
+	        this.enabled = source["enabled"];
+	        this.state = source["state"];
+	        this.catalogCurrent = source["catalogCurrent"];
+	        this.projectionValid = source["projectionValid"];
+	        this.runtimeDisabled = source["runtimeDisabled"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceContextsResponseBody {
+	    contexts: WorkspaceContextView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceContextsResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.contexts = this.convertValues(source["contexts"], WorkspaceContextView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceContextsResponse {
+	    Body?: ListWorkspaceContextsResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceContextsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], ListWorkspaceContextsResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListWorkspaceSkillsRequest {
+	    workspace: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceSkillsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceSkillArgument {
+	    name: string;
+	    description?: string;
+	    default?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceSkillArgument(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.default = source["default"];
+	    }
+	}
+	export class WorkspaceSkillSummary {
+	    schemaVersion: string;
+	    id: string;
+	    slug: string;
+	    name: string;
+	    displayName: string;
+	    description: string;
+	    tags?: string[];
+	    insert: string;
+	    arguments?: WorkspaceSkillArgument[];
+	    isEnabled: boolean;
+	    // Go type: time
+	    createdAt: any;
+	    // Go type: time
+	    modifiedAt: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceSkillSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.schemaVersion = source["schemaVersion"];
+	        this.id = source["id"];
+	        this.slug = source["slug"];
+	        this.name = source["name"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.tags = source["tags"];
+	        this.insert = source["insert"];
+	        this.arguments = this.convertValues(source["arguments"], WorkspaceSkillArgument);
+	        this.isEnabled = source["isEnabled"];
+	        this.createdAt = this.convertValues(source["createdAt"], null);
+	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkspaceSkillView {
+	    workspace: collection.CollectionRef;
+	    artifact: artifact.ArtifactRef;
+	    definitionDigest: string;
+	    sourceID: string;
+	    locator: string;
+	    skill: WorkspaceSkillSummary;
+	    markdownBody?: string;
+	    recordRevision: number;
+	    state: string;
+	    projectionValid: boolean;
+	    catalogCurrent: boolean;
+	    runtimeDisabled: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceSkillView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.definitionDigest = source["definitionDigest"];
+	        this.sourceID = source["sourceID"];
+	        this.locator = source["locator"];
+	        this.skill = this.convertValues(source["skill"], WorkspaceSkillSummary);
+	        this.markdownBody = source["markdownBody"];
+	        this.recordRevision = source["recordRevision"];
+	        this.state = source["state"];
+	        this.projectionValid = source["projectionValid"];
+	        this.catalogCurrent = source["catalogCurrent"];
+	        this.runtimeDisabled = source["runtimeDisabled"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceSkillsResponseBody {
+	    skills: WorkspaceSkillView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceSkillsResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.skills = this.convertValues(source["skills"], WorkspaceSkillView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspaceSkillsResponse {
+	    Body?: ListWorkspaceSkillsResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspaceSkillsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], ListWorkspaceSkillsResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ListWorkspacesRequest {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspacesRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
+	}
+	export class ListWorkspacesResponseBody {
+	    workspaces: WorkspaceView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspacesResponseBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspaces = this.convertValues(source["workspaces"], WorkspaceView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListWorkspacesResponse {
+	    Body?: ListWorkspacesResponseBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListWorkspacesResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], ListWorkspacesResponseBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class LoadWorkspaceContextsRequestBody {
+	    artifacts?: artifact.ArtifactRef[];
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceContextsRequestBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadWorkspaceContextsRequest {
+	    workspace: collection.CollectionRef;
+	    Body?: LoadWorkspaceContextsRequestBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceContextsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.Body = this.convertValues(source["Body"], LoadWorkspaceContextsRequestBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class WorkspaceContextInspectionView {
+	    workspace: collection.CollectionRef;
+	    catalogRevision: number;
+	    contributions: WorkspaceContextContribution[];
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceContextInspectionView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadWorkspaceContextsResponse {
+	    Body?: WorkspaceContextInspectionView;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceContextsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceContextInspectionView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadWorkspaceSkillsRequestBody {
+	    artifacts: artifact.ArtifactRef[];
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceSkillsRequestBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadWorkspaceSkillsRequest {
+	    workspace: collection.CollectionRef;
+	    Body?: LoadWorkspaceSkillsRequestBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceSkillsRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.Body = this.convertValues(source["Body"], LoadWorkspaceSkillsRequestBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class WorkspaceSkillLoadView {
+	    workspace: collection.CollectionRef;
+	    catalogRevision: number;
+	    skills: WorkspaceSkillView[];
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceSkillLoadView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.skills = this.convertValues(source["skills"], WorkspaceSkillView);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadWorkspaceSkillsResponse {
+	    Body?: WorkspaceSkillLoadView;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadWorkspaceSkillsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceSkillLoadView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class MCPDocumentSchemaIdentity {
+	    kind: string;
+	    schemaID: string;
+	    schemaVersion: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MCPDocumentSchemaIdentity(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.schemaID = source["schemaID"];
+	        this.schemaVersion = source["schemaVersion"];
+	    }
+	}
+	export class MCPServerSchemaIdentity {
+	    server: MCPDocumentSchemaIdentity;
+	    policy: MCPDocumentSchemaIdentity;
+	
+	    static createFrom(source: any = {}) {
+	        return new MCPServerSchemaIdentity(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.server = this.convertValues(source["server"], MCPDocumentSchemaIdentity);
+	        this.policy = this.convertValues(source["policy"], MCPDocumentSchemaIdentity);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PinSkillBody {
+	    Bundle: collection.CollectionRef;
+	    ExpectedCollectionRevision: number;
+	    ArtifactID: string;
+	    Binding: artifact.SourceBinding;
+	    Name: string;
+	    Enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PinSkillBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
+	        this.ArtifactID = source["ArtifactID"];
+	        this.Binding = this.convertValues(source["Binding"], artifact.SourceBinding);
+	        this.Name = source["Name"];
+	        this.Enabled = source["Enabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PinSkillRequest {
+	    body?: PinSkillBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new PinSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], PinSkillBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PinSkillResponse {
+	    body?: artifact.Artifact;
+	
+	    static createFrom(source: any = {}) {
+	        return new PinSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PinWorkspaceArtifactInput {
+	    expectedCollectionRevision: number;
+	    artifactID: string;
+	    binding: artifact.SourceBinding;
+	    name: string;
+	    enabled: boolean;
+	    settings: WorkspaceArtifactSettings;
+	
+	    static createFrom(source: any = {}) {
+	        return new PinWorkspaceArtifactInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.artifactID = source["artifactID"];
+	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
+	        this.name = source["name"];
+	        this.enabled = source["enabled"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceArtifactSettings);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class PurgeSkillBundleRequest {
+	    bundle: collection.CollectionRef;
+	    expectedRevision: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PurgeSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	        this.expectedRevision = source["expectedRevision"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PurgeSkillBundleResponse {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new PurgeSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PurgeSkillRequest {
+	    artifact: artifact.ArtifactRef;
+	    expectedRevision: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PurgeSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.expectedRevision = source["expectedRevision"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PurgeSkillResponse {
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new PurgeSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RefreshSkillBundleRequest {
+	    bundle: collection.CollectionRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new RefreshSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RefreshSkillBundleResponse {
+	    body?: catalog.RefreshCollectionResult;
+	
+	    static createFrom(source: any = {}) {
+	        return new RefreshSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], catalog.RefreshCollectionResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RegisterSkillBundleDirectoryRequest {
+	    bundle: collection.CollectionRef;
+	    expectedCollectionRevision: number;
+	    rootPath: string;
+	    sourceDisplayName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RegisterSkillBundleDirectoryRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.rootPath = source["rootPath"];
+	        this.sourceDisplayName = source["sourceDisplayName"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RegisterSkillBundleDirectoryResponse {
+	    body?: domain.SkillBundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new RegisterSkillBundleDirectoryResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RegisterWorkspaceDirectoryInput {
+	    expectedCollectionRevision: number;
+	    displayName: string;
+	    rootPath: string;
+	    role: string;
+	    settings: WorkspaceAttachmentSettings;
+	
+	    static createFrom(source: any = {}) {
+	        return new RegisterWorkspaceDirectoryInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.displayName = source["displayName"];
+	        this.rootPath = source["rootPath"];
+	        this.role = source["role"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ReplaceDocumentRequest {
+	    Bundle: collection.CollectionRef;
+	    ExpectedCollectionRevision: number;
+	    Document: number[];
+	    Registrations: Registration[];
+	    AllowProtected: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReplaceDocumentRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
+	        this.Document = source["Document"];
+	        this.Registrations = this.convertValues(source["Registrations"], Registration);
+	        this.AllowProtected = source["AllowProtected"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RetireSkillBundleRequest {
+	    bundle: collection.CollectionRef;
+	    expectedRevision: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RetireSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
+	        this.expectedRevision = source["expectedRevision"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RetireSkillBundleResponse {
+	    body?: collection.Collection;
+	
+	    static createFrom(source: any = {}) {
+	        return new RetireSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], collection.Collection);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RetireWorkspaceResult {
+	    workspace: collection.CollectionRef;
+	    revision: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RetireWorkspaceResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.revision = source["revision"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class SetSkillEnabledBody {
+	    Artifact: artifact.ArtifactRef;
+	    ExpectedRevision: number;
+	    Enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetSkillEnabledBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Artifact = this.convertValues(source["Artifact"], artifact.ArtifactRef);
+	        this.ExpectedRevision = source["ExpectedRevision"];
+	        this.Enabled = source["Enabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SetSkillEnabledRequest {
+	    body?: SetSkillEnabledBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetSkillEnabledRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], SetSkillEnabledBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SetSkillEnabledResponse {
+	    body?: artifact.Artifact;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetSkillEnabledResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], artifact.Artifact);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SetWorkspaceArtifactRuntimeDisabledRequestBody {
+	    expectedRevision: number;
+	    runtimeDisabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetWorkspaceArtifactRuntimeDisabledRequestBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedRevision = source["expectedRevision"];
+	        this.runtimeDisabled = source["runtimeDisabled"];
+	    }
+	}
+	export class SetWorkspaceArtifactRuntimeDisabledRequest {
+	    workspace: collection.CollectionRef;
+	    artifact: artifact.ArtifactRef;
+	    Body?: SetWorkspaceArtifactRuntimeDisabledRequestBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetWorkspaceArtifactRuntimeDisabledRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.Body = this.convertValues(source["Body"], SetWorkspaceArtifactRuntimeDisabledRequestBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class SetWorkspaceArtifactRuntimeDisabledResponse {
+	    Body?: WorkspaceArtifactView;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetWorkspaceArtifactRuntimeDisabledResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SetWorkspacePrimarySourceInput {
+	    expectedCollectionRevision: number;
+	    sourceID?: string;
+	    clear?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetWorkspacePrimarySourceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.sourceID = source["sourceID"];
+	        this.clear = source["clear"];
+	    }
+	}
+	export class SuppressWorkspaceBindingInput {
+	    expectedCollectionRevision: number;
+	    binding: artifact.SourceBinding;
+	
+	    static createFrom(source: any = {}) {
+	        return new SuppressWorkspaceBindingInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UnadoptSkillRequest {
+	    artifact: artifact.ArtifactRef;
+	    expectedRevision: number;
+	    suppress: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnadoptSkillRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.expectedRevision = source["expectedRevision"];
+	        this.suppress = source["suppress"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UnadoptSkillResponse {
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnadoptSkillResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UnadoptWorkspaceArtifactInput {
+	    expectedRevision: number;
+	    suppress: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnadoptWorkspaceArtifactInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedRevision = source["expectedRevision"];
+	        this.suppress = source["suppress"];
+	    }
+	}
+	export class UnadoptWorkspaceArtifactResult {
+	    artifact: artifact.ArtifactRef;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnadoptWorkspaceArtifactResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UnsuppressWorkspaceBindingResult {
+	    workspace: collection.CollectionRef;
+	    binding: artifact.SourceBinding;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnsuppressWorkspaceBindingResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UpdateSkillBundleBody {
+	    Bundle: collection.CollectionRef;
+	    ExpectedRevision: number;
+	    DisplayName: string;
+	    Description: string;
+	    Enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateSkillBundleBody(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
+	        this.ExpectedRevision = source["ExpectedRevision"];
+	        this.DisplayName = source["DisplayName"];
+	        this.Description = source["Description"];
+	        this.Enabled = source["Enabled"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UpdateSkillBundleRequest {
+	    body?: UpdateSkillBundleBody;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateSkillBundleRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], UpdateSkillBundleBody);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UpdateSkillBundleResponse {
+	    body?: domain.SkillBundle;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateSkillBundleResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.body = this.convertValues(source["body"], domain.SkillBundle);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UpdateWorkspaceAttachmentInput {
+	    expectedCollectionRevision: number;
+	    expectedAttachmentRevision: number;
+	    sourceID: string;
+	    role: string;
+	    enabled: boolean;
+	    settings: WorkspaceAttachmentSettings;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateWorkspaceAttachmentInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
+	        this.expectedAttachmentRevision = source["expectedAttachmentRevision"];
+	        this.sourceID = source["sourceID"];
+	        this.role = source["role"];
+	        this.enabled = source["enabled"];
+	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class UpdateWorkspaceInput {
+	    expectedRevision: number;
+	    displayName: string;
+	    description?: string;
+	    enabled: boolean;
+	    discovery: WorkspaceDiscovery;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateWorkspaceInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.expectedRevision = source["expectedRevision"];
+	        this.displayName = source["displayName"];
+	        this.description = source["description"];
+	        this.enabled = source["enabled"];
+	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	export class WorkspaceDirectoryRegistrationResult {
+	    source: source.Summary;
+	    workspace: WorkspaceView;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceDirectoryRegistrationResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.source = this.convertValues(source["source"], source.Summary);
+	        this.workspace = this.convertValues(source["workspace"], WorkspaceView);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	
+	
+	
+	export class WorkspaceRefreshResult {
+	    workspace: collection.CollectionRef;
+	    catalogRevision: number;
+	    createdArtifacts: artifact.ArtifactRef[];
+	    updatedArtifacts: artifact.ArtifactRef[];
+	    diagnostics?: diagnostic.Diagnostic[];
+	    candidates: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceRefreshResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.catalogRevision = source["catalogRevision"];
+	        this.createdArtifacts = this.convertValues(source["createdArtifacts"], artifact.ArtifactRef);
+	        this.updatedArtifacts = this.convertValues(source["updatedArtifacts"], artifact.ArtifactRef);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	        this.candidates = source["candidates"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	export class WorkspaceSuppressionView {
+	    workspace: collection.CollectionRef;
+	    binding: artifact.SourceBinding;
+	    revision: number;
+	    // Go type: time
+	    createdAt: any;
+	    // Go type: time
+	    modifiedAt: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkspaceSuppressionView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
+	        this.revision = source["revision"];
+	        this.createdAt = this.convertValues(source["createdAt"], null);
+	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace conversation {
 	
+	export class ConversationContextUsage {
+	    artifact: artifact.ArtifactRef;
+	    name?: string;
+	    locator?: string;
+	    selectedDefinitionDigest?: string;
+	    usedDefinitionDigest?: string;
+	    usedArtifactRevision?: number;
+	    status: string;
+	    code?: string;
+	    originalBytes?: number;
+	    includedBytes?: number;
+	    changed?: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ConversationContextUsage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.name = source["name"];
+	        this.locator = source["locator"];
+	        this.selectedDefinitionDigest = source["selectedDefinitionDigest"];
+	        this.usedDefinitionDigest = source["usedDefinitionDigest"];
+	        this.usedArtifactRevision = source["usedArtifactRevision"];
+	        this.status = source["status"];
+	        this.code = source["code"];
+	        this.originalBytes = source["originalBytes"];
+	        this.includedBytes = source["includedBytes"];
+	        this.changed = source["changed"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ConversationResourceSelectionRef {
+	    artifact: artifact.ArtifactRef;
+	    name?: string;
+	    locator?: string;
+	    definitionDigest?: string;
+	    artifactRevision?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConversationResourceSelectionRef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.name = source["name"];
+	        this.locator = source["locator"];
+	        this.definitionDigest = source["definitionDigest"];
+	        this.artifactRevision = source["artifactRevision"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ConversationSelection {
+	    workspace: collection.CollectionRef;
+	    displayName?: string;
+	    workspaceRevision?: number;
+	    catalogRevision?: number;
+	    contextRefs?: ConversationResourceSelectionRef[];
+	    skillRefs?: ConversationResourceSelectionRef[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ConversationSelection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.displayName = source["displayName"];
+	        this.workspaceRevision = source["workspaceRevision"];
+	        this.catalogRevision = source["catalogRevision"];
+	        this.contextRefs = this.convertValues(source["contextRefs"], ConversationResourceSelectionRef);
+	        this.skillRefs = this.convertValues(source["skillRefs"], ConversationResourceSelectionRef);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ConversationSkillUsage {
+	    artifact: artifact.ArtifactRef;
+	    name?: string;
+	    displayName?: string;
+	    locator?: string;
+	    selectedDefinitionDigest?: string;
+	    usedDefinitionDigest?: string;
+	    usedArtifactRevision?: number;
+	    status: string;
+	    changed?: boolean;
+	    sessionAvailable?: boolean;
+	    active?: boolean;
+	    advertised?: boolean;
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ConversationSkillUsage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
+	        this.name = source["name"];
+	        this.displayName = source["displayName"];
+	        this.locator = source["locator"];
+	        this.selectedDefinitionDigest = source["selectedDefinitionDigest"];
+	        this.usedDefinitionDigest = source["usedDefinitionDigest"];
+	        this.usedArtifactRevision = source["usedArtifactRevision"];
+	        this.status = source["status"];
+	        this.changed = source["changed"];
+	        this.sessionAvailable = source["sessionAvailable"];
+	        this.active = source["active"];
+	        this.advertised = source["advertised"];
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ConversationUsage {
+	    workspace: collection.CollectionRef;
+	    displayName?: string;
+	    workspaceRevision?: number;
+	    catalogRevision?: number;
+	    status: string;
+	    contexts?: ConversationContextUsage[];
+	    skills?: ConversationSkillUsage[];
+	    diagnostics?: diagnostic.Diagnostic[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ConversationUsage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
+	        this.displayName = source["displayName"];
+	        this.workspaceRevision = source["workspaceRevision"];
+	        this.catalogRevision = source["catalogRevision"];
+	        this.status = source["status"];
+	        this.contexts = this.convertValues(source["contexts"], ConversationContextUsage);
+	        this.skills = this.convertValues(source["skills"], ConversationSkillUsage);
+	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class MCPAppModelContextUpdate {
 	    instanceID?: string;
 	    server: string;
@@ -2498,6 +6669,121 @@ export namespace document {
 
 }
 
+export namespace domain {
+	
+	export class AttachmentDraft {
+	    sourceId: string;
+	    role: string;
+	    enabled: boolean;
+	    discoveryRoot: string;
+	    expectedMemberDigests: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new AttachmentDraft(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourceId = source["sourceId"];
+	        this.role = source["role"];
+	        this.enabled = source["enabled"];
+	        this.discoveryRoot = source["discoveryRoot"];
+	        this.expectedMemberDigests = source["expectedMemberDigests"];
+	    }
+	}
+	export class CollectionData {
+	    schemaVersion: string;
+	    discoveryPolicyRevision: string;
+	    logicalName: string;
+	    logicalVersion?: string;
+	    labels?: Record<string, string>;
+	    managedSourceID?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.schemaVersion = source["schemaVersion"];
+	        this.discoveryPolicyRevision = source["discoveryPolicyRevision"];
+	        this.logicalName = source["logicalName"];
+	        this.logicalVersion = source["logicalVersion"];
+	        this.labels = source["labels"];
+	        this.managedSourceID = source["managedSourceID"];
+	    }
+	}
+	export class ManagedSkillDocument {
+	    artifact: artifact.Artifact;
+	    document: document.SkillDocument;
+	
+	    static createFrom(source: any = {}) {
+	        return new ManagedSkillDocument(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
+	        this.document = this.convertValues(source["document"], document.SkillDocument);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SkillBundle {
+	    collection: collection.Collection;
+	    data: CollectionData;
+	    attachments: collection.Attachment[];
+	    sources: source.Summary[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SkillBundle(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collection = this.convertValues(source["collection"], collection.Collection);
+	        this.data = this.convertValues(source["data"], CollectionData);
+	        this.attachments = this.convertValues(source["attachments"], collection.Attachment);
+	        this.sources = this.convertValues(source["sources"], source.Summary);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace main {
 	
 	export class MCPGlobalSettingsView {
@@ -2764,92 +7050,6 @@ export namespace provider {
 	        this.totalCount = source["totalCount"];
 	        this.locations = source["locations"];
 	        this.moreLocations = source["moreLocations"];
-	    }
-	}
-
-}
-
-export namespace root {
-	
-	export class Root {
-	    id: string;
-	    storageKey: string;
-	    displayName: string;
-	    description?: string;
-	    revision: number;
-	    // Go type: time
-	    createdAt: any;
-	    // Go type: time
-	    modifiedAt: any;
-	    // Go type: time
-	    retiredAt?: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new Root(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.storageKey = source["storageKey"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.revision = source["revision"];
-	        this.createdAt = this.convertValues(source["createdAt"], null);
-	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
-	        this.retiredAt = this.convertValues(source["retiredAt"], null);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RootDraft {
-	    id: string;
-	    storageKey: string;
-	    displayName: string;
-	    description?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new RootDraft(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.storageKey = source["storageKey"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	    }
-	}
-	export class RootUpdate {
-	    expectedRevision: number;
-	    displayName: string;
-	    description?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new RootUpdate(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
 	    }
 	}
 
@@ -3627,239 +7827,6 @@ export namespace runtime {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	
 	    }
-	}
-
-}
-
-export namespace selection {
-	
-	export class ConversationContextUsage {
-	    artifact: artifact.ArtifactRef;
-	    name?: string;
-	    locator?: string;
-	    selectedDefinitionDigest?: string;
-	    usedDefinitionDigest?: string;
-	    usedArtifactRevision?: number;
-	    status: string;
-	    code?: string;
-	    originalBytes?: number;
-	    includedBytes?: number;
-	    changed?: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ConversationContextUsage(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.name = source["name"];
-	        this.locator = source["locator"];
-	        this.selectedDefinitionDigest = source["selectedDefinitionDigest"];
-	        this.usedDefinitionDigest = source["usedDefinitionDigest"];
-	        this.usedArtifactRevision = source["usedArtifactRevision"];
-	        this.status = source["status"];
-	        this.code = source["code"];
-	        this.originalBytes = source["originalBytes"];
-	        this.includedBytes = source["includedBytes"];
-	        this.changed = source["changed"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ConversationResourceSelectionRef {
-	    artifact: artifact.ArtifactRef;
-	    name?: string;
-	    locator?: string;
-	    definitionDigest?: string;
-	    artifactRevision?: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new ConversationResourceSelectionRef(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.name = source["name"];
-	        this.locator = source["locator"];
-	        this.definitionDigest = source["definitionDigest"];
-	        this.artifactRevision = source["artifactRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ConversationSelection {
-	    workspace: collection.CollectionRef;
-	    displayName?: string;
-	    workspaceRevision?: number;
-	    catalogRevision?: number;
-	    contextRefs?: ConversationResourceSelectionRef[];
-	    skillRefs?: ConversationResourceSelectionRef[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ConversationSelection(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.displayName = source["displayName"];
-	        this.workspaceRevision = source["workspaceRevision"];
-	        this.catalogRevision = source["catalogRevision"];
-	        this.contextRefs = this.convertValues(source["contextRefs"], ConversationResourceSelectionRef);
-	        this.skillRefs = this.convertValues(source["skillRefs"], ConversationResourceSelectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ConversationSkillUsage {
-	    artifact: artifact.ArtifactRef;
-	    name?: string;
-	    displayName?: string;
-	    locator?: string;
-	    selectedDefinitionDigest?: string;
-	    usedDefinitionDigest?: string;
-	    usedArtifactRevision?: number;
-	    status: string;
-	    changed?: boolean;
-	    sessionAvailable?: boolean;
-	    active?: boolean;
-	    advertised?: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ConversationSkillUsage(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.name = source["name"];
-	        this.displayName = source["displayName"];
-	        this.locator = source["locator"];
-	        this.selectedDefinitionDigest = source["selectedDefinitionDigest"];
-	        this.usedDefinitionDigest = source["usedDefinitionDigest"];
-	        this.usedArtifactRevision = source["usedArtifactRevision"];
-	        this.status = source["status"];
-	        this.changed = source["changed"];
-	        this.sessionAvailable = source["sessionAvailable"];
-	        this.active = source["active"];
-	        this.advertised = source["advertised"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ConversationUsage {
-	    workspace: collection.CollectionRef;
-	    displayName?: string;
-	    workspaceRevision?: number;
-	    catalogRevision?: number;
-	    status: string;
-	    contexts?: ConversationContextUsage[];
-	    skills?: ConversationSkillUsage[];
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ConversationUsage(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.displayName = source["displayName"];
-	        this.workspaceRevision = source["workspaceRevision"];
-	        this.catalogRevision = source["catalogRevision"];
-	        this.status = source["status"];
-	        this.contexts = this.convertValues(source["contexts"], ConversationContextUsage);
-	        this.skills = this.convertValues(source["skills"], ConversationSkillUsage);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 
 }
@@ -6349,8 +10316,8 @@ export namespace spec {
 	    mcpContext?: conversation.MCPConversationContext;
 	    mcpToolMappings?: conversation.MCPProviderToolMapping[];
 	    mcpAppContextUpdates?: conversation.MCPAppModelContextUpdate[];
-	    workspaceSelection?: selection.ConversationSelection;
-	    workspaceUsage?: selection.ConversationUsage;
+	    workspaceSelection?: conversation.ConversationSelection;
+	    workspaceUsage?: conversation.ConversationUsage;
 	    attachments?: attachment.Attachment[];
 	    enabledSkillRefs?: artifact.ArtifactRef[];
 	    activeSkillRefs?: artifact.ArtifactRef[];
@@ -6378,8 +10345,8 @@ export namespace spec {
 	        this.mcpContext = this.convertValues(source["mcpContext"], conversation.MCPConversationContext);
 	        this.mcpToolMappings = this.convertValues(source["mcpToolMappings"], conversation.MCPProviderToolMapping);
 	        this.mcpAppContextUpdates = this.convertValues(source["mcpAppContextUpdates"], conversation.MCPAppModelContextUpdate);
-	        this.workspaceSelection = this.convertValues(source["workspaceSelection"], selection.ConversationSelection);
-	        this.workspaceUsage = this.convertValues(source["workspaceUsage"], selection.ConversationUsage);
+	        this.workspaceSelection = this.convertValues(source["workspaceSelection"], conversation.ConversationSelection);
+	        this.workspaceUsage = this.convertValues(source["workspaceUsage"], conversation.ConversationUsage);
 	        this.attachments = this.convertValues(source["attachments"], attachment.Attachment);
 	        this.enabledSkillRefs = this.convertValues(source["enabledSkillRefs"], artifact.ArtifactRef);
 	        this.activeSkillRefs = this.convertValues(source["activeSkillRefs"], artifact.ArtifactRef);
@@ -6659,7 +10626,7 @@ export namespace spec {
 	    inferenceResponse?: FetchCompletionResponse;
 	    hydratedCurrentInputs?: InputUnion[];
 	    mcpToolMappings?: conversation.MCPProviderToolMapping[];
-	    workspaceUsage?: selection.ConversationUsage;
+	    workspaceUsage?: conversation.ConversationUsage;
 	
 	    static createFrom(source: any = {}) {
 	        return new CompletionResponseBody(source);
@@ -6670,7 +10637,7 @@ export namespace spec {
 	        this.inferenceResponse = this.convertValues(source["inferenceResponse"], FetchCompletionResponse);
 	        this.hydratedCurrentInputs = this.convertValues(source["hydratedCurrentInputs"], InputUnion);
 	        this.mcpToolMappings = this.convertValues(source["mcpToolMappings"], conversation.MCPProviderToolMapping);
-	        this.workspaceUsage = this.convertValues(source["workspaceUsage"], selection.ConversationUsage);
+	        this.workspaceUsage = this.convertValues(source["workspaceUsage"], conversation.ConversationUsage);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -10119,418 +14086,6 @@ export namespace spec {
 
 }
 
-export namespace store {
-	
-	export class CollectionData {
-	    schemaVersion: string;
-	    discoveryPolicyRevision: string;
-	    logicalName: string;
-	    logicalVersion?: string;
-	    labels?: Record<string, string>;
-	    managedSourceID?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new CollectionData(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.schemaVersion = source["schemaVersion"];
-	        this.discoveryPolicyRevision = source["discoveryPolicyRevision"];
-	        this.logicalName = source["logicalName"];
-	        this.logicalVersion = source["logicalVersion"];
-	        this.labels = source["labels"];
-	        this.managedSourceID = source["managedSourceID"];
-	    }
-	}
-	export class Bundle {
-	    collection: collection.Collection;
-	    data: CollectionData;
-	    attachment: collection.Attachment;
-	    source: source.Summary;
-	    packageAddress: source.ManagedPackageAddress;
-	    documentLocator: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Bundle(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.collection = this.convertValues(source["collection"], collection.Collection);
-	        this.data = this.convertValues(source["data"], CollectionData);
-	        this.attachment = this.convertValues(source["attachment"], collection.Attachment);
-	        this.source = this.convertValues(source["source"], source.Summary);
-	        this.packageAddress = this.convertValues(source["packageAddress"], source.ManagedPackageAddress);
-	        this.documentLocator = source["documentLocator"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class BundleExtension {
-	    servers?: Record<string, server.ServerExtension>;
-	    policies?: Record<string, policy.PolicyDocument>;
-	
-	    static createFrom(source: any = {}) {
-	        return new BundleExtension(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.servers = this.convertValues(source["servers"], server.ServerExtension, true);
-	        this.policies = this.convertValues(source["policies"], policy.PolicyDocument, true);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class BundleDocument {
-	    kind: string;
-	    schemaID: string;
-	    schemaVersion: string;
-	    digest?: string;
-	    logicalName: string;
-	    logicalVersion?: string;
-	    displayName?: string;
-	    description?: string;
-	    labels?: Record<string, string>;
-	    mcpServers: Record<string, server.CoreServer>;
-	    bundleExtension: BundleExtension;
-	
-	    static createFrom(source: any = {}) {
-	        return new BundleDocument(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.kind = source["kind"];
-	        this.schemaID = source["schemaID"];
-	        this.schemaVersion = source["schemaVersion"];
-	        this.digest = source["digest"];
-	        this.logicalName = source["logicalName"];
-	        this.logicalVersion = source["logicalVersion"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.labels = source["labels"];
-	        this.mcpServers = this.convertValues(source["mcpServers"], server.CoreServer, true);
-	        this.bundleExtension = this.convertValues(source["bundleExtension"], BundleExtension);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class BundleInstallationView {
-	    bundle: collection.CollectionRef;
-	    builtIn: boolean;
-	    collectionRevision: number;
-	    overlayRevision: number;
-	    runtimeEnabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new BundleInstallationView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.bundle = this.convertValues(source["bundle"], collection.CollectionRef);
-	        this.builtIn = source["builtIn"];
-	        this.collectionRevision = source["collectionRevision"];
-	        this.overlayRevision = source["overlayRevision"];
-	        this.runtimeEnabled = source["runtimeEnabled"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class Registration {
-	    ArtifactID: string;
-	    Subresource: string;
-	    Kind: string;
-	    Enabled: boolean;
-	    Data: number[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Registration(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.ArtifactID = source["ArtifactID"];
-	        this.Subresource = source["Subresource"];
-	        this.Kind = source["Kind"];
-	        this.Enabled = source["Enabled"];
-	        this.Data = source["Data"];
-	    }
-	}
-	export class CreateRequest {
-	    RootID: string;
-	    CollectionID: string;
-	    SourceID: string;
-	    SourceStorageKey: string;
-	    Document: number[];
-	    Registrations: Registration[];
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.RootID = source["RootID"];
-	        this.CollectionID = source["CollectionID"];
-	        this.SourceID = source["SourceID"];
-	        this.SourceStorageKey = source["SourceStorageKey"];
-	        this.Document = source["Document"];
-	        this.Registrations = this.convertValues(source["Registrations"], Registration);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PolicyView {
-	    artifact: artifact.Artifact;
-	    collection: collection.CollectionRef;
-	    catalogRevision: number;
-	    definition: definition.Definition;
-	    body: policy.MCPPolicy;
-	    effectiveEnabled: boolean;
-	    builtIn: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new PolicyView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
-	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.definition = this.convertValues(source["definition"], definition.Definition);
-	        this.body = this.convertValues(source["body"], policy.MCPPolicy);
-	        this.effectiveEnabled = source["effectiveEnabled"];
-	        this.builtIn = source["builtIn"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ReplaceDocumentRequest {
-	    Bundle: collection.CollectionRef;
-	    ExpectedCollectionRevision: number;
-	    Document: number[];
-	    Registrations: Registration[];
-	    AllowProtected: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new ReplaceDocumentRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Bundle = this.convertValues(source["Bundle"], collection.CollectionRef);
-	        this.ExpectedCollectionRevision = source["ExpectedCollectionRevision"];
-	        this.Document = source["Document"];
-	        this.Registrations = this.convertValues(source["Registrations"], Registration);
-	        this.AllowProtected = source["AllowProtected"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ResolvedArtifactSkill {
-	    artifact: artifact.ArtifactRef;
-	    collection: collection.CollectionRef;
-	    definition: provider.SkillDef;
-	    version: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ResolvedArtifactSkill(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
-	        this.definition = this.convertValues(source["definition"], provider.SkillDef);
-	        this.version = source["version"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ServerInstallationView {
-	    artifact: artifact.Artifact;
-	    collection: collection.CollectionRef;
-	    catalogRevision: number;
-	    document: server.ServerDocument;
-	    installation: server.ServerData;
-	    installationRevision: number;
-	    installationEnabled: boolean;
-	    runtimeEnabled: boolean;
-	    builtIn: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new ServerInstallationView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.Artifact);
-	        this.collection = this.convertValues(source["collection"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.document = this.convertValues(source["document"], server.ServerDocument);
-	        this.installation = this.convertValues(source["installation"], server.ServerData);
-	        this.installationRevision = source["installationRevision"];
-	        this.installationEnabled = source["installationEnabled"];
-	        this.runtimeEnabled = source["runtimeEnabled"];
-	        this.builtIn = source["builtIn"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
 export namespace texttool {
 	
 	export class ApplyUnifiedDiffFileTarget {
@@ -10730,3471 +14285,6 @@ export namespace texttool {
 		    return a;
 		}
 	}
-
-}
-
-export namespace workspace {
-	
-	export class WorkspaceArtifactSettings {
-	    runtimeDisabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceArtifactSettings(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.runtimeDisabled = source["runtimeDisabled"];
-	    }
-	}
-	export class WorkspaceOccurrenceRef {
-	    sourceID: string;
-	    locator: string;
-	    subresourceLocator?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceOccurrenceRef(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.subresourceLocator = source["subresourceLocator"];
-	    }
-	}
-	export class AdoptWorkspaceOccurrenceRequestBody {
-	    expectedCatalogRevision: number;
-	    occurrence: WorkspaceOccurrenceRef;
-	    artifactID: string;
-	    name?: string;
-	    enabled: boolean;
-	    settings: WorkspaceArtifactSettings;
-	
-	    static createFrom(source: any = {}) {
-	        return new AdoptWorkspaceOccurrenceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCatalogRevision = source["expectedCatalogRevision"];
-	        this.occurrence = this.convertValues(source["occurrence"], WorkspaceOccurrenceRef);
-	        this.artifactID = source["artifactID"];
-	        this.name = source["name"];
-	        this.enabled = source["enabled"];
-	        this.settings = this.convertValues(source["settings"], WorkspaceArtifactSettings);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class AdoptWorkspaceOccurrenceRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: AdoptWorkspaceOccurrenceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new AdoptWorkspaceOccurrenceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], AdoptWorkspaceOccurrenceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class WorkspaceArtifactView {
-	    artifact: artifact.ArtifactRef;
-	    revision: number;
-	    name: string;
-	    kind: string;
-	    enabled: boolean;
-	    state: string;
-	    adoption: string;
-	    resolvedDefinition?: string;
-	    sourceID: string;
-	    locator: string;
-	    subresourceLocator?: string;
-	    runtimeDisabled: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceArtifactView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.revision = source["revision"];
-	        this.name = source["name"];
-	        this.kind = source["kind"];
-	        this.enabled = source["enabled"];
-	        this.state = source["state"];
-	        this.adoption = source["adoption"];
-	        this.resolvedDefinition = source["resolvedDefinition"];
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.subresourceLocator = source["subresourceLocator"];
-	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class AdoptWorkspaceOccurrenceResponse {
-	    Body?: WorkspaceArtifactView;
-	
-	    static createFrom(source: any = {}) {
-	        return new AdoptWorkspaceOccurrenceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceAttachmentSettings {
-	    recursive?: boolean;
-	    authoritative?: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceAttachmentSettings(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.recursive = source["recursive"];
-	        this.authoritative = source["authoritative"];
-	    }
-	}
-	export class AttachWorkspaceSourceRequestBody {
-	    expectedCollectionRevision: number;
-	    sourceID: string;
-	    role: string;
-	    enabled: boolean;
-	    settings: WorkspaceAttachmentSettings;
-	
-	    static createFrom(source: any = {}) {
-	        return new AttachWorkspaceSourceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.sourceID = source["sourceID"];
-	        this.role = source["role"];
-	        this.enabled = source["enabled"];
-	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class AttachWorkspaceSourceRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: AttachWorkspaceSourceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new AttachWorkspaceSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], AttachWorkspaceSourceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class WorkspaceAttachmentView {
-	    sourceID: string;
-	    revision: number;
-	    role: string;
-	    enabled: boolean;
-	    sourceDisplayName?: string;
-	    sourceKind?: string;
-	    path?: string;
-	    settings: WorkspaceAttachmentSettings;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceAttachmentView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sourceID = source["sourceID"];
-	        this.revision = source["revision"];
-	        this.role = source["role"];
-	        this.enabled = source["enabled"];
-	        this.sourceDisplayName = source["sourceDisplayName"];
-	        this.sourceKind = source["sourceKind"];
-	        this.path = source["path"];
-	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceDiscoveryRoot {
-	    root: string;
-	    recursive: boolean;
-	    includePatterns?: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceDiscoveryRoot(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.root = source["root"];
-	        this.recursive = source["recursive"];
-	        this.includePatterns = source["includePatterns"];
-	    }
-	}
-	export class WorkspaceDiscovery {
-	    additionalLocators?: string[];
-	    additionalRoots?: WorkspaceDiscoveryRoot[];
-	    includeReadme?: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceDiscovery(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.additionalLocators = source["additionalLocators"];
-	        this.additionalRoots = this.convertValues(source["additionalRoots"], WorkspaceDiscoveryRoot);
-	        this.includeReadme = source["includeReadme"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceView {
-	    workspace: collection.CollectionRef;
-	    revision: number;
-	    displayName: string;
-	    description?: string;
-	    enabled: boolean;
-	    mode: string;
-	    primarySourceID?: string;
-	    primaryPath?: string;
-	    discovery: WorkspaceDiscovery;
-	    attachments: WorkspaceAttachmentView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.revision = source["revision"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.enabled = source["enabled"];
-	        this.mode = source["mode"];
-	        this.primarySourceID = source["primarySourceID"];
-	        this.primaryPath = source["primaryPath"];
-	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
-	        this.attachments = this.convertValues(source["attachments"], WorkspaceAttachmentView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class AttachWorkspaceSourceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new AttachWorkspaceSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ComposeWorkspaceContextRequestBody {
-	    artifacts?: artifact.ArtifactRef[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ComposeWorkspaceContextRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ComposeWorkspaceContextRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: ComposeWorkspaceContextRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ComposeWorkspaceContextRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], ComposeWorkspaceContextRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class WorkspaceContextDecision {
-	    artifact: artifact.ArtifactRef;
-	    status: string;
-	    code?: string;
-	    originalBytes: number;
-	    includedBytes: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceContextDecision(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.status = source["status"];
-	        this.code = source["code"];
-	        this.originalBytes = source["originalBytes"];
-	        this.includedBytes = source["includedBytes"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceContextContribution {
-	    artifact: artifact.ArtifactRef;
-	    recordRevision: number;
-	    definitionDigest: string;
-	    sourceID: string;
-	    locator: string;
-	    name: string;
-	    role: string;
-	    mediaType: string;
-	    content: string;
-	    conventionOrder: number;
-	    originalBytes: number;
-	    includedBytes: number;
-	    truncated: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceContextContribution(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.recordRevision = source["recordRevision"];
-	        this.definitionDigest = source["definitionDigest"];
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.name = source["name"];
-	        this.role = source["role"];
-	        this.mediaType = source["mediaType"];
-	        this.content = source["content"];
-	        this.conventionOrder = source["conventionOrder"];
-	        this.originalBytes = source["originalBytes"];
-	        this.includedBytes = source["includedBytes"];
-	        this.truncated = source["truncated"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceContextLoadPlan {
-	    workspace: collection.CollectionRef;
-	    catalogRevision: number;
-	    contributions: WorkspaceContextContribution[];
-	    prompt: string;
-	    diagnostics?: diagnostic.Diagnostic[];
-	    decisions: WorkspaceContextDecision[];
-	    promptBytes: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceContextLoadPlan(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
-	        this.prompt = source["prompt"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	        this.decisions = this.convertValues(source["decisions"], WorkspaceContextDecision);
-	        this.promptBytes = source["promptBytes"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ComposeWorkspaceContextResponse {
-	    Body?: WorkspaceContextLoadPlan;
-	
-	    static createFrom(source: any = {}) {
-	        return new ComposeWorkspaceContextResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceContextLoadPlan);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateEmptyWorkspaceRequestBody {
-	    workspaceID: string;
-	    displayName: string;
-	    description?: string;
-	    discovery: WorkspaceDiscovery;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateEmptyWorkspaceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspaceID = source["workspaceID"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateEmptyWorkspaceRequest {
-	    Body?: CreateEmptyWorkspaceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateEmptyWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], CreateEmptyWorkspaceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class CreateEmptyWorkspaceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateEmptyWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateFilesystemWorkspaceRequestBody {
-	    workspaceID: string;
-	    sourceID: string;
-	    sourceStorageKey: string;
-	    displayName: string;
-	    description?: string;
-	    rootPath: string;
-	    discovery: WorkspaceDiscovery;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateFilesystemWorkspaceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspaceID = source["workspaceID"];
-	        this.sourceID = source["sourceID"];
-	        this.sourceStorageKey = source["sourceStorageKey"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.rootPath = source["rootPath"];
-	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class CreateFilesystemWorkspaceRequest {
-	    Body?: CreateFilesystemWorkspaceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateFilesystemWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], CreateFilesystemWorkspaceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class CreateFilesystemWorkspaceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new CreateFilesystemWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class DetachWorkspaceSourceRequest {
-	    workspace: collection.CollectionRef;
-	    sourceID: string;
-	    expectedCollectionRevision: number;
-	    expectedAttachmentRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new DetachWorkspaceSourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.sourceID = source["sourceID"];
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.expectedAttachmentRevision = source["expectedAttachmentRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class DetachWorkspaceSourceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new DetachWorkspaceSourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceArtifactRequest {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceArtifactRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceArtifactResponse {
-	    Body?: WorkspaceArtifactView;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceArtifactResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceCatalogRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceCatalogRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceOccurrenceView {
-	    sourceID: string;
-	    locator: string;
-	    subresourceLocator?: string;
-	    kind?: string;
-	    logicalName?: string;
-	    logicalVersion?: string;
-	    definitionDigest?: string;
-	    sourceContentDigest?: string;
-	    state: string;
-	    recorded: boolean;
-	    artifact?: artifact.ArtifactRef;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceOccurrenceView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.subresourceLocator = source["subresourceLocator"];
-	        this.kind = source["kind"];
-	        this.logicalName = source["logicalName"];
-	        this.logicalVersion = source["logicalVersion"];
-	        this.definitionDigest = source["definitionDigest"];
-	        this.sourceContentDigest = source["sourceContentDigest"];
-	        this.state = source["state"];
-	        this.recorded = source["recorded"];
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceResourceGroupView {
-	    kind: string;
-	    resources: WorkspaceResourceView[];
-	    unrecorded: WorkspaceOccurrenceView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceResourceGroupView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.kind = source["kind"];
-	        this.resources = this.convertValues(source["resources"], WorkspaceResourceView);
-	        this.unrecorded = this.convertValues(source["unrecorded"], WorkspaceOccurrenceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceResourceView {
-	    artifact: WorkspaceArtifactView;
-	    definitionDigest: string;
-	    sourceID: string;
-	    locator: string;
-	    catalogCurrent: boolean;
-	    projectionValid: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceResourceView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], WorkspaceArtifactView);
-	        this.definitionDigest = source["definitionDigest"];
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.catalogCurrent = source["catalogCurrent"];
-	        this.projectionValid = source["projectionValid"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceCatalogView {
-	    workspace: WorkspaceView;
-	    catalogRevision: number;
-	    catalogCurrent: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	    resources: WorkspaceResourceView[];
-	    groups: WorkspaceResourceGroupView[];
-	    occurrences: WorkspaceOccurrenceView[];
-	    validOccurrences: WorkspaceOccurrenceView[];
-	    invalidOccurrences: WorkspaceOccurrenceView[];
-	    missingOccurrences: WorkspaceOccurrenceView[];
-	    unrecordedOccurrences: WorkspaceOccurrenceView[];
-	    unresolvedArtifacts: WorkspaceArtifactView[];
-	    unrecordedCount: number;
-	    unresolvedArtifactCount: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceCatalogView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], WorkspaceView);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.catalogCurrent = source["catalogCurrent"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	        this.resources = this.convertValues(source["resources"], WorkspaceResourceView);
-	        this.groups = this.convertValues(source["groups"], WorkspaceResourceGroupView);
-	        this.occurrences = this.convertValues(source["occurrences"], WorkspaceOccurrenceView);
-	        this.validOccurrences = this.convertValues(source["validOccurrences"], WorkspaceOccurrenceView);
-	        this.invalidOccurrences = this.convertValues(source["invalidOccurrences"], WorkspaceOccurrenceView);
-	        this.missingOccurrences = this.convertValues(source["missingOccurrences"], WorkspaceOccurrenceView);
-	        this.unrecordedOccurrences = this.convertValues(source["unrecordedOccurrences"], WorkspaceOccurrenceView);
-	        this.unresolvedArtifacts = this.convertValues(source["unresolvedArtifacts"], WorkspaceArtifactView);
-	        this.unrecordedCount = source["unrecordedCount"];
-	        this.unresolvedArtifactCount = source["unresolvedArtifactCount"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceCatalogResponse {
-	    Body?: WorkspaceCatalogView;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceCatalogResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceCatalogView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class GetWorkspaceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceArtifactsRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceArtifactsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceArtifactsResponseBody {
-	    artifacts: WorkspaceArtifactView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceArtifactsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifacts = this.convertValues(source["artifacts"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceArtifactsResponse {
-	    Body?: ListWorkspaceArtifactsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceArtifactsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListWorkspaceArtifactsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListWorkspaceContextsRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceContextsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceContextView {
-	    artifact: artifact.ArtifactRef;
-	    recordRevision: number;
-	    definitionDigest: string;
-	    sourceID: string;
-	    locator: string;
-	    name: string;
-	    role: string;
-	    mediaType: string;
-	    enabled: boolean;
-	    state: string;
-	    catalogCurrent: boolean;
-	    projectionValid: boolean;
-	    runtimeDisabled: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceContextView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.recordRevision = source["recordRevision"];
-	        this.definitionDigest = source["definitionDigest"];
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.name = source["name"];
-	        this.role = source["role"];
-	        this.mediaType = source["mediaType"];
-	        this.enabled = source["enabled"];
-	        this.state = source["state"];
-	        this.catalogCurrent = source["catalogCurrent"];
-	        this.projectionValid = source["projectionValid"];
-	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceContextsResponseBody {
-	    contexts: WorkspaceContextView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceContextsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.contexts = this.convertValues(source["contexts"], WorkspaceContextView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceContextsResponse {
-	    Body?: ListWorkspaceContextsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceContextsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListWorkspaceContextsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListWorkspaceSkillsRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSkillsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceSkillArgument {
-	    name: string;
-	    description?: string;
-	    default?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceSkillArgument(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.description = source["description"];
-	        this.default = source["default"];
-	    }
-	}
-	export class WorkspaceSkillSummary {
-	    schemaVersion: string;
-	    id: string;
-	    slug: string;
-	    name: string;
-	    displayName: string;
-	    description: string;
-	    tags?: string[];
-	    insert: string;
-	    arguments?: WorkspaceSkillArgument[];
-	    isEnabled: boolean;
-	    // Go type: time
-	    createdAt: any;
-	    // Go type: time
-	    modifiedAt: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceSkillSummary(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.schemaVersion = source["schemaVersion"];
-	        this.id = source["id"];
-	        this.slug = source["slug"];
-	        this.name = source["name"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.tags = source["tags"];
-	        this.insert = source["insert"];
-	        this.arguments = this.convertValues(source["arguments"], WorkspaceSkillArgument);
-	        this.isEnabled = source["isEnabled"];
-	        this.createdAt = this.convertValues(source["createdAt"], null);
-	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceSkillView {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	    definitionDigest: string;
-	    sourceID: string;
-	    locator: string;
-	    skill: WorkspaceSkillSummary;
-	    markdownBody?: string;
-	    recordRevision: number;
-	    state: string;
-	    projectionValid: boolean;
-	    catalogCurrent: boolean;
-	    runtimeDisabled: boolean;
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceSkillView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.definitionDigest = source["definitionDigest"];
-	        this.sourceID = source["sourceID"];
-	        this.locator = source["locator"];
-	        this.skill = this.convertValues(source["skill"], WorkspaceSkillSummary);
-	        this.markdownBody = source["markdownBody"];
-	        this.recordRevision = source["recordRevision"];
-	        this.state = source["state"];
-	        this.projectionValid = source["projectionValid"];
-	        this.catalogCurrent = source["catalogCurrent"];
-	        this.runtimeDisabled = source["runtimeDisabled"];
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceSkillsResponseBody {
-	    skills: WorkspaceSkillView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSkillsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.skills = this.convertValues(source["skills"], WorkspaceSkillView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceSkillsResponse {
-	    Body?: ListWorkspaceSkillsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSkillsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListWorkspaceSkillsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListWorkspaceSuppressionsRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSuppressionsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceSuppressionView {
-	    workspace: collection.CollectionRef;
-	    binding: artifact.SourceBinding;
-	    revision: number;
-	    // Go type: time
-	    createdAt: any;
-	    // Go type: time
-	    modifiedAt: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceSuppressionView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
-	        this.revision = source["revision"];
-	        this.createdAt = this.convertValues(source["createdAt"], null);
-	        this.modifiedAt = this.convertValues(source["modifiedAt"], null);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceSuppressionsResponseBody {
-	    suppressions: WorkspaceSuppressionView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSuppressionsResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.suppressions = this.convertValues(source["suppressions"], WorkspaceSuppressionView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspaceSuppressionsResponse {
-	    Body?: ListWorkspaceSuppressionsResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspaceSuppressionsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListWorkspaceSuppressionsResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class ListWorkspacesRequest {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspacesRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
-	}
-	export class ListWorkspacesResponseBody {
-	    workspaces: WorkspaceView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspacesResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspaces = this.convertValues(source["workspaces"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListWorkspacesResponse {
-	    Body?: ListWorkspacesResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListWorkspacesResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], ListWorkspacesResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class LoadWorkspaceContextsRequestBody {
-	    artifacts?: artifact.ArtifactRef[];
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceContextsRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class LoadWorkspaceContextsRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: LoadWorkspaceContextsRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceContextsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], LoadWorkspaceContextsRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class WorkspaceContextInspectionView {
-	    workspace: collection.CollectionRef;
-	    catalogRevision: number;
-	    contributions: WorkspaceContextContribution[];
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceContextInspectionView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.contributions = this.convertValues(source["contributions"], WorkspaceContextContribution);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class LoadWorkspaceContextsResponse {
-	    Body?: WorkspaceContextInspectionView;
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceContextsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceContextInspectionView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class LoadWorkspaceSkillsRequestBody {
-	    artifacts: artifact.ArtifactRef[];
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceSkillsRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifacts = this.convertValues(source["artifacts"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class LoadWorkspaceSkillsRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: LoadWorkspaceSkillsRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceSkillsRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], LoadWorkspaceSkillsRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class WorkspaceSkillLoadView {
-	    workspace: collection.CollectionRef;
-	    catalogRevision: number;
-	    skills: WorkspaceSkillView[];
-	    diagnostics?: diagnostic.Diagnostic[];
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceSkillLoadView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.skills = this.convertValues(source["skills"], WorkspaceSkillView);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class LoadWorkspaceSkillsResponse {
-	    Body?: WorkspaceSkillLoadView;
-	
-	    static createFrom(source: any = {}) {
-	        return new LoadWorkspaceSkillsResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceSkillLoadView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PinWorkspaceArtifactRequestBody {
-	    expectedCollectionRevision: number;
-	    binding: artifact.SourceBinding;
-	    artifactID: string;
-	    name: string;
-	    enabled: boolean;
-	    settings: WorkspaceArtifactSettings;
-	
-	    static createFrom(source: any = {}) {
-	        return new PinWorkspaceArtifactRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
-	        this.artifactID = source["artifactID"];
-	        this.name = source["name"];
-	        this.enabled = source["enabled"];
-	        this.settings = this.convertValues(source["settings"], WorkspaceArtifactSettings);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PinWorkspaceArtifactRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: PinWorkspaceArtifactRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new PinWorkspaceArtifactRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], PinWorkspaceArtifactRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class PinWorkspaceArtifactResponse {
-	    Body?: WorkspaceArtifactView;
-	
-	    static createFrom(source: any = {}) {
-	        return new PinWorkspaceArtifactResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PurgeWorkspaceArtifactRequest {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceArtifactRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PurgeWorkspaceArtifactResponseBody {
-	    artifact: artifact.ArtifactRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceArtifactResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PurgeWorkspaceArtifactResponse {
-	    Body?: PurgeWorkspaceArtifactResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceArtifactResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], PurgeWorkspaceArtifactResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class PurgeWorkspaceRequest {
-	    workspace: collection.CollectionRef;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PurgeWorkspaceResponseBody {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class PurgeWorkspaceResponse {
-	    Body?: PurgeWorkspaceResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new PurgeWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], PurgeWorkspaceResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class RefreshWorkspaceRequest {
-	    workspace: collection.CollectionRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new RefreshWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class WorkspaceRefreshResult {
-	    workspace: collection.CollectionRef;
-	    catalogRevision: number;
-	    createdArtifacts: artifact.ArtifactRef[];
-	    updatedArtifacts: artifact.ArtifactRef[];
-	    diagnostics?: diagnostic.Diagnostic[];
-	    candidates: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkspaceRefreshResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.catalogRevision = source["catalogRevision"];
-	        this.createdArtifacts = this.convertValues(source["createdArtifacts"], artifact.ArtifactRef);
-	        this.updatedArtifacts = this.convertValues(source["updatedArtifacts"], artifact.ArtifactRef);
-	        this.diagnostics = this.convertValues(source["diagnostics"], diagnostic.Diagnostic);
-	        this.candidates = source["candidates"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RefreshWorkspaceResponse {
-	    Body?: WorkspaceRefreshResult;
-	
-	    static createFrom(source: any = {}) {
-	        return new RefreshWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceRefreshResult);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RetireWorkspaceRequest {
-	    workspace: collection.CollectionRef;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RetireWorkspaceResponseBody {
-	    workspace: collection.CollectionRef;
-	    revision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireWorkspaceResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.revision = source["revision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RetireWorkspaceResponse {
-	    Body?: RetireWorkspaceResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new RetireWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], RetireWorkspaceResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class SetWorkspaceArtifactEnabledRequestBody {
-	    expectedRevision: number;
-	    enabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactEnabledRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.enabled = source["enabled"];
-	    }
-	}
-	export class SetWorkspaceArtifactEnabledRequest {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	    Body?: SetWorkspaceArtifactEnabledRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactEnabledRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.Body = this.convertValues(source["Body"], SetWorkspaceArtifactEnabledRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class SetWorkspaceArtifactEnabledResponse {
-	    Body?: WorkspaceArtifactView;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactEnabledResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SetWorkspaceArtifactRuntimeDisabledRequestBody {
-	    expectedRevision: number;
-	    runtimeDisabled: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactRuntimeDisabledRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.runtimeDisabled = source["runtimeDisabled"];
-	    }
-	}
-	export class SetWorkspaceArtifactRuntimeDisabledRequest {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	    Body?: SetWorkspaceArtifactRuntimeDisabledRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactRuntimeDisabledRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.Body = this.convertValues(source["Body"], SetWorkspaceArtifactRuntimeDisabledRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class SetWorkspaceArtifactRuntimeDisabledResponse {
-	    Body?: WorkspaceArtifactView;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspaceArtifactRuntimeDisabledResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceArtifactView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SetWorkspacePrimarySourceRequestBody {
-	    expectedCollectionRevision: number;
-	    previousSourceID?: string;
-	    expectedPreviousAttachmentRevision?: number;
-	    sourceID?: string;
-	    clear?: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspacePrimarySourceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.previousSourceID = source["previousSourceID"];
-	        this.expectedPreviousAttachmentRevision = source["expectedPreviousAttachmentRevision"];
-	        this.sourceID = source["sourceID"];
-	        this.clear = source["clear"];
-	    }
-	}
-	export class SetWorkspacePrimarySourceRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: SetWorkspacePrimarySourceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspacePrimarySourceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], SetWorkspacePrimarySourceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class SetWorkspacePrimarySourceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new SetWorkspacePrimarySourceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SuppressWorkspaceBindingRequestBody {
-	    expectedCollectionRevision: number;
-	    binding: artifact.SourceBinding;
-	
-	    static createFrom(source: any = {}) {
-	        return new SuppressWorkspaceBindingRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SuppressWorkspaceBindingRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: SuppressWorkspaceBindingRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new SuppressWorkspaceBindingRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], SuppressWorkspaceBindingRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class SuppressWorkspaceBindingResponse {
-	    Body?: WorkspaceSuppressionView;
-	
-	    static createFrom(source: any = {}) {
-	        return new SuppressWorkspaceBindingResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceSuppressionView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UnadoptWorkspaceArtifactRequest {
-	    workspace: collection.CollectionRef;
-	    artifact: artifact.ArtifactRef;
-	    expectedRevision: number;
-	    suppress: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnadoptWorkspaceArtifactRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.suppress = source["suppress"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UnadoptWorkspaceArtifactResponseBody {
-	    artifact: artifact.ArtifactRef;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnadoptWorkspaceArtifactResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.artifact = this.convertValues(source["artifact"], artifact.ArtifactRef);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UnadoptWorkspaceArtifactResponse {
-	    Body?: UnadoptWorkspaceArtifactResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnadoptWorkspaceArtifactResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], UnadoptWorkspaceArtifactResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class UnsuppressWorkspaceBindingRequest {
-	    workspace: collection.CollectionRef;
-	    binding: artifact.SourceBinding;
-	    expectedRevision: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnsuppressWorkspaceBindingRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
-	        this.expectedRevision = source["expectedRevision"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UnsuppressWorkspaceBindingResponseBody {
-	    workspace: collection.CollectionRef;
-	    binding: artifact.SourceBinding;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnsuppressWorkspaceBindingResponseBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.binding = this.convertValues(source["binding"], artifact.SourceBinding);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UnsuppressWorkspaceBindingResponse {
-	    Body?: UnsuppressWorkspaceBindingResponseBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new UnsuppressWorkspaceBindingResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], UnsuppressWorkspaceBindingResponseBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class UpdateWorkspaceAttachmentRequestBody {
-	    expectedCollectionRevision: number;
-	    expectedAttachmentRevision: number;
-	    role: string;
-	    enabled: boolean;
-	    settings: WorkspaceAttachmentSettings;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceAttachmentRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedCollectionRevision = source["expectedCollectionRevision"];
-	        this.expectedAttachmentRevision = source["expectedAttachmentRevision"];
-	        this.role = source["role"];
-	        this.enabled = source["enabled"];
-	        this.settings = this.convertValues(source["settings"], WorkspaceAttachmentSettings);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateWorkspaceAttachmentRequest {
-	    workspace: collection.CollectionRef;
-	    sourceID: string;
-	    Body?: UpdateWorkspaceAttachmentRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceAttachmentRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.sourceID = source["sourceID"];
-	        this.Body = this.convertValues(source["Body"], UpdateWorkspaceAttachmentRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class UpdateWorkspaceAttachmentResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceAttachmentResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateWorkspaceRequestBody {
-	    expectedRevision: number;
-	    displayName: string;
-	    description?: string;
-	    enabled: boolean;
-	    discovery: WorkspaceDiscovery;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceRequestBody(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.expectedRevision = source["expectedRevision"];
-	        this.displayName = source["displayName"];
-	        this.description = source["description"];
-	        this.enabled = source["enabled"];
-	        this.discovery = this.convertValues(source["discovery"], WorkspaceDiscovery);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class UpdateWorkspaceRequest {
-	    workspace: collection.CollectionRef;
-	    Body?: UpdateWorkspaceRequestBody;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceRequest(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.workspace = this.convertValues(source["workspace"], collection.CollectionRef);
-	        this.Body = this.convertValues(source["Body"], UpdateWorkspaceRequestBody);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class UpdateWorkspaceResponse {
-	    Body?: WorkspaceView;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateWorkspaceResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Body = this.convertValues(source["Body"], WorkspaceView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 }
 

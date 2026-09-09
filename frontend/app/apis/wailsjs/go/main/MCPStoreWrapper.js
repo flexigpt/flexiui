@@ -22,6 +22,10 @@ export function GetMCPServerInstallation(arg1) {
   return window['go']['main']['MCPStoreWrapper']['GetMCPServerInstallation'](arg1);
 }
 
+export function GetMCPServerSchemaIdentity() {
+  return window['go']['main']['MCPStoreWrapper']['GetMCPServerSchemaIdentity']();
+}
+
 export function InspectMCPPolicy(arg1) {
   return window['go']['main']['MCPStoreWrapper']['InspectMCPPolicy'](arg1);
 }
@@ -40,4 +44,12 @@ export function ListMCPBundleServers(arg1) {
 
 export function ListMCPBundles(arg1) {
   return window['go']['main']['MCPStoreWrapper']['ListMCPBundles'](arg1);
+}
+
+export function ListMCPBundlesForManagement() {
+  return window['go']['main']['MCPStoreWrapper']['ListMCPBundlesForManagement']();
+}
+
+export function UpdateBundleEnabled(arg1, arg2, arg3) {
+  return window['go']['main']['MCPStoreWrapper']['UpdateBundleEnabled'](arg1, arg2, arg3);
 }

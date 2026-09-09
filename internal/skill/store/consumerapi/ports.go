@@ -6,20 +6,22 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
+
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 type BundleReader interface {
 	GetBundle(
 		ctx context.Context,
 		ref collection.CollectionRef,
-	) (Bundle, error)
+	) (skillDomain.SkillBundle, error)
 }
 
 type BuiltinStore interface {
 	ListBundles(
 		ctx context.Context,
 		rootID root.RootID,
-	) ([]Bundle, error)
+	) ([]skillDomain.SkillBundle, error)
 
 	ListSkills(
 		ctx context.Context,
@@ -28,8 +30,8 @@ type BuiltinStore interface {
 
 	EnsureBuiltInBundleTopology(
 		ctx context.Context,
-		request BuiltInBundleTopology,
-	) (Bundle, error)
+		request skillDomain.BuiltInBundleTopology,
+	) (skillDomain.SkillBundle, error)
 
 	InstallBuiltInCollection(
 		ctx context.Context,

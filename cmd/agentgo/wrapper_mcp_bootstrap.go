@@ -34,6 +34,7 @@ func InitMCPWrappers(
 	storeWrapper *MCPStoreWrapper,
 	runtimeWrapper *MCPRuntimeWrapper,
 	aggregateWrapper *MCPAggregateWrapper,
+	roots compositionapi.RootAPI,
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
@@ -48,6 +49,9 @@ func InitMCPWrappers(
 	if storeWrapper == nil ||
 		runtimeWrapper == nil ||
 		aggregateWrapper == nil {
+		return nil, errors.New("MCP wrapper receivers are incomplete")
+	}
+	if roots == nil {
 		return nil, errors.New("MCP wrapper dependencies are incomplete")
 	}
 
@@ -180,6 +184,7 @@ func InitMCPWrappers(
 	}
 
 	storeWrapper.api = storeAPI
+	storeWrapper.roots = roots
 
 	runtimeWrapper.runtime = runtimeManager
 	runtimeWrapper.toolBridge = toolBridge

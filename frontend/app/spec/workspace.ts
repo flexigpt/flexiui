@@ -7,19 +7,14 @@ import type {
 	ArtifactLocator,
 	ArtifactOccurrenceState,
 	ArtifactRef,
-	ArtifactRootID,
 	ArtifactSourceBinding,
 	ArtifactSourceID,
+	ArtifactSourceSummary,
 	ArtifactState,
-	ArtifactStorageKey,
 } from '@/spec/artifact';
 import { SkillInsert as WorkspaceSkillInsert } from '@/spec/skill';
 
 export { WorkspaceSkillInsert };
-
-// This value is created and retained by `InitArtifactStoreWrapper`. It is not
-// the protected built-in topology Root.
-export const DEFAULT_WORKSPACE_ROOT_ID: ArtifactRootID = '0198f097-0d5b-7000-8000-000000000001';
 
 export type WorkspaceRef = ArtifactCollectionRef;
 
@@ -300,29 +295,18 @@ export interface WorkspaceSkillLoadView {
 	diagnostics?: ArtifactDiagnostic[];
 }
 
-export interface CreateFilesystemWorkspaceBody {
-	workspaceID: string;
-	sourceID: ArtifactSourceID;
-	sourceStorageKey: ArtifactStorageKey;
+export interface CreateFilesystemWorkspaceInput {
 	displayName: string;
 	description?: string;
 	rootPath: string;
 	discovery: WorkspaceDiscovery;
 }
 
-export interface CreateEmptyWorkspaceBody {
-	workspaceID: string;
+export interface CreateEmptyWorkspaceInput {
 	displayName: string;
 	description?: string;
 	discovery: WorkspaceDiscovery;
 }
-
-export type CreateFilesystemWorkspaceInput = Omit<
-	CreateFilesystemWorkspaceBody,
-	'workspaceID' | 'sourceID' | 'sourceStorageKey'
->;
-
-export type CreateEmptyWorkspaceInput = Omit<CreateEmptyWorkspaceBody, 'workspaceID'>;
 
 export interface UpdateWorkspaceBody {
 	expectedRevision: number;
@@ -334,8 +318,6 @@ export interface UpdateWorkspaceBody {
 
 export interface SetWorkspacePrimarySourceBody {
 	expectedCollectionRevision: number;
-	previousSourceID?: ArtifactSourceID;
-	expectedPreviousAttachmentRevision?: number;
 	sourceID?: ArtifactSourceID;
 	clear?: boolean;
 }
@@ -412,6 +394,21 @@ export interface RetireWorkspaceResult {
 	workspace: WorkspaceRef;
 	revision: number;
 }
+
+export interface RegisterWorkspaceDirectoryInput {
+	expectedCollectionRevision: number;
+	displayName: string;
+	rootPath: string;
+	role: WorkspaceAttachmentRole;
+	settings: WorkspaceAttachmentSettings;
+}
+
+export interface WorkspaceDirectoryRegistrationResult {
+	source: ArtifactSourceSummary;
+	workspace: WorkspaceView;
+}
+
+export type WorkspaceSourceSummary = ArtifactSourceSummary;
 
 /**
  * Persisted conversation selection for the Artifact Store Workspace model.

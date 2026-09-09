@@ -15,6 +15,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/installerapi/topology"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	skillConsumerAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/consumerapi"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 type InstallerDependencies struct {
@@ -149,7 +150,7 @@ func (i *Installer) EnsureBuiltInArtifacts(
 	if err != nil {
 		return err
 	}
-	byCollectionID := make(map[collection.CollectionID]skillConsumerAPI.Bundle, len(bundles))
+	byCollectionID := make(map[collection.CollectionID]skillDomain.SkillBundle, len(bundles))
 	for _, bundle := range bundles {
 		byCollectionID[bundle.Collection.ID] = bundle
 	}
@@ -192,13 +193,13 @@ func (i *Installer) EnsureBuiltInArtifacts(
 			PackageAddress:             packageAddress,
 			PackageFiles:               files,
 			Skills: make(
-				[]skillConsumerAPI.BuiltInCollectionSkill,
+				[]skillDomain.BuiltInCollectionSkill,
 				0,
 				len(value.Artifacts),
 			),
 		}
 		for _, skill := range value.Artifacts {
-			request.Skills = append(request.Skills, skillConsumerAPI.BuiltInCollectionSkill{
+			request.Skills = append(request.Skills, skillDomain.BuiltInCollectionSkill{
 				ArtifactID: skill.Registration.ID,
 				Member:     basespec.Locator(skill.Member.Locator),
 				Enabled:    skill.Registration.Enabled,
@@ -257,7 +258,7 @@ func (i *Installer) EnsureBuiltInArtifacts(
 
 func (i *Installer) EnsureBuiltInBundles(
 	ctx context.Context,
-) ([]skillConsumerAPI.Bundle, error) {
+) ([]skillDomain.SkillBundle, error) {
 	if err := installerapi.RequirePrivileged(ctx); err != nil {
 		return nil, err
 	}
@@ -265,7 +266,7 @@ func (i *Installer) EnsureBuiltInBundles(
 		return nil, err
 	}
 
-	output := make([]skillConsumerAPI.Bundle, 0, len(i.hydrated.Collections))
+	output := make([]skillDomain.SkillBundle, 0, len(i.hydrated.Collections))
 	for _, value := range i.hydrated.OrderedCollections() {
 		if value.Definition.Digest == nil {
 			return nil, fmt.Errorf(
@@ -286,7 +287,7 @@ func (i *Installer) EnsureBuiltInBundles(
 		}
 		b, err := i.skills.EnsureBuiltInBundleTopology(
 			ctx,
-			skillConsumerAPI.BuiltInBundleTopology{
+			skillDomain.BuiltInBundleTopology{
 				RootID:                i.builtInTopology.Root.ID,
 				CollectionID:          value.Registration.ID,
 				SourceID:              i.builtInTopology.Sources[0].ID,
@@ -489,7 +490,7 @@ func (i *Installer) rejectDynamicBuiltInBundles(
 
 func (i *Installer) rejectDynamicBuiltInArtifacts(
 	ctx context.Context,
-	current skillConsumerAPI.Bundle,
+	current skillDomain.SkillBundle,
 	declaredCollection HydratedCollection,
 ) error {
 	artifacts, err := i.skills.ListSkills(ctx, current.Collection.Ref())

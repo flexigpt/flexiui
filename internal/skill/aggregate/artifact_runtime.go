@@ -65,6 +65,51 @@ func (s *Service) Close() {
 	s.lifecycleMu.Unlock()
 }
 
+// ResolveArtifactSkill resolves one durable Artifact identity into its
+// runtime-native SkillDef and ensures that the owning runtime catalog has
+// been synchronized before returning it.
+func (s *Service) ResolveArtifactSkill(
+	ctx context.Context,
+	ref artifact.ArtifactRef,
+) (ResolvedArtifactSkill, error) {
+	if err := s.ensureConfigured(); err != nil {
+		return ResolvedArtifactSkill{}, err
+	}
+	if err := ref.Validate(); err != nil {
+		return ResolvedArtifactSkill{}, err
+	}
+
+	collectionRef, err := s.resolver.CollectionForArtifact(ctx, ref)
+	if err != nil {
+		return ResolvedArtifactSkill{}, err
+	}
+	if err := s.resyncCollection(ctx, collectionRef); err != nil {
+		return ResolvedArtifactSkill{}, err
+	}
+
+	value, err := s.resolver.ResolveArtifactSkill(ctx, ref)
+	if err != nil {
+		return ResolvedArtifactSkill{}, err
+	}
+	if value.Collection != collectionRef {
+		return ResolvedArtifactSkill{}, fmt.Errorf(
+			"%w: resolved Skill belongs to another Collection",
+			basespec.ErrInvalid,
+		)
+	}
+	if !s.runtime.IsRegistered(skillRuntime.SkillRegistration{
+		Definition: value.Definition,
+		Revision:   value.Version,
+	}) {
+		return ResolvedArtifactSkill{}, fmt.Errorf(
+			"%w: runtime did not register Artifact Skill %q",
+			basespec.ErrReferenceUnresolved,
+			ref.ArtifactID,
+		)
+	}
+	return value, nil
+}
+
 // GetArtifactSkillsPrompt resolves Artifact Store allow-list entries before
 // delegating prompt generation to the Agent Skills runtime.
 //

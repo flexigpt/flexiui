@@ -9,7 +9,7 @@ import { throwIfAborted } from '@/lib/async_utils';
 
 import { useAsyncResource } from '@/hooks/use_async_resource';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import { ActionDeniedAlertModal } from '@/components/action_denied_modal';
 import { Loader } from '@/components/loader';
@@ -114,8 +114,8 @@ export default function WorkspacesPage() {
 			}
 
 			try {
-				await workspaceAPI.refreshWorkspace(created.workspace);
-				const refreshed = await workspaceAPI.getWorkspace(created.workspace);
+				await workspaceManagementAPI.refreshWorkspace(created.workspace);
+				const refreshed = await workspaceManagementAPI.getWorkspace(created.workspace);
 				if (mountedRef.current) {
 					replaceWorkspace(refreshed);
 				}
@@ -135,7 +135,7 @@ export default function WorkspacesPage() {
 
 	const updateWorkspace = useCallback(
 		async (workspace: WorkspaceView, payload: UpdateWorkspaceBody): Promise<WorkspaceView> => {
-			const updated = await workspaceAPI.updateWorkspace(workspace.workspace, payload);
+			const updated = await workspaceManagementAPI.updateWorkspace(workspace.workspace, payload);
 			if (mountedRef.current) {
 				replaceWorkspace(updated);
 			}
@@ -155,13 +155,13 @@ export default function WorkspacesPage() {
 		let purgeRevision = retiredWorkspaceRevisionsRef.current.get(deletingKey);
 
 		if (purgeRevision === undefined) {
-			const retired = await workspaceAPI.retireWorkspace(deletingRef, deletingWorkspace.revision);
+			const retired = await workspaceManagementAPI.retireWorkspace(deletingRef, deletingWorkspace.revision);
 			purgeRevision = retired.revision;
 			retiredWorkspaceRevisionsRef.current.set(deletingKey, purgeRevision);
 		}
 
 		try {
-			await workspaceAPI.purgeWorkspace(deletingRef, purgeRevision);
+			await workspaceManagementAPI.purgeWorkspace(deletingRef, purgeRevision);
 		} catch (error) {
 			const details = getErrorMessage(error, '');
 			throw new Error(

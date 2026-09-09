@@ -15,7 +15,7 @@ import type { AssistantSkillOption } from '@/spec/skill';
 import type { AssistantToolOption } from '@/spec/tool';
 import { ToolImplType } from '@/spec/tool';
 
-import { assistantPresetStoreAPI, mcpAPI } from '@/apis/baseapi';
+import { assistantPresetStoreAPI, mcpRuntimeAPI } from '@/apis/baseapi';
 
 import type { AssistantPresetCatalogLoadErrors } from '@/assistantpresets/lib/assistant_preset_catalog';
 import { loadAssistantPresetEditorCatalog } from '@/assistantpresets/lib/assistant_preset_catalog';
@@ -161,10 +161,10 @@ async function loadAssistantPresetMCPAvailabilityLookups(
 
 			const serverKey = mcpServerKeyForAvailability(runtimeServerID);
 			const [toolsResult, resourcesResult, resourceTemplatesResult, promptsResult] = await Promise.allSettled([
-				mcpAPI.listMCPServerTools(runtimeServerID),
-				mcpAPI.listMCPServerResources(runtimeServerID),
-				mcpAPI.listMCPServerResourceTemplates(runtimeServerID),
-				mcpAPI.listMCPServerPrompts(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerTools(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerResources(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerResourceTemplates(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerPrompts(runtimeServerID),
 			]);
 
 			if (toolsResult.status === 'fulfilled') {

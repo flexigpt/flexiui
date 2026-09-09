@@ -12,7 +12,7 @@ import { ToolOutputKind } from '@/spec/tool';
 
 import { isJSONObject } from '@/lib/jsonschema_utils';
 
-import { mcpAPI, skillManagementAPI, toolRuntimeAPI } from '@/apis/baseapi';
+import { mcpRuntimeAPI, skillManagementAPI, toolRuntimeAPI } from '@/apis/baseapi';
 
 import type { RequestMCPApproval } from '@/chats/composer/mcp/use_mcp_approval';
 import { isSkillsToolName } from '@/skills/lib/skill_identity_utils';
@@ -180,7 +180,7 @@ async function executeMCPToolCall(
 
 	let evaluation: MCPApprovalEvaluation;
 	try {
-		evaluation = await mcpAPI.evaluateMCPToolCall(selection.server, req);
+		evaluation = await mcpRuntimeAPI.evaluateMCPToolCall(selection.server, req);
 	} catch (error) {
 		const message = error instanceof Error && error.message.trim() ? error.message : 'MCP approval evaluation failed.';
 		return {
@@ -247,7 +247,7 @@ async function executeMCPToolCall(
 							summary: evaluation.summary,
 							reason: evaluation.reason,
 						})
-					: await mcpAPI.resolveMCPApproval(evaluation.approvalID, MCPApprovalResolution.DenyOnce);
+					: await mcpRuntimeAPI.resolveMCPApproval(evaluation.approvalID, MCPApprovalResolution.DenyOnce);
 		} catch (error) {
 			const message =
 				error instanceof Error && error.message.trim() ? error.message : 'MCP approval could not be resolved.';
@@ -312,7 +312,7 @@ async function executeMCPToolCall(
 
 	try {
 		const resp = await withTimeout(
-			mcpAPI.invokeMCPTool(selection.server, req),
+			mcpRuntimeAPI.invokeMCPTool(selection.server, req),
 			TOOL_CALL_TIMEOUT_MS,
 			`MCP tool call "${selection.toolName}" timed out after ${Math.round(TOOL_CALL_TIMEOUT_MS / 1000)} seconds.`
 		);

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
@@ -121,6 +124,24 @@ func (w *SkillAggregateWrapper) RuntimeCatalogIDForCollection(
 	return middleware.WithRecoveryResp(
 		func() (skillRuntime.CatalogID, error) {
 			return skillAggregate.CollectionCatalogID(ref)
+		},
+	)
+}
+
+// ResolveArtifactSkill is the durable ArtifactRef to runtime SkillDef bridge.
+//
+// It belongs here instead of SkillStoreWrapper because resolution also makes
+// the owning runtime catalog current and verifies that the resolved runtime
+// definition is registered.
+func (w *SkillAggregateWrapper) ResolveArtifactSkill(
+	ref artifact.ArtifactRef,
+) (skillAggregate.ResolvedArtifactSkill, error) {
+	return middleware.WithRecoveryResp(
+		func() (skillAggregate.ResolvedArtifactSkill, error) {
+			if w == nil || w.service == nil {
+				return skillAggregate.ResolvedArtifactSkill{}, basespec.ErrClosed
+			}
+			return w.service.ResolveArtifactSkill(context.Background(), ref)
 		},
 	)
 }

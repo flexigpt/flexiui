@@ -6,7 +6,7 @@ import { throwIfAborted } from '@/lib/async_utils';
 
 import { useAsyncResource } from '@/hooks/use_async_resource';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import { Loader } from '@/components/loader';
 import { ManagementDetailsModal } from '@/components/managementui/management_details_modal';
@@ -27,7 +27,7 @@ interface WorkspaceContextPreviewProps {
 function WorkspaceContextPreviewContent({ onClose, workspace }: Omit<WorkspaceContextPreviewProps, 'isOpen'>) {
 	const loadPlan = useCallback(
 		async (signal: AbortSignal): Promise<WorkspaceContextLoadPlan> => {
-			const plan = await workspaceAPI.composeWorkspaceContext(workspace.workspace);
+			const plan = await workspaceManagementAPI.composeWorkspaceContext(workspace.workspace);
 			throwIfAborted(signal);
 			return plan;
 		},

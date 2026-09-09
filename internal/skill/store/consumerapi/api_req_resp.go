@@ -10,58 +10,15 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
-	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
-
-type AttachmentDraft struct {
-	SourceID              source.SourceID
-	Role                  collection.AttachmentRole
-	Enabled               bool
-	DiscoveryRoot         basespec.Locator
-	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
-}
-
-type Bundle struct {
-	Collection  collection.Collection
-	Data        skillDomain.CollectionData
-	Attachments []collection.Attachment
-	Sources     []source.Summary
-}
-
-type ManagedSkillDocument struct {
-	Artifact artifact.Artifact
-	Document document.SkillDocument
-}
-
-// BuiltInBundleTopology is trusted bootstrap input. SkillStoreWrapper does not
-// expose this type through Wails.
-type BuiltInBundleTopology struct {
-	RootID                root.RootID
-	CollectionID          collection.CollectionID
-	SourceID              source.SourceID
-	LogicalName           basespec.LogicalName
-	LogicalVersion        basespec.LogicalVersion
-	DisplayName           string
-	Description           string
-	Labels                map[string]string
-	Enabled               bool
-	DiscoveryRoot         basespec.Locator
-	ExpectedMemberDigests map[basespec.Locator]cryptoutil.Digest
-}
-
-type BuiltInCollectionSkill struct {
-	ArtifactID artifact.ArtifactID
-	Member     basespec.Locator
-	Enabled    bool
-}
 
 type BuiltInCollectionInstallRequest struct {
 	Bundle                     collection.CollectionRef
 	ExpectedCollectionRevision uint64
 	PackageAddress             source.ManagedPackageAddress
 	PackageFiles               []source.ManagedPackageFile
-	Skills                     []BuiltInCollectionSkill
+	Skills                     []skillDomain.BuiltInCollectionSkill
 }
 
 type CreateSkillBundleBody struct {
@@ -75,7 +32,7 @@ type CreateSkillBundleBody struct {
 	LogicalName             basespec.LogicalName
 	LogicalVersion          basespec.LogicalVersion
 	Labels                  map[string]string
-	Attachments             []AttachmentDraft
+	Attachments             []skillDomain.AttachmentDraft
 }
 
 type CreateSkillBundleRequest struct {
@@ -83,7 +40,7 @@ type CreateSkillBundleRequest struct {
 }
 
 type CreateSkillBundleResponse struct {
-	Body *Bundle `json:"body"`
+	Body *skillDomain.SkillBundle `json:"body"`
 }
 
 type GetSkillBundleRequest struct {
@@ -91,7 +48,7 @@ type GetSkillBundleRequest struct {
 }
 
 type GetSkillBundleResponse struct {
-	Body *Bundle `json:"body"`
+	Body *skillDomain.SkillBundle `json:"body"`
 }
 
 type ListSkillBundlesRequest struct {
@@ -99,7 +56,7 @@ type ListSkillBundlesRequest struct {
 }
 
 type ListSkillBundlesResponseBody struct {
-	Bundles []Bundle `json:"bundles"`
+	Bundles []skillDomain.SkillBundle `json:"bundles"`
 }
 
 type ListSkillBundlesResponse struct {
@@ -119,7 +76,7 @@ type UpdateSkillBundleRequest struct {
 }
 
 type UpdateSkillBundleResponse struct {
-	Body *Bundle `json:"body"`
+	Body *skillDomain.SkillBundle `json:"body"`
 }
 
 type RetireSkillBundleRequest struct {
@@ -143,7 +100,7 @@ type PurgeSkillBundleResponse struct {
 type AttachSkillBundleSourceBody struct {
 	Bundle                     collection.CollectionRef
 	ExpectedCollectionRevision uint64
-	Attachment                 AttachmentDraft
+	Attachment                 skillDomain.AttachmentDraft
 }
 
 type AttachSkillBundleSourceRequest struct {
@@ -151,7 +108,18 @@ type AttachSkillBundleSourceRequest struct {
 }
 
 type AttachSkillBundleSourceResponse struct {
-	Body *Bundle `json:"body"`
+	Body *skillDomain.SkillBundle `json:"body"`
+}
+
+type RegisterSkillBundleDirectoryRequest struct {
+	Bundle                     collection.CollectionRef `json:"bundle"`
+	ExpectedCollectionRevision uint64                   `json:"expectedCollectionRevision"`
+	RootPath                   string                   `json:"rootPath"`
+	SourceDisplayName          string                   `json:"sourceDisplayName"`
+}
+
+type RegisterSkillBundleDirectoryResponse struct {
+	Body *skillDomain.SkillBundle `json:"body"`
 }
 
 type RefreshSkillBundleRequest struct {
@@ -192,7 +160,7 @@ type GetManagedSkillDocumentRequest struct {
 }
 
 type GetManagedSkillDocumentResponse struct {
-	Body *ManagedSkillDocument `json:"body"`
+	Body *skillDomain.ManagedSkillDocument `json:"body"`
 }
 
 type AdoptSkillBody struct {

@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"errors"
+	"sort"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/middleware"
 	skillBuiltin "github.com/flexigpt/flexigpt-app/internal/skill/store/builtin"
 	skillConsumerAPI "github.com/flexigpt/flexigpt-app/internal/skill/store/consumerapi"
+	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 )
 
 func NewSkillBuiltInInstaller(
@@ -40,11 +43,13 @@ func NewSkillBuiltInInstaller(
 }
 
 type SkillStoreWrapper struct {
-	api *skillConsumerAPI.API
+	api   *skillConsumerAPI.API
+	roots compositionapi.RootAPI
 }
 
 func InitSkillStoreWrapper(
 	wrapper *SkillStoreWrapper,
+	roots compositionapi.RootAPI,
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
@@ -53,7 +58,8 @@ func InitSkillStoreWrapper(
 	managedArtifacts compositionapi.ManagedArtifactAPI,
 	protection compositionapi.ProtectionAPI,
 ) error {
-	if wrapper == nil {
+	if wrapper == nil ||
+		roots == nil {
 		return errors.New("skill store wrapper dependencies are incomplete")
 	}
 
@@ -72,6 +78,7 @@ func InitSkillStoreWrapper(
 	}
 
 	wrapper.api = api
+	wrapper.roots = roots
 	return nil
 }
 
@@ -107,6 +114,45 @@ func (w *SkillStoreWrapper) ListSkillBundles(
 	return middleware.WithRecoveryResp(
 		func() (*skillConsumerAPI.ListSkillBundlesResponse, error) {
 			return w.api.ListSkillBundles(ctx, request)
+		},
+	)
+}
+
+// ListSkillBundlesForManagement hides Artifact Store root topology from the
+// frontend while including user and protected built-in Skill Bundles.
+func (w *SkillStoreWrapper) ListSkillBundlesForManagement() (
+	[]skillDomain.SkillBundle,
+	error,
+) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() ([]skillDomain.SkillBundle, error) {
+			if w == nil || w.api == nil || w.roots == nil {
+				return nil, basespec.ErrClosed
+			}
+
+			roots, err := w.roots.List(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			bundles := make([]skillDomain.SkillBundle, 0)
+			for _, rootValue := range roots {
+				values, err := w.api.ListBundles(ctx, rootValue.ID)
+				if err != nil {
+					return nil, err
+				}
+				bundles = append(bundles, values...)
+			}
+
+			sort.Slice(bundles, func(left, right int) bool {
+				if bundles[left].Collection.RootID != bundles[right].Collection.RootID {
+					return bundles[left].Collection.RootID < bundles[right].Collection.RootID
+				}
+				return bundles[left].Collection.ID < bundles[right].Collection.ID
+			})
+			return bundles, nil
 		},
 	)
 }
@@ -155,6 +201,18 @@ func (w *SkillStoreWrapper) AttachSkillBundleSource(
 	return middleware.WithRecoveryResp(
 		func() (*skillConsumerAPI.AttachSkillBundleSourceResponse, error) {
 			return w.api.AttachSkillBundleSource(ctx, request)
+		},
+	)
+}
+
+func (w *SkillStoreWrapper) RegisterSkillBundleDirectory(
+	request *skillConsumerAPI.RegisterSkillBundleDirectoryRequest,
+) (*skillConsumerAPI.RegisterSkillBundleDirectoryResponse, error) {
+	ctx := context.Background()
+
+	return middleware.WithRecoveryResp(
+		func() (*skillConsumerAPI.RegisterSkillBundleDirectoryResponse, error) {
+			return w.api.RegisterSkillBundleDirectory(ctx, request)
 		},
 	)
 }
@@ -284,4 +342,5 @@ func (w *SkillStoreWrapper) close() {
 		return
 	}
 	w.api = nil
+	w.roots = nil
 }

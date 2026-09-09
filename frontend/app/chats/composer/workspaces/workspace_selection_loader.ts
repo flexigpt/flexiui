@@ -1,6 +1,6 @@
 import type { WorkspaceContextView, WorkspaceRef, WorkspaceSkillView, WorkspaceView } from '@/spec/workspace';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 function getErrorMessage(error: unknown, fallback: string): string {
 	return error instanceof Error && error.message.trim() ? error.message : fallback;
@@ -19,10 +19,10 @@ export async function loadWorkspaceSelectionCatalog(
 	workspaceRef: WorkspaceRef
 ): Promise<LoadedWorkspaceSelectionCatalog> {
 	const [workspaceResult, catalogResult, contextsResult, skillsResult] = await Promise.allSettled([
-		workspaceAPI.getWorkspace(workspaceRef),
-		workspaceAPI.getWorkspaceCatalog(workspaceRef),
-		workspaceAPI.listWorkspaceContexts(workspaceRef),
-		workspaceAPI.listWorkspaceSkills(workspaceRef),
+		workspaceManagementAPI.getWorkspace(workspaceRef),
+		workspaceManagementAPI.getWorkspaceCatalog(workspaceRef),
+		workspaceManagementAPI.listWorkspaceContexts(workspaceRef),
+		workspaceManagementAPI.listWorkspaceSkills(workspaceRef),
 	]);
 
 	const workspace =

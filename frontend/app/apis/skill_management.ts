@@ -1,4 +1,4 @@
-import type { ArtifactRef, ArtifactRootID } from '@/spec/artifact';
+import type { ArtifactRef } from '@/spec/artifact';
 import { ArtifactAdoptionMode, ArtifactState, newArtifactStorageKey } from '@/spec/artifact';
 import type {
 	CreateSkillSessionOptions,
@@ -25,6 +25,7 @@ import type {
 } from '@/spec/skill';
 import {
 	RuntimeSkillActivity,
+	SKILL_USER_ROOT_ID,
 	SkillBundleAttachmentRole,
 	SkillInsert,
 	SkillPresenceStatus,
@@ -34,13 +35,7 @@ import {
 import type { JSONRawString } from '@/lib/jsonschema_utils';
 import { getUUIDv7 } from '@/lib/uuid_utils';
 
-import type { IArtifactStoreAPI, ISkillAggregateAPI, ISkillRuntimeAPI, ISkillStoreAPI } from '@/apis/interface';
-
-const DEFAULT_SKILL_ROOT_DISPLAY_NAME = 'FlexiGPT Skills';
-const DEFAULT_SKILL_ROOT_DESCRIPTION = 'Artifact Store namespace for user-managed Skill Bundles.';
-const FILESYSTEM_SOURCE_KIND = 'fs-directory';
-const DEFAULT_SKILL_ROOT_STORAGE_KEY = 'skills';
-const DEFAULT_SKILL_ROOT_ID: ArtifactRootID = '0198f097-0d5c-7000-8000-000000000001';
+import type { ISkillAggregateAPI, ISkillRuntimeAPI, ISkillStoreAPI } from '@/apis/interface';
 
 function getErrorMessage(error: unknown, fallback: string): string {
 	if (error instanceof Error && error.message.trim()) {
@@ -204,26 +199,20 @@ function runtimeListItemFromRecord(
 }
 
 export class SkillManagementAPI {
-	private rootCreationPromise?: Promise<ArtifactRootID>;
-
 	constructor(
 		// oxlint-disable-next-line typescript/parameter-properties
 		private readonly skills: ISkillStoreAPI,
 		// oxlint-disable-next-line typescript/parameter-properties
 		private readonly aggregate: ISkillAggregateAPI,
 		// oxlint-disable-next-line typescript/parameter-properties
-		private readonly runtime: ISkillRuntimeAPI,
-		// oxlint-disable-next-line typescript/parameter-properties
-		private readonly artifacts: IArtifactStoreAPI
+		private readonly runtime: ISkillRuntimeAPI
 	) {}
 
 	async listSkillBundles(bundleIDs?: string[], includeDisabled = true): Promise<SkillBundle[]> {
-		const roots = await this.artifacts.listArtifactRoots();
-		const groups = await Promise.all(roots.map(root => this.skills.listSkillBundles(root.id)));
+		const bundles = await this.skills.listSkillBundlesForManagement();
 		const requested = bundleIDs ? new Set(bundleIDs) : undefined;
 
-		return groups
-			.flat()
+		return bundles
 			.filter(bundle => requested === undefined || requested.has(bundle.bundle.collectionID))
 			.filter(bundle => includeDisabled || bundle.enabled)
 			.map(s => {
@@ -315,10 +304,9 @@ export class SkillManagementAPI {
 		isEnabled: boolean,
 		description?: string
 	): Promise<void> {
-		const rootID = await this.resolveCreationRoot();
 		const managedSourceID = getUUIDv7();
 
-		const created = await this.skills.createSkillBundle(rootID, {
+		const created = await this.skills.createSkillBundle(SKILL_USER_ROOT_ID, {
 			collectionID: bundleID,
 			displayName,
 			description,
@@ -425,45 +413,13 @@ export class SkillManagementAPI {
 
 	async registerFilesystemSkills(bundleID: string, rootPath: string, sourceDisplayName: string): Promise<void> {
 		const bundle = await this.resolveBundle(bundleID);
-		const sourceID = getUUIDv7();
-		let sourceRevision: number | undefined;
-		let attachedBundle: SkillBundleView | undefined;
 
-		try {
-			const source = await this.artifacts.createArtifactSource(bundle.bundle.rootID, {
-				id: sourceID,
-				kind: FILESYSTEM_SOURCE_KIND,
-				storageKey: newArtifactStorageKey(),
-				displayName: sourceDisplayName,
-				enabled: true,
-				config: JSON.stringify({ rootPath }),
-			});
-			sourceRevision = source.revision;
-
-			attachedBundle = await this.skills.attachSkillBundleSource(bundle.bundle, {
-				expectedCollectionRevision: bundle.revision,
-				sourceID,
-				role: SkillBundleAttachmentRole.External,
-				enabled: true,
-				discoveryRoot: '.',
-			});
-		} catch (error) {
-			if (sourceRevision !== undefined) {
-				const latest = await this.resolveBundle(bundleID).catch(() => undefined);
-				if (latest?.attachments.some(attachment => attachment.sourceID === sourceID)) {
-					// The wrapper may have committed attachment metadata and
-					// failed only during its follow-up refresh. The caller's
-					// normal bundle refresh can now converge safely.
-					return;
-				}
-				await this.cleanupSource(bundle.bundle.rootID, sourceID, sourceRevision);
-			}
-			throw error;
-		}
-
-		if (attachedBundle) {
-			await this.syncRuntimeCollection(attachedBundle.bundle, attachedBundle.enabled);
-		}
+		const attached = await this.skills.registerSkillBundleDirectory(bundle.bundle, {
+			expectedCollectionRevision: bundle.revision,
+			rootPath,
+			sourceDisplayName,
+		});
+		await this.syncRuntimeCollection(attached.bundle, attached.enabled);
 	}
 
 	async patchSkill(
@@ -729,14 +685,7 @@ export class SkillManagementAPI {
 			};
 		}
 
-		const values = await Promise.all([...uniqueRefs.values()].map(ref => this.skills.resolveArtifactSkill(ref)));
-
-		const collections = new Map<string, SkillBundleRef>();
-		for (const value of values) {
-			collections.set(`${value.collection.rootID}:${value.collection.collectionID}`, value.collection);
-		}
-
-		await Promise.all([...collections.values()].map(collection => this.syncRuntimeCollection(collection)));
+		const values = await Promise.all([...uniqueRefs.values()].map(ref => this.aggregate.resolveArtifactSkill(ref)));
 
 		const definitions: RuntimeSkillDefinition[] = [];
 		const byArtifactKey = new Map<string, ResolvedSkillRuntime>();
@@ -764,10 +713,9 @@ export class SkillManagementAPI {
 	}
 
 	private async listBundleViews(bundleIDs?: string[]): Promise<SkillBundleView[]> {
-		const roots = await this.artifacts.listArtifactRoots();
-		const groups = await Promise.all(roots.map(root => this.skills.listSkillBundles(root.id)));
+		const bundles = await this.skills.listSkillBundlesForManagement();
 		const requested = bundleIDs ? new Set(bundleIDs) : undefined;
-		return groups.flat().filter(bundle => requested === undefined || requested.has(bundle.bundle.collectionID));
+		return bundles.filter(bundle => requested === undefined || requested.has(bundle.bundle.collectionID));
 	}
 
 	private async resolveBundle(bundleID: string): Promise<SkillBundleView> {
@@ -805,43 +753,5 @@ export class SkillManagementAPI {
 		}
 
 		return bundle;
-	}
-
-	private async resolveCreationRoot(): Promise<ArtifactRootID> {
-		const promise = this.rootCreationPromise ?? this.resolveOrCreateRoot();
-		this.rootCreationPromise = promise;
-
-		try {
-			return await promise;
-		} finally {
-			if (this.rootCreationPromise === promise) {
-				this.rootCreationPromise = undefined;
-			}
-		}
-	}
-
-	private async resolveOrCreateRoot(): Promise<ArtifactRootID> {
-		const roots = await this.artifacts.listArtifactRoots();
-		const existing = roots.find(root => root.id === DEFAULT_SKILL_ROOT_ID);
-		if (existing) {
-			return existing.id;
-		}
-
-		const created = await this.artifacts.createArtifactRoot({
-			id: DEFAULT_SKILL_ROOT_ID,
-			storageKey: DEFAULT_SKILL_ROOT_STORAGE_KEY,
-			displayName: DEFAULT_SKILL_ROOT_DISPLAY_NAME,
-			description: DEFAULT_SKILL_ROOT_DESCRIPTION,
-		});
-		return created.id;
-	}
-
-	private async cleanupSource(rootID: ArtifactRootID, sourceID: string, revision: number): Promise<void> {
-		try {
-			const retired = await this.artifacts.retireArtifactSource(rootID, sourceID, revision);
-			await this.artifacts.purgeArtifactSource(rootID, sourceID, retired.revision);
-		} catch (error) {
-			console.error('Failed to compensate orphaned Skill Source:', error);
-		}
 	}
 }

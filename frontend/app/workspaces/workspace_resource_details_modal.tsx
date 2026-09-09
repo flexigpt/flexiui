@@ -11,7 +11,7 @@ import { throwIfAborted } from '@/lib/async_utils';
 
 import { useAsyncResource } from '@/hooks/use_async_resource';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import { Loader } from '@/components/loader';
 import { ManagementDetailsModal } from '@/components/managementui/management_details_modal';
@@ -60,7 +60,7 @@ function WorkspaceResourceDetailsContent({
 }: Omit<WorkspaceResourceDetailsModalProps, 'isOpen'> & { record: WorkspaceArtifactView }) {
 	const loadInspection = useCallback(
 		async (signal: AbortSignal): Promise<RecordInspection> => {
-			const freshArtifact = await workspaceAPI.getWorkspaceArtifact(workspace.workspace, record.artifact);
+			const freshArtifact = await workspaceManagementAPI.getWorkspaceArtifact(workspace.workspace, record.artifact);
 			throwIfAborted(signal);
 
 			let context: WorkspaceContextInspectionView | undefined;
@@ -69,9 +69,9 @@ function WorkspaceResourceDetailsContent({
 
 			try {
 				if (freshArtifact.kind === WORKSPACE_CONTEXT_ARTIFACT_KIND) {
-					context = await workspaceAPI.loadWorkspaceContexts(workspace.workspace, [freshArtifact.artifact]);
+					context = await workspaceManagementAPI.loadWorkspaceContexts(workspace.workspace, [freshArtifact.artifact]);
 				} else if (freshArtifact.kind === WORKSPACE_SKILL_ARTIFACT_KIND) {
-					skill = await workspaceAPI.loadWorkspaceSkills(workspace.workspace, [freshArtifact.artifact]);
+					skill = await workspaceManagementAPI.loadWorkspaceSkills(workspace.workspace, [freshArtifact.artifact]);
 				}
 				throwIfAborted(signal);
 			} catch (error) {

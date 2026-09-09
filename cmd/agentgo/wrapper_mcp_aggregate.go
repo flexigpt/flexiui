@@ -80,6 +80,32 @@ func (w *MCPAggregateWrapper) CollectionRefForRuntimeCatalogID(
 	})
 }
 
+func (w *MCPAggregateWrapper) RefreshMCPBundle(
+	ref collection.CollectionRef,
+) (mcpConsumerAPI.Bundle, error) {
+	return withMCPAggregate(w, func(service *mcpAggregate.Service) (mcpConsumerAPI.Bundle, error) {
+		return service.RefreshBundle(context.Background(), ref, false)
+	})
+}
+
+func (w *MCPAggregateWrapper) RetireMCPBundle(
+	ref collection.CollectionRef,
+	expectedRevision uint64,
+) (collection.Collection, error) {
+	return withMCPAggregate(w, func(service *mcpAggregate.Service) (collection.Collection, error) {
+		return service.RetireBundle(context.Background(), ref, expectedRevision)
+	})
+}
+
+func (w *MCPAggregateWrapper) PurgeMCPBundle(
+	ref collection.CollectionRef,
+	expectedRevision uint64,
+) error {
+	return withMCPAggregateError(w, func(service *mcpAggregate.Service) error {
+		return service.PurgeBundle(context.Background(), ref, expectedRevision)
+	})
+}
+
 func (w *MCPAggregateWrapper) ReplaceMCPBundleDocument(
 	request *mcpConsumerAPI.ReplaceDocumentRequest,
 ) (mcpConsumerAPI.Bundle, error) {

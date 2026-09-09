@@ -1,4 +1,4 @@
-import type { ArtifactCollectionRef, ArtifactKind, ArtifactRecord, ArtifactRef } from '@/spec/artifact';
+import type { ArtifactCollectionRef, ArtifactRecord, ArtifactRef } from '@/spec/artifact';
 import { ArtifactState, newArtifactStorageKey } from '@/spec/artifact';
 import type {
 	MCPAppsPolicy,
@@ -8,6 +8,7 @@ import type {
 	MCPBundle,
 	MCPBundleDocument,
 	MCPBundleInstallation,
+	MCPDocumentSchemaIdentity,
 	MCPInputBinding,
 	MCPInputDeclaration,
 	MCPPolicy,
@@ -36,7 +37,7 @@ import { mapWithConcurrency } from '@/lib/async_utils';
 import { omitManyKeys } from '@/lib/obj_utils';
 import { getUUIDv7 } from '@/lib/uuid_utils';
 
-import { artifactStoreAPI, mcpAPI } from '@/apis/baseapi';
+import { mcpManagementAPI } from '@/apis/baseapi';
 
 const PLACEHOLDER_PATTERN = /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 const INSTALLATION_READ_CONCURRENCY = 6;
@@ -148,9 +149,8 @@ export interface MCPServerDraft {
 }
 
 interface MCPServerIdentity {
-	serverKind: ArtifactKind;
-	policyKind: ArtifactKind;
-	policyTemplate: Pick<MCPPolicyDocument, 'kind' | 'schemaID' | 'schemaVersion'>;
+	server: MCPDocumentSchemaIdentity;
+	policy: MCPDocumentSchemaIdentity;
 }
 
 interface PlannedSecretWrite {
@@ -498,24 +498,18 @@ function bundleView(bundle: MCPBundle, installation: MCPBundleInstallation): MCP
 }
 
 export async function loadMCPBundleView(ref: ArtifactCollectionRef): Promise<MCPBundleView> {
-	const [bundle, installation] = await Promise.all([mcpAPI.getMCPBundle(ref), mcpAPI.getMCPBundleInstallation(ref)]);
+	const [bundle, installation] = await Promise.all([
+		mcpManagementAPI.getMCPBundle(ref),
+		mcpManagementAPI.getMCPBundleInstallation(ref),
+	]);
 
 	return bundleView(bundle, installation);
 }
 
 export async function loadMCPBundleViews(): Promise<MCPBundleView[]> {
-	const roots = await artifactStoreAPI.listArtifactRoots();
-	const responses = await Promise.allSettled(roots.map(root => mcpAPI.listMCPBundles(root.id)));
-	const bundles: MCPBundle[] = [];
-
-	for (const response of responses) {
-		if (response.status === 'fulfilled') {
-			bundles.push(...response.value);
-		}
-	}
-
+	const bundles = await mcpManagementAPI.listMCPBundlesForManagement();
 	const loaded = await mapWithConcurrency(bundles, INSTALLATION_READ_CONCURRENCY, async bundle => {
-		const installation = await mcpAPI.getMCPBundleInstallation({
+		const installation = await mcpManagementAPI.getMCPBundleInstallation({
 			rootID: bundle.collection.rootID,
 			collectionID: bundle.collection.id,
 		});
@@ -535,9 +529,9 @@ export async function loadMCPBundleViews(): Promise<MCPBundleView[]> {
 
 export async function loadMCPServerViews(bundle: MCPBundleView): Promise<MCPServerView[]> {
 	const [document, artifacts, policies] = await Promise.all([
-		mcpAPI.getMCPBundleDocument(bundle.ref),
-		mcpAPI.listMCPBundleServers(bundle.ref),
-		mcpAPI.listMCPBundlePolicies(bundle.ref),
+		mcpManagementAPI.getMCPBundleDocument(bundle.ref),
+		mcpManagementAPI.listMCPBundleServers(bundle.ref),
+		mcpManagementAPI.listMCPBundlePolicies(bundle.ref),
 	]);
 
 	const policiesBySubresource = new Map(
@@ -551,8 +545,8 @@ export async function loadMCPServerViews(bundle: MCPBundleView): Promise<MCPServ
 				artifactID: artifact.id,
 			};
 			const [installation, runtimeServerID] = await Promise.all([
-				mcpAPI.getMCPServerInstallation(serverRef),
-				mcpAPI.runtimeServerIDForArtifact(serverRef),
+				mcpManagementAPI.getMCPServerInstallation(serverRef),
+				mcpManagementAPI.runtimeServerIDForArtifact(serverRef),
 			]);
 			const policyDocument = getPolicyForServer(document, installation.document);
 			const policyReference = installation.document.extension.policy?.ref;
@@ -602,41 +596,9 @@ export async function loadMCPServerViews(bundle: MCPBundleView): Promise<MCPServ
 	);
 }
 
-async function discoverServerIdentity(): Promise<MCPServerIdentity> {
-	const bundles = await loadMCPBundleViews();
-
-	for (const bundle of bundles) {
-		const [document, servers, policies] = await Promise.all([
-			mcpAPI.getMCPBundleDocument(bundle.ref),
-			mcpAPI.listMCPBundleServers(bundle.ref),
-			mcpAPI.listMCPBundlePolicies(bundle.ref),
-		]);
-
-		const policyTemplate = Object.values(document.bundleExtension.policies ?? {})[0];
-		const serverKind = servers[0]?.kind;
-		const policyKind = policies[0]?.kind;
-
-		if (policyTemplate && serverKind && policyKind) {
-			return {
-				serverKind,
-				policyKind,
-				policyTemplate: {
-					kind: policyTemplate.kind,
-					schemaID: policyTemplate.schemaID,
-					schemaVersion: policyTemplate.schemaVersion,
-				},
-			};
-		}
-	}
-
-	throw new Error(
-		'MCP schema identity could not be discovered from installed bundles. Install the built-in MCP topology before creating a server.'
-	);
-}
-
 async function getServerIdentity(): Promise<MCPServerIdentity> {
 	if (!serverIdentityPromise) {
-		serverIdentityPromise = discoverServerIdentity();
+		serverIdentityPromise = mcpManagementAPI.getMCPServerSchemaIdentity();
 	}
 
 	return serverIdentityPromise;
@@ -676,9 +638,9 @@ function buildPolicyDocument(
 	existing?: MCPPolicyDocument
 ): MCPPolicyDocument {
 	return {
-		kind: existing?.kind ?? identity.policyTemplate.kind,
-		schemaID: existing?.schemaID ?? identity.policyTemplate.schemaID,
-		schemaVersion: existing?.schemaVersion ?? identity.policyTemplate.schemaVersion,
+		kind: existing?.kind ?? identity.policy.kind,
+		schemaID: existing?.schemaID ?? identity.policy.schemaID,
+		schemaVersion: existing?.schemaVersion ?? identity.policy.schemaVersion,
 		logicalName: policyName,
 		logicalVersion: existing?.logicalVersion,
 		displayName: `${displayName} Policy`,
@@ -942,9 +904,9 @@ function buildServerDocument(
 	const baseDocument: MCPServerDocument = existingServerDocument
 		? cloneJSON(existingServerDocument)
 		: {
-				kind: identity.serverKind,
-				schemaID: '',
-				schemaVersion: MCP_SCHEMA_VERSION,
+				kind: identity.server.kind,
+				schemaID: identity.server.schemaID,
+				schemaVersion: identity.server.schemaVersion,
 				logicalName: draft.logicalName,
 				displayName: draft.displayName,
 				mcpServer: {
@@ -1084,14 +1046,14 @@ function fillMissingKinds(
 		if (registration.artifactID === targetServerArtifactID) {
 			return {
 				...registration,
-				kind: identity.serverKind,
+				kind: identity.server.kind,
 			};
 		}
 
 		if (registration.artifactID === targetPolicyArtifactID) {
 			return {
 				...registration,
-				kind: identity.policyKind,
+				kind: identity.policy.kind,
 			};
 		}
 
@@ -1123,7 +1085,7 @@ export async function createMCPBundle(
 		rootID: MCP_USER_ROOT_ID,
 		collectionID: '0198f097-0d5b-7000-8000-000000000020',
 	};
-	const template = await mcpAPI.getMCPBundleDocument(templateRef);
+	const template = await mcpManagementAPI.getMCPBundleDocument(templateRef);
 
 	const collectionID = getUUIDv7();
 	const sourceID = getUUIDv7();
@@ -1142,7 +1104,7 @@ export async function createMCPBundle(
 		},
 	};
 
-	const bundle = await mcpAPI.createMCPBundle({
+	const bundle = await mcpManagementAPI.createMCPBundle({
 		rootID: MCP_USER_ROOT_ID,
 		collectionID,
 		sourceID,
@@ -1151,7 +1113,7 @@ export async function createMCPBundle(
 		registrations: [],
 	});
 
-	const installation = await mcpAPI.getMCPBundleInstallation({
+	const installation = await mcpManagementAPI.getMCPBundleInstallation({
 		rootID: bundle.collection.rootID,
 		collectionID: bundle.collection.id,
 	});
@@ -1189,10 +1151,10 @@ export async function saveMCPServer(
 	}
 
 	const [currentBundle, currentDocument, serverRecords, policyRecords, identity] = await Promise.all([
-		mcpAPI.getMCPBundle(bundle.ref),
-		mcpAPI.getMCPBundleDocument(bundle.ref),
-		mcpAPI.listMCPBundleServers(bundle.ref),
-		mcpAPI.listMCPBundlePolicies(bundle.ref),
+		mcpManagementAPI.getMCPBundle(bundle.ref),
+		mcpManagementAPI.getMCPBundleDocument(bundle.ref),
+		mcpManagementAPI.listMCPBundleServers(bundle.ref),
+		mcpManagementAPI.listMCPBundlePolicies(bundle.ref),
 		getServerIdentity(),
 	]);
 
@@ -1221,7 +1183,7 @@ export async function saveMCPServer(
 		policyArtifactID
 	);
 
-	await mcpAPI.replaceMCPBundleDocument({
+	await mcpManagementAPI.replaceMCPBundleDocument({
 		bundle: bundle.ref,
 		expectedCollectionRevision: currentBundle.collection.revision,
 		document: built.document,
@@ -1233,28 +1195,28 @@ export async function saveMCPServer(
 		artifactID: serverArtifactID,
 	};
 
-	const freshInstallation = await mcpAPI.getMCPServerInstallation(serverRef);
+	const freshInstallation = await mcpManagementAPI.getMCPServerInstallation(serverRef);
 	const nextData = cloneJSON(freshInstallation.installation);
 	nextData.inputs = cloneJSON(nextData.inputs ?? {});
 
 	for (const deletion of dedupeSecretDeletes(built.secretDeletes)) {
-		await mcpAPI.deleteMCPServerSecret(serverRef, deletion.kind, deletion.slot);
+		await mcpManagementAPI.deleteMCPServerSecret(serverRef, deletion.kind, deletion.slot);
 	}
 
 	for (const write of built.secretWrites) {
-		const result = await mcpAPI.putMCPServerSecret(serverRef, write.kind, write.slot, write.secret);
+		const result = await mcpManagementAPI.putMCPServerSecret(serverRef, write.kind, write.slot, write.secret);
 		nextData.inputs[write.inputName] = {
 			secretRef: result.secretRef,
 		};
 	}
 
 	if (JSON.stringify(nextData) !== JSON.stringify(freshInstallation.installation)) {
-		await mcpAPI.updateMCPServerInstallation(serverRef, freshInstallation.artifact.revision, nextData);
+		await mcpManagementAPI.updateMCPServerInstallation(serverRef, freshInstallation.artifact.revision, nextData);
 	}
 
 	const refreshedBundle: MCPBundleView = {
-		bundle: await mcpAPI.getMCPBundle(bundle.ref),
-		installation: await mcpAPI.getMCPBundleInstallation(bundle.ref),
+		bundle: await mcpManagementAPI.getMCPBundle(bundle.ref),
+		installation: await mcpManagementAPI.getMCPBundleInstallation(bundle.ref),
 		ref: bundle.ref,
 		displayName: bundle.displayName,
 		logicalName: bundle.logicalName,
@@ -1282,7 +1244,7 @@ export async function setMCPServerRuntimeEnabled(
 	}
 
 	if (server.builtIn) {
-		await mcpAPI.updateProtectedMCPServerInstallation(
+		await mcpManagementAPI.updateProtectedMCPServerInstallation(
 			server.ref,
 			server.installationRevision ?? 0,
 			enabled,
@@ -1292,10 +1254,10 @@ export async function setMCPServerRuntimeEnabled(
 	}
 
 	const [currentBundle, document, serverRecords, policyRecords] = await Promise.all([
-		mcpAPI.getMCPBundle(bundle.ref),
-		mcpAPI.getMCPBundleDocument(bundle.ref),
-		mcpAPI.listMCPBundleServers(bundle.ref),
-		mcpAPI.listMCPBundlePolicies(bundle.ref),
+		mcpManagementAPI.getMCPBundle(bundle.ref),
+		mcpManagementAPI.getMCPBundleDocument(bundle.ref),
+		mcpManagementAPI.listMCPBundleServers(bundle.ref),
+		mcpManagementAPI.listMCPBundlePolicies(bundle.ref),
 	]);
 
 	const registrations = [
@@ -1315,7 +1277,7 @@ export async function setMCPServerRuntimeEnabled(
 		})),
 	].filter(registration => registration.subresource);
 
-	await mcpAPI.replaceMCPBundleDocument({
+	await mcpManagementAPI.replaceMCPBundleDocument({
 		bundle: bundle.ref,
 		expectedCollectionRevision: currentBundle.collection.revision,
 		document,
@@ -1325,11 +1287,15 @@ export async function setMCPServerRuntimeEnabled(
 
 export async function setMCPBundleRuntimeEnabled(bundle: MCPBundleView, enabled: boolean): Promise<void> {
 	if (bundle.builtIn) {
-		await mcpAPI.updateProtectedMCPBundleInstallation(bundle.ref, bundle.installation.overlayRevision, enabled);
+		await mcpManagementAPI.updateProtectedMCPBundleInstallation(
+			bundle.ref,
+			bundle.installation.overlayRevision,
+			enabled
+		);
 		return;
 	}
 
-	await mcpAPI.updateMCPBundleEnabled(bundle.ref, bundle.bundle.collection.revision, enabled);
+	await mcpManagementAPI.updateMCPBundleEnabled(bundle.ref, bundle.bundle.collection.revision, enabled);
 }
 
 export async function deleteMCPServer(bundle: MCPBundleView, server: MCPServerView): Promise<void> {
@@ -1342,10 +1308,10 @@ export async function deleteMCPServer(bundle: MCPBundleView, server: MCPServerVi
 	}
 
 	const [currentBundle, document, serverRecords, policyRecords] = await Promise.all([
-		mcpAPI.getMCPBundle(bundle.ref),
-		mcpAPI.getMCPBundleDocument(bundle.ref),
-		mcpAPI.listMCPBundleServers(bundle.ref),
-		mcpAPI.listMCPBundlePolicies(bundle.ref),
+		mcpManagementAPI.getMCPBundle(bundle.ref),
+		mcpManagementAPI.getMCPBundleDocument(bundle.ref),
+		mcpManagementAPI.listMCPBundleServers(bundle.ref),
+		mcpManagementAPI.listMCPBundlePolicies(bundle.ref),
 	]);
 
 	const nextDocument = cloneJSON(document);
@@ -1392,7 +1358,7 @@ export async function deleteMCPServer(bundle: MCPBundleView, server: MCPServerVi
 		});
 	}
 
-	await mcpAPI.replaceMCPBundleDocument({
+	await mcpManagementAPI.replaceMCPBundleDocument({
 		bundle: bundle.ref,
 		expectedCollectionRevision: currentBundle.collection.revision,
 		document: nextDocument,
@@ -1405,16 +1371,16 @@ export async function deleteMCPBundle(bundle: MCPBundleView): Promise<void> {
 		throw new Error('Built-in MCP bundles cannot be deleted.');
 	}
 
-	const servers = await mcpAPI.listMCPBundleServers(bundle.ref);
-	const policies = await mcpAPI.listMCPBundlePolicies(bundle.ref);
+	const servers = await mcpManagementAPI.listMCPBundleServers(bundle.ref);
+	const policies = await mcpManagementAPI.listMCPBundlePolicies(bundle.ref);
 
 	if (servers.length > 0 || policies.length > 0) {
 		throw new Error('Remove all MCP server and policy Artifacts before deleting this bundle.');
 	}
 
-	const retired = await mcpAPI.retireMCPBundle(bundle.ref, bundle.bundle.collection.revision);
+	const retired = await mcpManagementAPI.retireMCPBundle(bundle.ref, bundle.bundle.collection.revision);
 
-	await mcpAPI.purgeMCPBundle(bundle.ref, retired.revision);
+	await mcpManagementAPI.purgeMCPBundle(bundle.ref, retired.revision);
 }
 
 export async function applyMCPServerSetup(
@@ -1426,7 +1392,7 @@ export async function applyMCPServerSetup(
 		throw new Error('The MCP server installation is unavailable.');
 	}
 
-	const latest = await mcpAPI.getMCPServerInstallation(server.ref);
+	const latest = await mcpManagementAPI.getMCPServerInstallation(server.ref);
 	const nextData = cloneJSON(latest.installation);
 	nextData.inputs = cloneJSON(nextData.inputs ?? {});
 	const inputs = latest.document.extension.install.inputs ?? {};
@@ -1460,7 +1426,7 @@ export async function applyMCPServerSetup(
 					...(submitted.clientSecret ? { clientSecret: submitted.clientSecret } : {}),
 				});
 
-				const result = await mcpAPI.putMCPServerSecret(
+				const result = await mcpManagementAPI.putMCPServerSecret(
 					server.ref,
 					MCPSecretKindEnum.OAuthClientCredentials,
 					'clientCredentials',
@@ -1471,7 +1437,11 @@ export async function applyMCPServerSetup(
 					secretRef: result.secretRef,
 				};
 			} else if (reset && existing?.secretRef) {
-				await mcpAPI.deleteMCPServerSecret(server.ref, MCPSecretKindEnum.OAuthClientCredentials, 'clientCredentials');
+				await mcpManagementAPI.deleteMCPServerSecret(
+					server.ref,
+					MCPSecretKindEnum.OAuthClientCredentials,
+					'clientCredentials'
+				);
 				nextData.inputs = omitManyKeys(nextData.inputs, [inputName]);
 			}
 			continue;
@@ -1485,20 +1455,20 @@ export async function applyMCPServerSetup(
 			}
 
 			if (submitted?.value) {
-				const result = await mcpAPI.putMCPServerSecret(server.ref, target.kind, target.slot, submitted.value);
+				const result = await mcpManagementAPI.putMCPServerSecret(server.ref, target.kind, target.slot, submitted.value);
 
 				nextData.inputs[inputName] = {
 					secretRef: result.secretRef,
 				};
 			} else if (reset && existing?.secretRef) {
-				await mcpAPI.deleteMCPServerSecret(server.ref, target.kind, target.slot);
+				await mcpManagementAPI.deleteMCPServerSecret(server.ref, target.kind, target.slot);
 				nextData.inputs = omitManyKeys(nextData.inputs, [inputName]);
 			}
 		}
 	}
 
 	if (server.builtIn) {
-		await mcpAPI.updateProtectedMCPServerInstallation(
+		await mcpManagementAPI.updateProtectedMCPServerInstallation(
 			server.ref,
 			latest.installationRevision,
 			latest.runtimeEnabled,
@@ -1507,7 +1477,7 @@ export async function applyMCPServerSetup(
 		return;
 	}
 
-	await mcpAPI.updateMCPServerInstallation(server.ref, latest.artifact.revision, nextData);
+	await mcpManagementAPI.updateMCPServerInstallation(server.ref, latest.artifact.revision, nextData);
 }
 
 export function isServerOperational(server: MCPServerView): boolean {

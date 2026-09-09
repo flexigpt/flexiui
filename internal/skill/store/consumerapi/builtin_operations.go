@@ -19,7 +19,7 @@ import (
 )
 
 type preparedBuiltInSkill struct {
-	request          BuiltInCollectionSkill
+	request          skillDomain.BuiltInCollectionSkill
 	name             string
 	locator          basespec.Locator
 	definitionDigest cryptoutil.Digest

@@ -244,6 +244,17 @@ export interface MCPServerDocument {
 	extension: MCPServerExtension;
 }
 
+export interface MCPDocumentSchemaIdentity {
+	kind: ArtifactKind;
+	schemaID: string;
+	schemaVersion: string;
+}
+
+export interface MCPServerSchemaIdentity {
+	server: MCPDocumentSchemaIdentity;
+	policy: MCPDocumentSchemaIdentity;
+}
+
 interface MCPServerPolicy {
 	defaultApprovalRule: MCPApprovalRule;
 	defaultExecutionMode: MCPExecutionMode;

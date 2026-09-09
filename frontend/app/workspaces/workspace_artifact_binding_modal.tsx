@@ -10,7 +10,7 @@ import { getUUIDv7 } from '@/lib/uuid_utils';
 
 import { useModalDialogController } from '@/hooks/use_dialog_controller';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import { Dropdown } from '@/components/dropdown';
 import { ModalActions } from '@/components/modal/modal_actions';
@@ -130,7 +130,7 @@ function WorkspaceArtifactBindingModalContent({
 		void (async () => {
 			try {
 				if (action === 'pin') {
-					await workspaceAPI.pinWorkspaceArtifact(workspace.workspace, {
+					await workspaceManagementAPI.pinWorkspaceArtifact(workspace.workspace, {
 						expectedCollectionRevision: workspace.revision,
 						artifactID: getUUIDv7(),
 						binding,
@@ -141,7 +141,7 @@ function WorkspaceArtifactBindingModalContent({
 						},
 					});
 				} else {
-					await workspaceAPI.suppressWorkspaceBinding(workspace.workspace, {
+					await workspaceManagementAPI.suppressWorkspaceBinding(workspace.workspace, {
 						expectedCollectionRevision: workspace.revision,
 						binding,
 					});

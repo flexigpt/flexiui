@@ -34,7 +34,7 @@ import {
 	MCPToolExposure,
 } from '@/spec/mcp_artifact';
 
-import { mcpAPI } from '@/apis/baseapi';
+import { mcpRuntimeAPI } from '@/apis/baseapi';
 
 import {
 	actionTriggerChipClearButtonClasses,
@@ -266,7 +266,7 @@ function MCPArgumentFields({
 
 		let cancelled = false;
 		const timer = window.setTimeout(() => {
-			void mcpAPI
+			void mcpRuntimeAPI
 				.completeMCPArgument(server, refType, name, focusedArg, focusedValue, values)
 				.then(result => {
 					if (cancelled) {

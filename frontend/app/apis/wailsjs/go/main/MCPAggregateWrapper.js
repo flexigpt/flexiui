@@ -46,10 +46,6 @@ export function RuntimeServerIDForArtifact(arg1) {
   return window['go']['main']['MCPAggregateWrapper']['RuntimeServerIDForArtifact'](arg1);
 }
 
-export function UpdateMCPBundleEnabled(arg1, arg2, arg3) {
-  return window['go']['main']['MCPAggregateWrapper']['UpdateMCPBundleEnabled'](arg1, arg2, arg3);
-}
-
 export function UpdateMCPServerInstallation(arg1, arg2, arg3) {
   return window['go']['main']['MCPAggregateWrapper']['UpdateMCPServerInstallation'](arg1, arg2, arg3);
 }

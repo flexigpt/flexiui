@@ -28,7 +28,7 @@ import { getUUIDv7 } from '@/lib/uuid_utils';
 
 import { usePendingActions } from '@/hooks/use_pending_actions';
 
-import { workspaceAPI } from '@/apis/baseapi';
+import { workspaceManagementAPI } from '@/apis/baseapi';
 
 import { ActionDeniedAlertModal } from '@/components/action_denied_modal';
 import { ActionRow } from '@/components/managementui/action_row';
@@ -101,11 +101,11 @@ function workspaceOccurrencePendingKey(occurrence: WorkspaceOccurrenceView): str
 
 async function loadWorkspaceCatalogData(workspace: WorkspaceView): Promise<WorkspaceCatalogData> {
 	const workspaceRef = workspace.workspace;
-	const catalog = normalizeWorkspaceCatalog(await workspaceAPI.getWorkspaceCatalog(workspaceRef));
+	const catalog = normalizeWorkspaceCatalog(await workspaceManagementAPI.getWorkspaceCatalog(workspaceRef));
 	const [contextResult, skillResult, suppressionResult] = await Promise.allSettled([
-		workspaceAPI.listWorkspaceContexts(workspaceRef),
-		workspaceAPI.listWorkspaceSkills(workspaceRef),
-		workspaceAPI.listWorkspaceSuppressions(workspaceRef),
+		workspaceManagementAPI.listWorkspaceContexts(workspaceRef),
+		workspaceManagementAPI.listWorkspaceSkills(workspaceRef),
+		workspaceManagementAPI.listWorkspaceSuppressions(workspaceRef),
 	]);
 
 	return {
@@ -387,7 +387,7 @@ export function WorkspaceCard({
 
 		try {
 			await runAction('workspace:refresh', async () => {
-				const result = await workspaceAPI.refreshWorkspace(workspace.workspace);
+				const result = await workspaceManagementAPI.refreshWorkspace(workspace.workspace);
 				if (mountedRef.current) {
 					setRefreshSummary(
 						`Scanned ${result.candidates} candidates. Created ${result.createdArtifacts.length} and updated ${result.updatedArtifacts.length} resources.`
@@ -431,12 +431,16 @@ export function WorkspaceCard({
 
 		const deletingRecord = recordToDelete;
 		if (deletingRecord.adoption === ArtifactAdoptionMode.Observed) {
-			await workspaceAPI.unadoptWorkspaceArtifact(workspace.workspace, deletingRecord.artifact, {
+			await workspaceManagementAPI.unadoptWorkspaceArtifact(workspace.workspace, deletingRecord.artifact, {
 				expectedRevision: deletingRecord.revision,
 				suppress: suppressRemovedBinding,
 			});
 		} else {
-			await workspaceAPI.purgeWorkspaceArtifact(workspace.workspace, deletingRecord.artifact, deletingRecord.revision);
+			await workspaceManagementAPI.purgeWorkspaceArtifact(
+				workspace.workspace,
+				deletingRecord.artifact,
+				deletingRecord.revision
+			);
 		}
 
 		if (!mountedRef.current) {
@@ -472,7 +476,7 @@ export function WorkspaceCard({
 			return;
 		}
 
-		await workspaceAPI.adoptWorkspaceOccurrence(workspace.workspace, {
+		await workspaceManagementAPI.adoptWorkspaceOccurrence(workspace.workspace, {
 			expectedCatalogRevision: catalogData.catalog.catalogRevision,
 			occurrence: {
 				sourceID: occurrence.sourceID,
@@ -498,7 +502,11 @@ export function WorkspaceCard({
 
 		try {
 			await runAction(pendingKey, async () => {
-				await workspaceAPI.unsuppressWorkspaceBinding(workspace.workspace, suppression.binding, suppression.revision);
+				await workspaceManagementAPI.unsuppressWorkspaceBinding(
+					workspace.workspace,
+					suppression.binding,
+					suppression.revision
+				);
 				if (mountedRef.current) {
 					setCatalogState(previous => {
 						if (!previous?.data || previous.workspaceVersion !== workspaceVersion) {
@@ -559,7 +567,7 @@ export function WorkspaceCard({
 					void runArtifactMutation(
 						`${current.artifact.artifactID}:enabled`,
 						() =>
-							workspaceAPI.setWorkspaceArtifactEnabled(workspace.workspace, current.artifact, {
+							workspaceManagementAPI.setWorkspaceArtifactEnabled(workspace.workspace, current.artifact, {
 								expectedRevision: current.revision,
 								enabled,
 							}),
@@ -570,7 +578,7 @@ export function WorkspaceCard({
 					void runArtifactMutation(
 						`${current.artifact.artifactID}:runtime`,
 						() =>
-							workspaceAPI.setWorkspaceArtifactRuntimeDisabled(workspace.workspace, current.artifact, {
+							workspaceManagementAPI.setWorkspaceArtifactRuntimeDisabled(workspace.workspace, current.artifact, {
 								expectedRevision: current.revision,
 								runtimeDisabled: disabled,
 							}),
@@ -958,10 +966,14 @@ export function WorkspaceCard({
 														void runArtifactMutation(
 															`${current.artifact.artifactID}:enabled`,
 															() =>
-																workspaceAPI.setWorkspaceArtifactEnabled(workspace.workspace, current.artifact, {
-																	expectedRevision: current.revision,
-																	enabled,
-																}),
+																workspaceManagementAPI.setWorkspaceArtifactEnabled(
+																	workspace.workspace,
+																	current.artifact,
+																	{
+																		expectedRevision: current.revision,
+																		enabled,
+																	}
+																),
 															'Failed to update context enable state.'
 														);
 													}}
@@ -969,7 +981,7 @@ export function WorkspaceCard({
 														void runArtifactMutation(
 															`${current.artifact.artifactID}:runtime`,
 															() =>
-																workspaceAPI.setWorkspaceArtifactRuntimeDisabled(
+																workspaceManagementAPI.setWorkspaceArtifactRuntimeDisabled(
 																	workspace.workspace,
 																	current.artifact,
 																	{
@@ -1039,10 +1051,14 @@ export function WorkspaceCard({
 														void runArtifactMutation(
 															`${current.artifact.artifactID}:enabled`,
 															() =>
-																workspaceAPI.setWorkspaceArtifactEnabled(workspace.workspace, current.artifact, {
-																	expectedRevision: current.revision,
-																	enabled,
-																}),
+																workspaceManagementAPI.setWorkspaceArtifactEnabled(
+																	workspace.workspace,
+																	current.artifact,
+																	{
+																		expectedRevision: current.revision,
+																		enabled,
+																	}
+																),
 															'Failed to update skill enable state.'
 														);
 													}}
@@ -1050,7 +1066,7 @@ export function WorkspaceCard({
 														void runArtifactMutation(
 															`${current.artifact.artifactID}:runtime`,
 															() =>
-																workspaceAPI.setWorkspaceArtifactRuntimeDisabled(
+																workspaceManagementAPI.setWorkspaceArtifactRuntimeDisabled(
 																	workspace.workspace,
 																	current.artifact,
 																	{

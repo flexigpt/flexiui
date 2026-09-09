@@ -6,7 +6,7 @@ import {collection} from '../models';
 import {secret} from '../models';
 import {auth} from '../models';
 import {aggregate} from '../models';
-import {store} from '../models';
+import {consumerapi} from '../models';
 
 export function ArtifactRefForRuntimeServerID(arg1:server.ServerID):Promise<artifact.ArtifactRef>;
 
@@ -20,17 +20,15 @@ export function PurgeMCPBundle(arg1:collection.CollectionRef,arg2:number):Promis
 
 export function PutMCPServerSecret(arg1:artifact.ArtifactRef,arg2:secret.MCPSecretKind,arg3:string,arg4:string):Promise<aggregate.SecretWriteResult>;
 
-export function RefreshMCPBundle(arg1:collection.CollectionRef):Promise<store.Bundle>;
+export function RefreshMCPBundle(arg1:collection.CollectionRef):Promise<consumerapi.Bundle>;
 
-export function ReplaceMCPBundleDocument(arg1:store.ReplaceDocumentRequest):Promise<store.Bundle>;
+export function ReplaceMCPBundleDocument(arg1:consumerapi.ReplaceDocumentRequest):Promise<consumerapi.Bundle>;
 
 export function RetireMCPBundle(arg1:collection.CollectionRef,arg2:number):Promise<collection.Collection>;
 
 export function RuntimeCatalogIDForCollection(arg1:collection.CollectionRef):Promise<server.CatalogID>;
 
 export function RuntimeServerIDForArtifact(arg1:artifact.ArtifactRef):Promise<server.ServerID>;
-
-export function UpdateMCPBundleEnabled(arg1:collection.CollectionRef,arg2:number,arg3:boolean):Promise<store.Bundle>;
 
 export function UpdateMCPServerInstallation(arg1:artifact.ArtifactRef,arg2:number,arg3:server.ServerData):Promise<artifact.Artifact>;
 

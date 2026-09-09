@@ -13,6 +13,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 )
 
+type WorkspaceRef = collection.CollectionRef
+
 type Mode string
 
 const (
@@ -62,8 +64,6 @@ type AttachmentData struct {
 type ArtifactData struct {
 	RuntimeDisabled bool `json:"runtimeDisabled,omitempty"`
 }
-
-type WorkspaceRef = collection.CollectionRef
 
 // Workspace is an internal privileged aggregate. API packages project it into
 // explicit view models and must not serialize collection local data, attachment

@@ -15,7 +15,7 @@ import { MCPToolRisk } from '@/spec/mcp_artifact';
 
 import { useAsyncResource } from '@/hooks/use_async_resource';
 
-import { mcpAPI } from '@/apis/baseapi';
+import { mcpRuntimeAPI } from '@/apis/baseapi';
 
 import { ManagementDetailsModal } from '@/components/managementui/management_details_modal';
 import { ManagementInfoGrid } from '@/components/managementui/management_info_grid';
@@ -120,10 +120,10 @@ function MCPServerDetailsModalContent({
 
 			const runtimeServerID = requireMCPRuntimeServerID(server);
 			const results = await Promise.allSettled([
-				mcpAPI.listMCPServerTools(runtimeServerID),
-				mcpAPI.listMCPServerResources(runtimeServerID),
-				mcpAPI.listMCPServerResourceTemplates(runtimeServerID),
-				mcpAPI.listMCPServerPrompts(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerTools(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerResources(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerResourceTemplates(runtimeServerID),
+				mcpRuntimeAPI.listMCPServerPrompts(runtimeServerID),
 			]);
 
 			const [tools, resources, templates, prompts] = results;

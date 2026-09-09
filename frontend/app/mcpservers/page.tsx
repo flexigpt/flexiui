@@ -13,7 +13,7 @@ import { MCPAuthHealthState, MCPHTTPAuthMode, MCPServerStatus } from '@/spec/mcp
 
 import { mapWithConcurrency } from '@/lib/async_utils';
 
-import { backendAPI, mcpAPI } from '@/apis/baseapi';
+import { backendAPI, mcpManagementAPI, mcpRuntimeAPI } from '@/apis/baseapi';
 
 import { ActionDeniedAlertModal } from '@/components/action_denied_modal';
 import { DeleteConfirmationModal } from '@/components/delete_confirmation_modal';
@@ -196,7 +196,8 @@ export default function MCPServersPage() {
 			readErrorsByArtifactID: Record<string, { runtime?: string; auth?: string } | undefined>;
 		}> => {
 			const pending =
-				knownPending ?? (await mcpAPI.listPendingMCPOAuthAuthorizations().catch(() => [] as MCPOAuthAuthorization[]));
+				knownPending ??
+				(await mcpRuntimeAPI.listPendingMCPOAuthAuthorizations().catch(() => [] as MCPOAuthAuthorization[]));
 
 			const entries = await mapWithConcurrency(servers, STATUS_READ_CONCURRENCY, async server => {
 				const key = server.ref.artifactID;
@@ -216,10 +217,10 @@ export default function MCPServersPage() {
 				const pendingAuthorization = pending.find(item => item.server === runtimeServerID);
 				const authRequest: Promise<MCPAuthHealth | undefined> = pendingAuthorization
 					? Promise.resolve(undefined)
-					: mcpAPI.getMCPServerAuthHealth(server.ref);
+					: mcpManagementAPI.getMCPServerAuthHealth(server.ref);
 
 				const [runtimeResult, authResult] = await Promise.allSettled([
-					mcpAPI.getMCPServerStatus(runtimeServerID),
+					mcpRuntimeAPI.getMCPServerStatus(runtimeServerID),
 					authRequest,
 				]);
 
@@ -296,10 +297,10 @@ export default function MCPServersPage() {
 		setPageLoadError(undefined);
 
 		try {
-			const settingsPromise = mcpAPI.getMCPGlobalSettings();
+			const settingsPromise = mcpRuntimeAPI.getMCPGlobalSettings();
 			const [bundleResult, pendingResult] = await Promise.allSettled([
 				loadMCPBundleViews(),
-				mcpAPI.listPendingMCPOAuthAuthorizations(),
+				mcpRuntimeAPI.listPendingMCPOAuthAuthorizations(),
 			]);
 
 			if (bundleResult.status === 'rejected') {
@@ -542,7 +543,7 @@ export default function MCPServersPage() {
 			markServerConnecting(server);
 
 			try {
-				let snapshot = await mcpAPI.connectMCPServer(runtimeServerID);
+				let snapshot = await mcpRuntimeAPI.connectMCPServer(runtimeServerID);
 				applyRuntimeSnapshot(server, snapshot);
 
 				const deadline = Date.now() + CONNECTION_WAIT_TIMEOUT_MS;
@@ -552,7 +553,7 @@ export default function MCPServersPage() {
 					}
 
 					await sleep(CONNECTION_POLL_INTERVAL_MS);
-					snapshot = await mcpAPI.getMCPServerStatus(runtimeServerID);
+					snapshot = await mcpRuntimeAPI.getMCPServerStatus(runtimeServerID);
 					applyRuntimeSnapshot(server, snapshot);
 
 					// Keep OAuth health and pending authorization state in sync
@@ -613,7 +614,7 @@ export default function MCPServersPage() {
 			polling = true;
 
 			try {
-				const pending = await mcpAPI.listPendingMCPOAuthAuthorizations();
+				const pending = await mcpRuntimeAPI.listPendingMCPOAuthAuthorizations();
 
 				await mapWithConcurrency(servers, STATUS_READ_CONCURRENCY, async ref => {
 					const bundle = bundlesRef.current.find(item =>
@@ -946,15 +947,15 @@ export default function MCPServersPage() {
 							}}
 							onConnectServer={handleConnectServer}
 							onDisconnectServer={async server => {
-								await mcpAPI.disconnectMCPServer(requireMCPRuntimeServerID(server));
+								await mcpRuntimeAPI.disconnectMCPServer(requireMCPRuntimeServerID(server));
 								await refreshSingleServer(server);
 							}}
 							onRefreshServer={async server => {
-								await mcpAPI.refreshMCPServer(requireMCPRuntimeServerID(server));
+								await mcpRuntimeAPI.refreshMCPServer(requireMCPRuntimeServerID(server));
 								await refreshSingleServer(server);
 							}}
 							onCancelOAuth={async server => {
-								await mcpAPI.cancelPendingMCPOAuthAuthorization(requireMCPRuntimeServerID(server));
+								await mcpRuntimeAPI.cancelPendingMCPOAuthAuthorization(requireMCPRuntimeServerID(server));
 								await refreshSingleServer(server);
 							}}
 							onRequestOAuthAuthorization={server => {
@@ -1023,9 +1024,9 @@ export default function MCPServersPage() {
 						setIsSettingsOpen(false);
 					}}
 					onSubmit={async oauthLoopbackListenAddr => {
-						const current = settings ?? (await mcpAPI.getMCPGlobalSettings());
-						await mcpAPI.updateMCPGlobalSettings(current.revision, oauthLoopbackListenAddr || undefined);
-						setSettings(await mcpAPI.getMCPGlobalSettings());
+						const current = settings ?? (await mcpRuntimeAPI.getMCPGlobalSettings());
+						await mcpRuntimeAPI.updateMCPGlobalSettings(current.revision, oauthLoopbackListenAddr || undefined);
+						setSettings(await mcpRuntimeAPI.getMCPGlobalSettings());
 					}}
 				/>
 
@@ -1049,7 +1050,7 @@ export default function MCPServersPage() {
 							return;
 						}
 
-						await mcpAPI.cancelPendingMCPOAuthAuthorization(requireMCPRuntimeServerID(selectedOAuth.server));
+						await mcpRuntimeAPI.cancelPendingMCPOAuthAuthorization(requireMCPRuntimeServerID(selectedOAuth.server));
 						await refreshSingleServer(selectedOAuth.server);
 						setOAuthTarget(null);
 					}}

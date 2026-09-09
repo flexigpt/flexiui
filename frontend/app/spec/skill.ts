@@ -9,6 +9,7 @@ import type {
 	ArtifactKind,
 	ArtifactLocator,
 	ArtifactRef,
+	ArtifactRootID,
 	ArtifactSourceBinding,
 	ArtifactSourceID,
 	ArtifactState,
@@ -16,6 +17,8 @@ import type {
 	ManagedSourcePackageFile,
 } from '@/spec/artifact';
 import type { ToolOutputUnion } from '@/spec/tool';
+
+export const SKILL_USER_ROOT_ID: ArtifactRootID = '0198f097-0d5c-7000-8000-000000000001';
 
 export const SKILLS_AUTOEXEC_TOOL_CHOICES = new Set([
 	'builtin.skills-load',
@@ -137,8 +140,10 @@ export interface UpdateSkillBundleBody {
 	enabled: boolean;
 }
 
-export interface AttachSkillBundleSourceBody extends SkillBundleAttachmentDraft {
+export interface RegisterSkillBundleDirectoryInput {
 	expectedCollectionRevision: number;
+	rootPath: string;
+	sourceDisplayName: string;
 }
 
 interface SkillOccurrenceRef {

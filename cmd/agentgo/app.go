@@ -274,6 +274,7 @@ func (a *App) initManagers() {
 		artifactComposition.Sources,
 		artifactComposition.Collections,
 		artifactComposition.Artifacts,
+		artifactComposition.Catalogs,
 		artifactComposition.Resources,
 	)
 	if err != nil {
@@ -288,6 +289,7 @@ func (a *App) initManagers() {
 
 	err = InitSkillStoreWrapper(
 		a.skillStoreAPI,
+		artifactComposition.Roots,
 		artifactComposition.Sources,
 		artifactComposition.Collections,
 		artifactComposition.Artifacts,
@@ -356,6 +358,7 @@ func (a *App) initManagers() {
 		a.mcpStoreAPI,
 		a.mcpRuntimeAPI,
 		a.mcpAggregateAPI,
+		artifactComposition.Roots,
 		artifactComposition.Sources,
 		artifactComposition.Collections,
 		artifactComposition.Artifacts,
