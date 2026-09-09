@@ -326,9 +326,6 @@ func (s *Service) DeleteServerSecret(
 			mcpAuth.ErrMCPInvalidAuthRequest,
 		)
 	}
-	if _, err := s.bundles.GetServerInstallation(ctx, ref); err != nil {
-		return err
-	}
 	installation, err := s.bundles.GetServerInstallation(ctx, ref)
 	if err != nil {
 		return err

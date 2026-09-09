@@ -162,7 +162,8 @@ func (a *API) EnsureBuiltIn(
 			Registrations:              request.Registrations,
 			AllowProtected:             true,
 		},
-		request.Document,
+		document,
+		request.Document.Raw,
 		request.PackageFiles,
 	)
 	if err != nil {

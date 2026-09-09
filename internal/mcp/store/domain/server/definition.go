@@ -26,27 +26,8 @@ func ServerSubresource(
 func ServerDocumentFromDefinition(
 	input definition.Definition,
 ) (ServerDocument, error) {
-	body, err := ServerBodyFromDefinition(input)
+	document, _, err := serverDocumentAndBodyFromDefinition(input)
 	if err != nil {
-		return ServerDocument{}, err
-	}
-	value, err := definition.Canonicalize(input)
-	if err != nil {
-		return ServerDocument{}, err
-	}
-	document := ServerDocument{
-		Kind:           artifactbuiltin.ServerKind,
-		SchemaID:       artifactbuiltin.ServerSchemaID,
-		SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
-		LogicalName:    value.LogicalName,
-		LogicalVersion: value.LogicalVersion,
-		DisplayName:    value.DisplayName,
-		Description:    value.Description,
-		Labels:         maps.Clone(value.Labels),
-		MCPServer:      body.MCPServer,
-		Extension:      body.Extension,
-	}
-	if err := document.Validate(); err != nil {
 		return ServerDocument{}, err
 	}
 	return document, nil
@@ -117,14 +98,24 @@ func DefinitionForCanonicalServer(
 func ServerBodyFromDefinition(
 	input definition.Definition,
 ) (ServerDefinitionBody, error) {
-	value, err := definition.Canonicalize(input)
+	_, body, err := serverDocumentAndBodyFromDefinition(input)
 	if err != nil {
 		return ServerDefinitionBody{}, err
+	}
+	return body, nil
+}
+
+func serverDocumentAndBodyFromDefinition(
+	input definition.Definition,
+) (ServerDocument, ServerDefinitionBody, error) {
+	value, err := definition.Canonicalize(input)
+	if err != nil {
+		return ServerDocument{}, ServerDefinitionBody{}, err
 	}
 	if value.Kind != artifactbuiltin.ServerKind ||
 		value.SchemaID != artifactbuiltin.ServerSchemaID ||
 		value.SchemaVersion != artifactbuiltin.MCPSchemaVersion {
-		return ServerDefinitionBody{}, fmt.Errorf(
+		return ServerDocument{}, ServerDefinitionBody{}, fmt.Errorf(
 			"%w: Definition is not an MCP Server",
 			basespec.ErrInvalid,
 		)
@@ -132,7 +123,7 @@ func ServerBodyFromDefinition(
 
 	body, err := definition.DecodeBody[ServerDefinitionBody](value.Body)
 	if err != nil {
-		return ServerDefinitionBody{}, err
+		return ServerDocument{}, ServerDefinitionBody{}, err
 	}
 
 	document := ServerDocument{
@@ -148,7 +139,7 @@ func ServerBodyFromDefinition(
 		Extension:      body.Extension,
 	}
 	if err := document.Validate(); err != nil {
-		return ServerDefinitionBody{}, err
+		return ServerDocument{}, ServerDefinitionBody{}, err
 	}
-	return body, nil
+	return document, body, nil
 }

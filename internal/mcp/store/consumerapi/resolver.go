@@ -15,7 +15,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
-	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 )
@@ -39,6 +38,16 @@ func (a *API) InspectMCPServerForRuntime(
 	return a.resolveMCPServer(ctx, ref, false)
 }
 
+type serverResolutionMaterial struct {
+	Resource             resource.ResolvedArtifact
+	Bundle               Bundle
+	Document             mcpDomainServer.ServerDocument
+	Installation         mcpDomainServer.ServerData
+	InstallationRevision uint64
+	InstallationEnabled  bool
+	RuntimeEnabled       bool
+}
+
 func (a *API) resolveMCPServer(
 	ctx context.Context,
 	ref artifact.ArtifactRef,
@@ -47,98 +56,22 @@ func (a *API) resolveMCPServer(
 	if a == nil {
 		return mcpDomainServer.Resolved{}, basespec.ErrClosed
 	}
-	if err := ref.Validate(); err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-
-	record, err := a.artifacts.Get(ctx, ref)
+	material, err := a.resolveServerMaterial(ctx, ref, verifySource)
 	if err != nil {
 		return mcpDomainServer.Resolved{}, err
 	}
-	if record.Kind != artifactbuiltin.ServerKind ||
-		record.State != artifact.StateAvailable ||
-		record.ResolvedDefinition == nil {
+	if material.Resource.Occurrence.SourceContentDigest == nil {
 		return mcpDomainServer.Resolved{}, fmt.Errorf(
-			"%w: MCP Server Artifact is not available",
-			basespec.ErrReferenceUnresolved,
-		)
-	}
-
-	bundle, err := a.Get(ctx, collection.CollectionRef{
-		RootID:       record.RootID,
-		CollectionID: record.CollectionID,
-	})
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-
-	snapshot, err := a.currentCatalog(ctx, bundle)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-	occurrence, err := currentServerOccurrence(snapshot, record)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-
-	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-	document, err := mcpDomainServer.ServerDocumentFromDefinition(definitionValue)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-
-	sourceRevision := snapshot.SourceRevisions[record.Binding.SourceID]
-	sourceGeneration := snapshot.SourceGenerations[record.Binding.SourceID]
-	if sourceRevision == 0 || sourceGeneration == "" ||
-		occurrence.SourceContentDigest == nil {
-		return mcpDomainServer.Resolved{}, fmt.Errorf(
-			"%w: MCP Server Source has no current Catalog state",
+			"%w: MCP Server Source has no current Catalog content digest",
 			basespec.ErrCatalogStale,
 		)
-	}
-
-	resolvedResource, err := a.resources.ResolveArtifact(
-		ctx,
-		ref,
-		resource.ResolveOptions{
-			VerifySourceContent: verifySource,
-		},
-	)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-	if resolvedResource.Artifact.Revision != record.Revision ||
-		resolvedResource.CatalogRevision != snapshot.Revision ||
-		resolvedResource.Definition.Digest != definitionValue.Digest ||
-		resolvedResource.Source.Revision != sourceRevision ||
-		resolvedResource.SourceGeneration != sourceGeneration ||
-		resolvedResource.Occurrence.SourceContentDigest == nil ||
-		*resolvedResource.Occurrence.SourceContentDigest !=
-			*occurrence.SourceContentDigest {
-		return mcpDomainServer.Resolved{}, fmt.Errorf(
-			"%w: MCP resource changed during resolution",
-			basespec.ErrCatalogStale,
-		)
-	}
-
-	installationData, installationRevision, _, runtimeEnabled, err := a.effectiveInstallation(
-		ctx,
-		bundle,
-		record,
-		document,
-	)
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
 	}
 
 	policyValue, err := a.effectivePolicy(
 		ctx,
-		bundle,
-		document,
-		installationData.AdditionalPolicies,
+		material.Bundle,
+		material.Document,
+		material.Installation.AdditionalPolicies,
 	)
 	if err != nil {
 		return mcpDomainServer.Resolved{}, err
@@ -155,14 +88,14 @@ func (a *API) resolveMCPServer(
 		InstallationRevision uint64                   `json:"installationRevision"`
 		PolicyDigest         cryptoutil.Digest        `json:"policyDigest"`
 	}{
-		ServerRef:            ref,
-		CollectionRef:        bundle.Collection.Ref(),
-		ArtifactRevision:     record.Revision,
-		CatalogRevision:      snapshot.Revision,
-		DefinitionDigest:     *record.ResolvedDefinition,
-		SourceContentDigest:  *occurrence.SourceContentDigest,
-		SourceGeneration:     sourceGeneration,
-		InstallationRevision: installationRevision,
+		ServerRef:            material.Resource.Artifact.Ref(),
+		CollectionRef:        material.Resource.Collection.Ref(),
+		ArtifactRevision:     material.Resource.Artifact.Revision,
+		CatalogRevision:      material.Resource.CatalogRevision,
+		DefinitionDigest:     material.Resource.Definition.Digest,
+		SourceContentDigest:  *material.Resource.Occurrence.SourceContentDigest,
+		SourceGeneration:     material.Resource.SourceGeneration,
+		InstallationRevision: material.InstallationRevision,
 		PolicyDigest:         policyValue.Digest,
 	})
 	if err != nil {
@@ -170,20 +103,20 @@ func (a *API) resolveMCPServer(
 	}
 
 	resolved := mcpDomainServer.Resolved{
-		Server:               ref,
-		Collection:           bundle.Collection.Ref(),
-		ArtifactRevision:     record.Revision,
-		CatalogRevision:      snapshot.Revision,
-		DefinitionDigest:     *record.ResolvedDefinition,
-		SourceContentDigest:  *occurrence.SourceContentDigest,
-		SourceGeneration:     sourceGeneration,
-		Document:             document,
-		Installation:         installationData,
+		Server:               material.Resource.Artifact.Ref(),
+		Collection:           material.Resource.Collection.Ref(),
+		ArtifactRevision:     material.Resource.Artifact.Revision,
+		CatalogRevision:      material.Resource.CatalogRevision,
+		DefinitionDigest:     material.Resource.Definition.Digest,
+		SourceContentDigest:  *material.Resource.Occurrence.SourceContentDigest,
+		SourceGeneration:     material.Resource.SourceGeneration,
+		Document:             material.Document,
+		Installation:         material.Installation,
 		Policy:               policyValue,
-		InstallationRevision: installationRevision,
-		RuntimeEnabled:       runtimeEnabled,
+		InstallationRevision: material.InstallationRevision,
+		RuntimeEnabled:       material.RuntimeEnabled,
 		BuiltIn: a.protection.IsProtectedRoot(
-			ref.RootID,
+			material.Resource.Artifact.RootID,
 		),
 		Version: version,
 	}
@@ -193,6 +126,69 @@ func (a *API) resolveMCPServer(
 	return resolved, nil
 }
 
+func (a *API) resolveServerMaterial(
+	ctx context.Context,
+	ref artifact.ArtifactRef,
+	verifySource bool,
+) (serverResolutionMaterial, error) {
+	resourceValue, err := a.resources.ResolveArtifact(
+		ctx,
+		ref,
+		resource.ResolveOptions{
+			VerifySourceContent: verifySource,
+		},
+	)
+	if err != nil {
+		return serverResolutionMaterial{}, err
+	}
+	if resourceValue.Artifact.Kind != artifactbuiltin.ServerKind {
+		return serverResolutionMaterial{}, fmt.Errorf(
+			"%w: Artifact is not an MCP Server",
+			basespec.ErrReferenceUnresolved,
+		)
+	}
+
+	bundle, err := a.Get(ctx, resourceValue.Collection.Ref())
+	if err != nil {
+		return serverResolutionMaterial{}, err
+	}
+	if bundle.Collection.Ref() != resourceValue.Collection.Ref() ||
+		bundle.Source.ID != resourceValue.Source.ID ||
+		bundle.DocumentLocator != resourceValue.Artifact.Binding.Locator {
+		return serverResolutionMaterial{}, fmt.Errorf(
+			"%w: MCP Bundle topology changed during Server resolution",
+			basespec.ErrCatalogStale,
+		)
+	}
+
+	document, err := mcpDomainServer.ServerDocumentFromDefinition(
+		resourceValue.Definition,
+	)
+	if err != nil {
+		return serverResolutionMaterial{}, err
+	}
+
+	installation, revision, enabled, runtimeEnabled, err := a.effectiveInstallation(
+		ctx,
+		bundle,
+		resourceValue.Artifact,
+		document,
+	)
+	if err != nil {
+		return serverResolutionMaterial{}, err
+	}
+
+	return serverResolutionMaterial{
+		Resource:             resourceValue.Clone(),
+		Bundle:               bundle,
+		Document:             document,
+		Installation:         installation,
+		InstallationRevision: revision,
+		InstallationEnabled:  enabled,
+		RuntimeEnabled:       runtimeEnabled,
+	}, nil
+}
+
 func (a *API) currentCatalog(
 	ctx context.Context,
 	bundle Bundle,
@@ -200,36 +196,6 @@ func (a *API) currentCatalog(
 	return a.catalogs.CurrentCatalog(
 		ctx,
 		bundle.Collection.Ref(),
-	)
-}
-
-func currentServerOccurrence(
-	snapshot catalog.Snapshot,
-	record artifact.Artifact,
-) (catalog.Occurrence, error) {
-	key := catalog.OccurrenceKey{
-		CollectionID:       record.CollectionID,
-		SourceID:           record.Binding.SourceID,
-		Locator:            record.Binding.Locator,
-		SubresourceLocator: record.Binding.SubresourceLocator,
-	}
-	for _, occurrence := range snapshot.Occurrences {
-		if occurrence.Key != key {
-			continue
-		}
-		if occurrence.State != catalog.OccurrenceValid ||
-			occurrence.Kind != artifactbuiltin.ServerKind ||
-			occurrence.DefinitionDigest == nil ||
-			occurrence.SourceContentDigest == nil ||
-			record.ResolvedDefinition == nil ||
-			*occurrence.DefinitionDigest != *record.ResolvedDefinition {
-			break
-		}
-		return occurrence.Clone(), nil
-	}
-	return catalog.Occurrence{}, fmt.Errorf(
-		"%w: MCP Server does not match its current Catalog occurrence",
-		basespec.ErrCatalogStale,
 	)
 }
 
@@ -356,27 +322,26 @@ func (a *API) effectivePolicy(
 				basespec.ErrInvalid,
 			)
 		}
-		record, err := a.artifacts.Get(ctx, ref)
+		resolvedResource, err := a.resources.ResolveArtifact(
+			ctx,
+			ref,
+			resource.ResolveOptions{},
+		)
 		if err != nil {
 			return mcpPolicy.Effective{}, err
 		}
+		record := resolvedResource.Artifact
 		if record.Kind != artifactbuiltin.PolicyKind ||
-			record.CollectionID != bundle.Collection.ID ||
-			!record.Enabled ||
-			record.State != artifact.StateAvailable ||
-			record.ResolvedDefinition == nil {
+			resolvedResource.Collection.Ref() != bundle.Collection.Ref() ||
+			!record.Enabled {
 			return mcpPolicy.Effective{}, fmt.Errorf(
 				"%w: additional MCP policy %q is unavailable",
 				basespec.ErrReferenceUnresolved,
 				ref.ArtifactID,
 			)
 		}
-		definitionValue, err := a.currentDefinitionForArtifact(ctx, record)
-		if err != nil {
-			return mcpPolicy.Effective{}, err
-		}
 		body, err := mcpDomainPolicy.BodyFromDefinition(
-			definitionValue,
+			resolvedResource.Definition,
 		)
 		if err != nil {
 			return mcpPolicy.Effective{}, err
@@ -401,27 +366,30 @@ func (a *API) policyBodiesByLogicalName(
 	ref collection.CollectionRef,
 	name basespec.LogicalName,
 ) ([]mcpPolicy.MCPPolicy, error) {
-	records, err := a.artifacts.ListByCollection(ctx, ref)
+	inspection, err := a.resources.InspectCollectionResources(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
+	if !inspection.Catalog.IsCurrent() {
+		return nil, fmt.Errorf(
+			"%w: MCP Bundle Catalog is stale",
+			basespec.ErrCatalogStale,
+		)
+	}
+
 	output := make([]mcpPolicy.MCPPolicy, 0)
-	for _, record := range records {
-		if record.Kind != artifactbuiltin.PolicyKind ||
-			!record.Enabled ||
-			record.State != artifact.StateAvailable ||
-			record.ResolvedDefinition == nil {
+	for _, value := range inspection.Resources {
+		if value.Artifact.Kind != artifactbuiltin.PolicyKind ||
+			!value.Artifact.Enabled ||
+			!value.CatalogCurrent ||
+			value.Resolved == nil {
 			continue
 		}
-		definitionValue, err := a.currentDefinitionForArtifact(ctx, record)
-		if err != nil {
-			return nil, err
-		}
-		if definitionValue.LogicalName != name {
+		if value.Definition.LogicalName != name {
 			continue
 		}
 		body, err := mcpDomainPolicy.BodyFromDefinition(
-			definitionValue,
+			value.Definition,
 		)
 		if err != nil {
 			return nil, err

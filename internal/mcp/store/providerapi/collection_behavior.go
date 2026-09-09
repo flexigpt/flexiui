@@ -81,14 +81,12 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
-	if err := attachmentData.Validate(); err != nil {
-		return providerapi.Plan{}, err
-	}
-	documentLocator, err := attachmentData.DocumentLocator()
+	documentLocator, err := mcpDomainBundle.DocumentLocatorForPackage(
+		attachmentData.PackageAddress,
+	)
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
-
 	sourcesByID := make(
 		map[source.SourceID]providerapi.Source,
 		len(sources),

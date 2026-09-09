@@ -13,7 +13,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -22,7 +21,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
-	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
 	mcpOverlay "github.com/flexigpt/flexigpt-app/internal/mcp/store/overlay"
 )
@@ -253,7 +251,8 @@ func (a *API) Create(
 			Registrations:              request.Registrations,
 			AllowProtected:             false,
 		},
-		parsedDocument,
+		document,
+		parsedDocument.Raw,
 		nil,
 	); err != nil {
 		return Bundle{}, err
@@ -418,11 +417,12 @@ func (a *API) Get(
 	if err != nil {
 		return Bundle{}, err
 	}
-	documentLocator, err := attachmentData.DocumentLocator()
+	documentLocator, err := mcpDomainBundle.DocumentLocatorForPackage(
+		attachmentData.PackageAddress,
+	)
 	if err != nil {
 		return Bundle{}, err
 	}
-
 	sourceValue, err := a.sources.Get(
 		ctx,
 		ref.RootID,
@@ -701,10 +701,10 @@ type ServerStore interface {
 		ctx context.Context,
 		ref artifact.ArtifactRef,
 	) (mcpDomainServer.Resolved, error)
-	InspectMCPServer(
+	InspectMCPServerForRuntime(
 		ctx context.Context,
-		request *InspectMCPServerRequest,
-	) (*InspectMCPServerResponse, error)
+		ref artifact.ArtifactRef,
+	) (mcpDomainServer.Resolved, error)
 }
 
 type BundleMutator interface {
@@ -842,7 +842,7 @@ func validateCreateRegistrations(
 	document mcpDomainBundle.BundleDocument,
 	registrations []Registration,
 ) error {
-	definitions, err := definitionsForDocument(document)
+	definitions, err := mcpDomainBundle.DefinitionsForDocument(document)
 	if err != nil {
 		return err
 	}
@@ -888,41 +888,6 @@ func validateCreateRegistrations(
 		}
 	}
 	return nil
-}
-
-func definitionsForDocument(
-	document mcpDomainBundle.BundleDocument,
-) (
-	map[basespec.SubresourceLocator]definition.Definition,
-	error,
-) {
-	output := make(
-		map[basespec.SubresourceLocator]definition.Definition,
-		len(document.MCPServers)+len(document.BundleExtension.Policies),
-	)
-	for name := range document.MCPServers {
-		serverDocument, err := mcpDomainBundle.ServerFromCanonicalBundle(document, name)
-		if err != nil {
-			return nil, err
-		}
-		value, err := mcpDomainServer.DefinitionForCanonicalServer(serverDocument)
-		if err != nil {
-			return nil, err
-		}
-		output[mcpDomainServer.ServerSubresource(
-			basespec.LogicalName(name),
-		)] = value
-	}
-	for name, policyDocument := range document.BundleExtension.Policies {
-		value, err := mcpDomainPolicy.DefinitionForCanonicalPolicy(policyDocument)
-		if err != nil {
-			return nil, err
-		}
-		output[mcpDomainPolicy.PolicySubresource(
-			basespec.LogicalName(name),
-		)] = value
-	}
-	return output, nil
 }
 
 func validateCreateBundleIntent(

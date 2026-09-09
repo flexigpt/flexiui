@@ -11,8 +11,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
@@ -34,7 +34,7 @@ func (a *API) ReplaceDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
 ) (Bundle, error) {
-	_, parsed, err := a.canonicalizeBundleBytes(
+	document, parsed, err := a.canonicalizeBundleBytes(
 		ctx,
 		request.Document,
 	)
@@ -44,24 +44,27 @@ func (a *API) ReplaceDocument(
 	return a.replaceCanonicalDocument(
 		ctx,
 		request,
-		parsed,
+		document,
+		parsed.Raw,
 		nil,
 	)
 }
 
 // replaceCanonicalDocument is shared by user-managed Bundle updates and
-// protected hydration after the portable document has passed through the
-// Artifact Store expected-schema registry exactly once.
+// protected hydration. The caller supplies a typed Bundle document and its
+// corresponding canonical bytes after expected-schema canonicalization.
 func (a *API) replaceCanonicalDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
-	parsed schema.ParsedDocument,
+	document mcpDomainBundle.BundleDocument,
+	raw json.RawMessage,
 	suppliedFiles []source.ManagedPackageFile,
 ) (Bundle, error) {
 	plan, err := a.prepareDocumentReplace(
 		ctx,
 		request,
-		parsed,
+		document,
+		raw,
 	)
 	if err != nil {
 		return Bundle{}, err
@@ -540,9 +543,6 @@ func (a *API) UpdateServerInstallation(
 	if a == nil {
 		return artifact.Artifact{}, basespec.ErrClosed
 	}
-	if err := ref.Validate(); err != nil {
-		return artifact.Artifact{}, err
-	}
 	if expectedArtifactRevision == 0 {
 		return artifact.Artifact{}, fmt.Errorf(
 			"%w: expected MCP Server Artifact revision is required",
@@ -550,10 +550,15 @@ func (a *API) UpdateServerInstallation(
 		)
 	}
 
-	record, err := a.artifacts.Get(ctx, ref)
+	resolvedResource, err := a.resources.ResolveArtifact(
+		ctx,
+		ref,
+		resource.ResolveOptions{},
+	)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
+	record := resolvedResource.Artifact
 	if a.protection.IsProtectedRoot(record.RootID) {
 		return artifact.Artifact{}, fmt.Errorf(
 			"%w: protected MCP Server installation data belongs in an overlay",
@@ -561,16 +566,12 @@ func (a *API) UpdateServerInstallation(
 		)
 	}
 	if record.Revision != expectedArtifactRevision ||
-		record.Kind != artifactbuiltin.ServerKind ||
-		record.ResolvedDefinition == nil {
+		record.Kind != artifactbuiltin.ServerKind {
 		return artifact.Artifact{}, basespec.ErrConflict
 	}
-
-	definitionValue, err := a.currentDefinitionForArtifact(ctx, record)
-	if err != nil {
-		return artifact.Artifact{}, err
-	}
-	document, err := mcpDomainServer.ServerDocumentFromDefinition(definitionValue)
+	document, err := mcpDomainServer.ServerDocumentFromDefinition(
+		resolvedResource.Definition,
+	)
 	if err != nil {
 		return artifact.Artifact{}, err
 	}
@@ -626,6 +627,7 @@ func (a *API) UpdateProtectedServerInstallation(
 	if err := ref.Validate(); err != nil {
 		return err
 	}
+
 	if !a.protection.IsProtectedRoot(ref.RootID) {
 		return fmt.Errorf(
 			"%w: MCP Server is not in a protected Root",
@@ -639,23 +641,25 @@ func (a *API) UpdateProtectedServerInstallation(
 		)
 	}
 
-	record, err := a.artifacts.Get(ctx, ref)
+	resolvedResource, err := a.resources.ResolveArtifact(
+		ctx,
+		ref,
+		resource.ResolveOptions{},
+	)
 	if err != nil {
 		return err
 	}
+	record := resolvedResource.Artifact
 	if record.Kind != artifactbuiltin.ServerKind ||
-		record.ResolvedDefinition == nil {
+		resolvedResource.Collection.Kind != artifactbuiltin.BundleKind {
 		return fmt.Errorf(
 			"%w: Artifact is not an available MCP Server",
 			basespec.ErrInvalid,
 		)
 	}
-
-	definitionValue, err := a.currentDefinitionForArtifact(ctx, record)
-	if err != nil {
-		return err
-	}
-	document, err := mcpDomainServer.ServerDocumentFromDefinition(definitionValue)
+	document, err := mcpDomainServer.ServerDocumentFromDefinition(
+		resolvedResource.Definition,
+	)
 	if err != nil {
 		return err
 	}
@@ -710,23 +714,4 @@ func (a *API) UpdateProtectedServerInstallation(
 		)
 	}
 	return nil
-}
-
-func (a *API) currentDefinitionForArtifact(
-	ctx context.Context,
-	record artifact.Artifact,
-) (definition.Definition, error) {
-	bundle, err := a.Get(ctx, collection.CollectionRef{
-		RootID:       record.RootID,
-		CollectionID: record.CollectionID,
-	})
-	if err != nil {
-		return definition.Definition{}, err
-	}
-
-	snapshot, err := a.currentCatalog(ctx, bundle)
-	if err != nil {
-		return definition.Definition{}, err
-	}
-	return mcpDomainBundle.DefinitionForArtifact(snapshot, record)
 }

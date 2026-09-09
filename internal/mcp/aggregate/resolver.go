@@ -47,12 +47,5 @@ func (r *ArtifactServerResolver) InspectMCPServer(
 	if r == nil || r.store == nil {
 		return mcpDomainServer.Resolved{}, mcpServer.ErrClosed
 	}
-	resp, err := r.store.InspectMCPServer(ctx, &mcpConsumerAPI.InspectMCPServerRequest{Server: ref})
-	if err != nil {
-		return mcpDomainServer.Resolved{}, err
-	}
-	if resp == nil || resp.Body == nil {
-		return mcpDomainServer.Resolved{}, errors.New("got nil mcp inspection")
-	}
-	return *resp.Body, nil
+	return r.store.InspectMCPServerForRuntime(ctx, ref)
 }

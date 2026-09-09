@@ -12,7 +12,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainServer "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/server"
@@ -40,7 +39,8 @@ type documentReplacePlan struct {
 func (a *API) prepareDocumentReplace(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
-	parsed schema.ParsedDocument,
+	document mcpDomainBundle.BundleDocument,
+	raw json.RawMessage,
 ) (documentReplacePlan, error) {
 	if a == nil {
 		return documentReplacePlan{}, basespec.ErrClosed
@@ -70,11 +70,13 @@ func (a *API) prepareDocumentReplace(
 		return documentReplacePlan{}, basespec.ErrConflict
 	}
 
-	document, err := mcpDomainBundle.BundleFromParsedDocument(parsed)
-	if err != nil {
-		return documentReplacePlan{}, err
+	if len(raw) == 0 {
+		return documentReplacePlan{}, fmt.Errorf(
+			"%w: canonical MCP Bundle document is required",
+			basespec.ErrInvalid,
+		)
 	}
-	raw := append(json.RawMessage(nil), parsed.Raw...)
+	raw = append(json.RawMessage(nil), raw...)
 	if bundle.Data.LogicalName != document.LogicalName ||
 		bundle.Data.LogicalVersion != document.LogicalVersion {
 		return documentReplacePlan{}, fmt.Errorf(
@@ -95,7 +97,7 @@ func (a *API) prepareDocumentReplace(
 		return documentReplacePlan{}, err
 	}
 
-	definitionsBySubresource, err := definitionsForDocument(document)
+	definitionsBySubresource, err := mcpDomainBundle.DefinitionsForDocument(document)
 	if err != nil {
 		return documentReplacePlan{}, err
 	}

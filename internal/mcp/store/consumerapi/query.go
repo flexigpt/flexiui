@@ -12,6 +12,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 	mcpDomainPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/policy"
@@ -168,68 +169,22 @@ func (a *API) GetServerInstallation(
 	if a == nil {
 		return ServerInstallationView{}, basespec.ErrClosed
 	}
-	if err := ref.Validate(); err != nil {
-		return ServerInstallationView{}, err
-	}
-
-	record, err := a.artifacts.Get(ctx, ref)
-	if err != nil {
-		return ServerInstallationView{}, err
-	}
-	if record.Kind != artifactbuiltin.ServerKind ||
-		record.State != artifact.StateAvailable ||
-		record.ResolvedDefinition == nil {
-		return ServerInstallationView{}, fmt.Errorf(
-			"%w: Artifact is not an available MCP Server",
-			basespec.ErrReferenceUnresolved,
-		)
-	}
-
-	bundle, err := a.Get(ctx, collection.CollectionRef{
-		RootID:       record.RootID,
-		CollectionID: record.CollectionID,
-	})
-	if err != nil {
-		return ServerInstallationView{}, err
-	}
-	snapshot, err := a.currentCatalog(ctx, bundle)
-	if err != nil {
-		return ServerInstallationView{}, err
-	}
-	if _, err := currentServerOccurrence(snapshot, record); err != nil {
-		return ServerInstallationView{}, err
-	}
-
-	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
-	if err != nil {
-		return ServerInstallationView{}, err
-	}
-	document, err := mcpDomainServer.ServerDocumentFromDefinition(definitionValue)
-	if err != nil {
-		return ServerInstallationView{}, err
-	}
-
-	data, revision, installationEnabled, runtimeEnabled, err := a.effectiveInstallation(
-		ctx,
-		bundle,
-		record,
-		document,
-	)
+	material, err := a.resolveServerMaterial(ctx, ref, false)
 	if err != nil {
 		return ServerInstallationView{}, err
 	}
 
 	return ServerInstallationView{
-		Artifact:             record.Clone(),
-		Collection:           bundle.Collection.Ref(),
-		CatalogRevision:      snapshot.Revision,
-		Document:             document,
-		Installation:         data,
-		InstallationRevision: revision,
-		InstallationEnabled:  installationEnabled,
-		RuntimeEnabled:       runtimeEnabled,
+		Artifact:             material.Resource.Artifact.Clone(),
+		Collection:           material.Resource.Collection.Ref(),
+		CatalogRevision:      material.Resource.CatalogRevision,
+		Document:             material.Document,
+		Installation:         material.Installation,
+		InstallationRevision: material.InstallationRevision,
+		InstallationEnabled:  material.InstallationEnabled,
+		RuntimeEnabled:       material.RuntimeEnabled,
 		BuiltIn: a.protection.IsProtectedRoot(
-			record.RootID,
+			material.Resource.Artifact.RootID,
 		),
 	}, nil
 }
@@ -241,57 +196,38 @@ func (a *API) InspectMCPPolicyForRuntime(
 	if a == nil {
 		return PolicyView{}, basespec.ErrClosed
 	}
-	if err := ref.Validate(); err != nil {
-		return PolicyView{}, err
-	}
-
-	record, err := a.artifacts.Get(ctx, ref)
+	resolvedResource, err := a.resources.ResolveArtifact(
+		ctx,
+		ref,
+		resource.ResolveOptions{},
+	)
 	if err != nil {
 		return PolicyView{}, err
 	}
-	if record.Kind != artifactbuiltin.PolicyKind ||
-		record.State != artifact.StateAvailable ||
-		record.ResolvedDefinition == nil {
+	if resolvedResource.Artifact.Kind != artifactbuiltin.PolicyKind ||
+		resolvedResource.Collection.Kind != artifactbuiltin.BundleKind {
 		return PolicyView{}, fmt.Errorf(
 			"%w: Artifact is not an available MCP Policy",
 			basespec.ErrReferenceUnresolved,
 		)
 	}
-
-	bundle, err := a.Get(ctx, collection.CollectionRef{
-		RootID:       record.RootID,
-		CollectionID: record.CollectionID,
-	})
-	if err != nil {
-		return PolicyView{}, err
-	}
-	snapshot, err := a.currentCatalog(ctx, bundle)
-	if err != nil {
-		return PolicyView{}, err
-	}
-	if err := requireCurrentPolicyOccurrence(snapshot, record); err != nil {
-		return PolicyView{}, err
-	}
-
-	definitionValue, err := mcpDomainBundle.DefinitionForArtifact(snapshot, record)
-	if err != nil {
-		return PolicyView{}, err
-	}
-	body, err := mcpDomainPolicy.BodyFromDefinition(definitionValue)
+	body, err := mcpDomainPolicy.BodyFromDefinition(
+		resolvedResource.Definition,
+	)
 	if err != nil {
 		return PolicyView{}, err
 	}
 
 	return PolicyView{
-		Artifact:        record.Clone(),
-		Collection:      bundle.Collection.Ref(),
-		CatalogRevision: snapshot.Revision,
-		Definition:      definitionValue,
+		Artifact:        resolvedResource.Artifact.Clone(),
+		Collection:      resolvedResource.Collection.Ref(),
+		CatalogRevision: resolvedResource.CatalogRevision,
+		Definition:      resolvedResource.Definition.Clone(),
 		Body:            body,
-		EffectiveEnabled: bundle.Collection.Enabled &&
-			record.Enabled,
+		EffectiveEnabled: resolvedResource.Collection.Enabled &&
+			resolvedResource.Artifact.Enabled,
 		BuiltIn: a.protection.IsProtectedRoot(
-			record.RootID,
+			resolvedResource.Artifact.RootID,
 		),
 	}, nil
 }
@@ -376,33 +312,4 @@ func (a *API) listArtifactsByKind(
 		return output[left].ID < output[right].ID
 	})
 	return output, nil
-}
-
-func requireCurrentPolicyOccurrence(
-	snapshot catalog.Snapshot,
-	record artifact.Artifact,
-) error {
-	key := catalog.OccurrenceKey{
-		CollectionID:       record.CollectionID,
-		SourceID:           record.Binding.SourceID,
-		Locator:            record.Binding.Locator,
-		SubresourceLocator: record.Binding.SubresourceLocator,
-	}
-	for _, occurrence := range snapshot.Occurrences {
-		if occurrence.Key != key {
-			continue
-		}
-		if occurrence.State == catalog.OccurrenceValid &&
-			occurrence.Kind == artifactbuiltin.PolicyKind &&
-			occurrence.DefinitionDigest != nil &&
-			record.ResolvedDefinition != nil &&
-			*occurrence.DefinitionDigest == *record.ResolvedDefinition {
-			return nil
-		}
-		break
-	}
-	return fmt.Errorf(
-		"%w: MCP Policy does not match its current Catalog occurrence",
-		basespec.ErrCatalogStale,
-	)
 }
