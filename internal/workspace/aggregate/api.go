@@ -31,7 +31,7 @@ type WorkspaceRuntimeReader interface {
 type WorkspaceArtifactSettingsStore interface {
 	SetArtifactRuntimeDisabled(
 		ctx context.Context,
-		workspace workspaceConsumerAPI.WorkspaceRef,
+		workspace workspaceDomain.WorkspaceRef,
 		ref artifact.ArtifactRef,
 		expectedRevision uint64,
 		runtimeDisabled bool,

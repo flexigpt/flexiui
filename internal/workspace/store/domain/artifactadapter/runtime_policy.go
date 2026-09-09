@@ -17,6 +17,9 @@ type RuntimePolicyRequest struct {
 	Artifact         artifact.Artifact
 	DefinitionDigest cryptoutil.Digest
 	SourceID         source.SourceID
+
+	RuntimeDisabled        bool
+	RuntimeSettingsInvalid bool
 }
 
 type SourceUsePolicy interface {
@@ -62,15 +65,14 @@ func (*ArtifactRuntimePolicy) Decide(
 			Message:     "the Workspace Artifact is not enabled and available",
 		}
 	}
-	disabled, err := ArtifactRuntimeDisabled(request.Artifact)
-	if err != nil {
+	if request.RuntimeSettingsInvalid {
 		return workspaceRuntime.RuntimeDecision{
 			Disposition: workspaceRuntime.RuntimeUnavailable,
 			Code:        workspaceDomain.DiagnosticCodeRuntimeUnavailable,
 			Message:     "the Workspace Artifact has invalid local runtime policy data",
 		}
 	}
-	if disabled {
+	if request.RuntimeDisabled {
 		return workspaceRuntime.RuntimeDecision{
 			Disposition: workspaceRuntime.RuntimeDenied,
 			Code:        workspaceDomain.DiagnosticCodeRuntimeDenied,

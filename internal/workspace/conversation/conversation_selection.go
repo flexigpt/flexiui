@@ -13,6 +13,7 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 	workspaceRuntime "github.com/flexigpt/flexigpt-app/internal/workspace/runtime"
 	workspaceConsumerAPI "github.com/flexigpt/flexigpt-app/internal/workspace/store/consumerapi"
+	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 )
 
 type ConversationSelectionStatus string
@@ -49,7 +50,7 @@ type ConversationResourceSelectionRef struct {
 }
 
 type ConversationSelection struct {
-	Workspace         workspaceConsumerAPI.WorkspaceRef  `json:"workspace"`
+	Workspace         workspaceDomain.WorkspaceRef       `json:"workspace"`
 	DisplayName       string                             `json:"displayName,omitempty"`
 	WorkspaceRevision uint64                             `json:"workspaceRevision,omitempty"`
 	CatalogRevision   uint64                             `json:"catalogRevision,omitempty"`
@@ -89,14 +90,14 @@ type ConversationSkillUsage struct {
 }
 
 type ConversationUsage struct {
-	Workspace         workspaceConsumerAPI.WorkspaceRef `json:"workspace"`
-	DisplayName       string                            `json:"displayName,omitempty"`
-	WorkspaceRevision uint64                            `json:"workspaceRevision,omitempty"`
-	CatalogRevision   uint64                            `json:"catalogRevision,omitempty"`
-	Status            ConversationSelectionStatus       `json:"status"`
-	Contexts          []ConversationContextUsage        `json:"contexts,omitempty"`
-	Skills            []ConversationSkillUsage          `json:"skills,omitempty"`
-	Diagnostics       []diagnostic.Diagnostic           `json:"diagnostics,omitempty"`
+	Workspace         workspaceDomain.WorkspaceRef `json:"workspace"`
+	DisplayName       string                       `json:"displayName,omitempty"`
+	WorkspaceRevision uint64                       `json:"workspaceRevision,omitempty"`
+	CatalogRevision   uint64                       `json:"catalogRevision,omitempty"`
+	Status            ConversationSelectionStatus  `json:"status"`
+	Contexts          []ConversationContextUsage   `json:"contexts,omitempty"`
+	Skills            []ConversationSkillUsage     `json:"skills,omitempty"`
+	Diagnostics       []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
 }
 
 type ConversationResolution struct {

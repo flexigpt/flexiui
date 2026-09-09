@@ -22,12 +22,8 @@ import (
 )
 
 type StoreAPI struct {
-	sources     compositionapi.SourceAPI
-	collections compositionapi.CollectionAPI
-	artifacts   compositionapi.ArtifactAPI
-	catalogs    compositionapi.CatalogAPI
-	resources   compositionapi.ResourceAPI
-
+	artifacts compositionapi.ArtifactAPI
+	resources compositionapi.ResourceAPI
 	workspace *components
 }
 
@@ -35,14 +31,12 @@ func NewStoreAPI(
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
-	catalogs compositionapi.CatalogAPI,
 	resources compositionapi.ResourceAPI,
 	config Config,
 ) (*StoreAPI, error) {
 	if sources == nil ||
 		collections == nil ||
 		artifacts == nil ||
-		catalogs == nil ||
 		resources == nil {
 		return nil, fmt.Errorf(
 			"%w: Workspace Store dependencies are incomplete",
@@ -52,11 +46,9 @@ func NewStoreAPI(
 	config = config.normalized()
 
 	workspaceComponents, err := newComponents(
-
 		sources,
 		collections,
 		artifacts,
-		catalogs,
 		resources,
 		config,
 	)
@@ -65,12 +57,9 @@ func NewStoreAPI(
 	}
 
 	return &StoreAPI{
-		sources:     sources,
-		collections: collections,
-		artifacts:   artifacts,
-		catalogs:    catalogs,
-		resources:   resources,
-		workspace:   workspaceComponents,
+		artifacts: artifacts,
+		resources: resources,
+		workspace: workspaceComponents,
 	}, nil
 }
 
@@ -226,7 +215,7 @@ func (a *StoreAPI) SkillAdapter() *workspaceadapter.Adapter {
 
 func (a *StoreAPI) SetArtifactRuntimeDisabled(
 	ctx context.Context,
-	workspace WorkspaceRef,
+	workspace workspaceDomain.WorkspaceRef,
 	ref artifact.ArtifactRef,
 	expectedRevision uint64,
 	runtimeDisabled bool,
@@ -281,26 +270,7 @@ func (a *StoreAPI) workspaceArtifact(
 			workspace.CollectionID,
 		)
 	}
-	if err := a.requireWorkspaceArtifactKind(value.Kind); err != nil {
-		return artifact.Artifact{}, err
-	}
 	return value, nil
-}
-
-func (a *StoreAPI) requireWorkspaceArtifactKind(
-	kind artifact.ArtifactKind,
-) error {
-	if err := kind.Validate(); err != nil {
-		return err
-	}
-	if _, supported := a.workspace.supportedKinds[kind]; !supported {
-		return fmt.Errorf(
-			"%w: Artifact kind %q is not supported by Workspace",
-			workspaceDomain.ErrInvalidWorkspace,
-			kind,
-		)
-	}
-	return nil
 }
 
 func (a *StoreAPI) workspaceViewForAPI(
@@ -432,7 +402,7 @@ func workspaceCatalogViewOf(
 	}
 	artifactsByOccurrence := make(map[string]artifact.Artifact, len(value.Resources))
 	for _, resourceValue := range value.Resources {
-		artifactView := workspaceArtifactViewOf(resourceValue.Artifact)
+		artifactView := workspaceArtifactViewOfResource(resourceValue)
 		projected := WorkspaceResourceView{
 			Artifact:         artifactView,
 			DefinitionDigest: resourceValue.Definition.Digest,
@@ -494,7 +464,7 @@ func workspaceCatalogViewOf(
 			Unrecorded: make([]WorkspaceOccurrenceView, 0, len(group.Unrecorded)),
 		}
 		for _, resourceValue := range group.Resources {
-			artifactView := workspaceArtifactViewOf(resourceValue.Artifact)
+			artifactView := workspaceArtifactViewOfResource(resourceValue)
 			projected.Resources = append(
 				projected.Resources,
 				WorkspaceResourceView{
@@ -733,27 +703,37 @@ func WorkspaceSkillViewOf(value workspaceadapter.WorkspaceSkill) WorkspaceSkillV
 	}
 }
 
-func workspaceArtifactViewOf(value artifact.Artifact) WorkspaceArtifactView {
+func workspaceArtifactViewOf(
+	value artifact.Artifact,
+) WorkspaceArtifactView {
+	runtimeDisabled, dataErr := artifactadapter.ArtifactRuntimeDisabled(value)
+	output := workspaceArtifactView(value, runtimeDisabled)
+	if dataErr != nil {
+		output.Diagnostics = diagnostic.Append(
+			output.Diagnostics,
+			workspaceArtifactDataDiagnostic(value),
+		)
+	}
+	return output
+}
+
+func workspaceArtifactViewOfResource(
+	value workspaceDomain.Resource,
+) WorkspaceArtifactView {
+	return workspaceArtifactView(
+		value.Artifact,
+		value.ArtifactData.RuntimeDisabled,
+	)
+}
+
+func workspaceArtifactView(
+	value artifact.Artifact,
+	runtimeDisabled bool,
+) WorkspaceArtifactView {
 	var digest *cryptoutil.Digest
 	if value.ResolvedDefinition != nil {
 		copyValue := *value.ResolvedDefinition
 		digest = &copyValue
-	}
-	diagnostics := diagnostic.Clone(value.Diagnostics)
-	runtimeDisabled, dataErr := artifactadapter.ArtifactRuntimeDisabled(value)
-	if dataErr != nil {
-		diagnostics = diagnostic.Append(
-			diagnostics,
-			diagnostic.Diagnostic{
-				Severity: diagnostic.SeverityError,
-				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
-				Message:  "the Workspace Artifact has invalid local runtime settings",
-				Location: &diagnostic.Location{
-					Locator:            value.Binding.Locator,
-					SubresourceLocator: value.Binding.SubresourceLocator,
-				},
-			},
-		)
 	}
 	return WorkspaceArtifactView{
 		Artifact:           value.Ref(),
@@ -768,7 +748,21 @@ func workspaceArtifactViewOf(value artifact.Artifact) WorkspaceArtifactView {
 		Locator:            value.Binding.Locator,
 		SubresourceLocator: value.Binding.SubresourceLocator,
 		RuntimeDisabled:    runtimeDisabled,
-		Diagnostics:        diagnostics,
+		Diagnostics:        diagnostic.Clone(value.Diagnostics),
+	}
+}
+
+func workspaceArtifactDataDiagnostic(
+	value artifact.Artifact,
+) diagnostic.Diagnostic {
+	return diagnostic.Diagnostic{
+		Severity: diagnostic.SeverityError,
+		Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
+		Message:  "the Workspace Artifact has invalid local runtime settings",
+		Location: &diagnostic.Location{
+			Locator:            value.Binding.Locator,
+			SubresourceLocator: value.Binding.SubresourceLocator,
+		},
 	}
 }
 

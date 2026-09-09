@@ -92,10 +92,10 @@ func supportedContextRole(role artifactbuiltin.WorkspaceContextRole) bool {
 }
 
 var artifactSupport = workspaceDomain.ArtifactSupport{
-	Kind:      artifactbuiltin.WorkspaceContextArtifactKind,
-	SchemaID:  artifactbuiltin.WorkspaceContextSchemaID,
-	DecoderID: artifactbuiltin.WorkspaceContextDecoderID,
-	Validator: ValidateContextDefinition,
+	Kind:          artifactbuiltin.WorkspaceContextArtifactKind,
+	SchemaID:      artifactbuiltin.WorkspaceContextSchemaID,
+	SchemaVersion: artifactbuiltin.WorkspaceContextSchemaVersion,
+	DecoderID:     artifactbuiltin.WorkspaceContextDecoderID,
 }
 
 func ArtifactSupport() workspaceDomain.ArtifactSupport {

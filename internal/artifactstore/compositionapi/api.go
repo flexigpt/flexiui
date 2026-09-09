@@ -285,6 +285,11 @@ type ResourceAPI interface {
 		options resource.ResolveOptions,
 	) (resource.ResolvedArtifact, error)
 
+	InspectCollectionResources(
+		ctx context.Context,
+		ref collection.CollectionRef,
+	) (resource.CollectionResourceInspection, error)
+
 	ResolveVerifiedLocalPath(
 		ctx context.Context,
 		resolved resource.ResolvedArtifact,

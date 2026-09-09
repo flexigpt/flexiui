@@ -19,8 +19,8 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
-	"github.com/flexigpt/flexigpt-app/internal/jsonutil"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
+	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/artifactadapter"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/attachmentdata"
 	"github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/collectiondata"
 )
@@ -113,9 +113,6 @@ func (b *workspaceCollectionBehavior) BuildDiscoveryPlanWithDocuments(
 			"%w: Workspace provider planning document reader is required",
 			workspaceDomain.ErrInvalidWorkspace,
 		)
-	}
-	if err := validateWorkspaceProviderCollection(collectionValue); err != nil {
-		return providerapi.Plan{}, err
 	}
 	if collectionValue.RootID != b.workspaceRootID {
 		return providerapi.Plan{}, fmt.Errorf(
@@ -218,28 +215,22 @@ func (b *workspaceCollectionBehavior) DecideAutomaticAdoption(
 			),
 		), nil
 	}
-	if input.Definition.SchemaID != support.SchemaID {
+	if input.Definition.SchemaID != support.SchemaID ||
+		input.Definition.SchemaVersion != support.SchemaVersion {
 		return workspaceAdoptionDiagnostic(
 			input.Occurrence,
 			workspaceDomain.DiagnosticCodeArtifactSchemaUnsupported,
 			fmt.Sprintf(
-				"definition schema %q is not supported for kind %q",
+				"definition schema %q/%q is not supported for kind %q",
 				input.Definition.SchemaID,
+				input.Definition.SchemaVersion,
 				input.Definition.Kind,
 			),
 		), nil
 	}
-	if err := support.Validator(input.Definition); err != nil {
-		return workspaceAdoptionDiagnostic(
-			input.Occurrence,
-			workspaceDomain.DiagnosticCodeProjectionInvalid,
-			err.Error(),
-		), nil
-	}
 
-	data, err := jsonutil.MarshalCanonicalObject(
+	data, err := artifactadapter.EncodeArtifactData(
 		workspaceDomain.ArtifactData{},
-		basespec.MaxLocalDataBytes,
 	)
 	if err != nil {
 		return providerapi.AdoptionDecision{}, err
@@ -586,57 +577,18 @@ func workspacePlanningTopologyFor(
 	return topology, nil
 }
 
-func validateWorkspaceProviderCollection(
-	value providerapi.Collection,
-) error {
-	if err := value.RootID.Validate(); err != nil {
-		return err
-	}
-	if err := value.ID.Validate(); err != nil {
-		return err
-	}
-	if err := value.Kind.Validate(); err != nil {
-		return err
-	}
-	if err := basespec.ValidateRequiredText(
-		"Workspace Collection display name",
-		value.DisplayName,
-		basespec.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
-	if err := basespec.ValidateOptionalText(
-		"Workspace Collection description",
-		value.Description,
-		basespec.MaxDescriptionBytes,
-	); err != nil {
-		return err
-	}
-	if value.Revision == 0 {
-		return fmt.Errorf(
-			"%w: Workspace Collection revision is required",
-			workspaceDomain.ErrInvalidWorkspace,
-		)
-	}
-	return nil
-}
-
 func validateWorkspaceProviderAttachment(
 	collectionValue providerapi.Collection,
 	value providerapi.Attachment,
 ) error {
+	// Artifact Store validates generic provider input fields before this
+	// behavior is invoked. This function validates Workspace relationships.
 	if value.RootID != collectionValue.RootID ||
 		value.CollectionID != collectionValue.ID {
 		return fmt.Errorf(
 			"%w: Workspace attachment belongs to another Collection",
 			workspaceDomain.ErrInvalidWorkspace,
 		)
-	}
-	if err := value.SourceID.Validate(); err != nil {
-		return err
-	}
-	if err := value.Role.Validate(); err != nil {
-		return err
 	}
 	if _, supported := attachmentdata.AttachmentOperationFor(value.Role); !supported {
 		return fmt.Errorf(
@@ -658,31 +610,11 @@ func validateWorkspaceProviderSource(
 	collectionValue providerapi.Collection,
 	value providerapi.Source,
 ) error {
+	// Artifact Store validates generic provider input fields before this
+	// behavior is invoked. This function validates Workspace relationships.
 	if value.RootID != collectionValue.RootID {
 		return fmt.Errorf(
 			"%w: Workspace Source belongs to another Root",
-			workspaceDomain.ErrInvalidWorkspace,
-		)
-	}
-	if err := value.ID.Validate(); err != nil {
-		return err
-	}
-	if err := value.StorageKey.Validate(); err != nil {
-		return err
-	}
-	if err := value.Kind.Validate(); err != nil {
-		return err
-	}
-	if err := basespec.ValidateRequiredText(
-		"Workspace Source display name",
-		value.DisplayName,
-		basespec.MaxDisplayNameBytes,
-	); err != nil {
-		return err
-	}
-	if value.Revision == 0 {
-		return fmt.Errorf(
-			"%w: Workspace Source revision is required",
 			workspaceDomain.ErrInvalidWorkspace,
 		)
 	}

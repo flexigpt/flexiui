@@ -9,7 +9,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
@@ -91,19 +90,13 @@ type ContextService interface {
 }
 
 type workspaceDataSource interface {
-	GetWorkspace(
-		ctx context.Context,
-		workspace collection.CollectionRef,
-	) (workspaceDomain.Workspace, error)
-
 	Catalog(
 		ctx context.Context,
 		workspace collection.CollectionRef,
 	) (workspaceDomain.CatalogView, error)
 
-	ComposeLoadPlan(
-		ctx context.Context,
-		workspace collection.CollectionRef,
+	ComposeLoadPlanFromCatalog(
+		view workspaceDomain.CatalogView,
 		artifactRefs []artifact.ArtifactRef,
 	) (workspaceDomain.LoadPlan, error)
 }
@@ -148,30 +141,32 @@ func (p *contextService) Compose(
 	workspace collection.CollectionRef,
 	artifactRefs []artifact.ArtifactRef,
 ) (ContextLoadPlan, error) {
-	if err := workspace.Validate(); err != nil {
+	view, err := p.query.Catalog(ctx, workspace)
+	if err != nil {
 		return ContextLoadPlan{}, err
 	}
 	if len(artifactRefs) == 0 {
-		values, err := p.List(ctx, workspace)
-		if err != nil {
-			return ContextLoadPlan{}, err
-		}
-		for _, value := range values {
-			if value.Enabled && value.State == artifact.StateAvailable {
-				artifactRefs = append(artifactRefs, value.Artifact)
+		for _, value := range view.Resources {
+			if !isWorkspaceContextResource(value) ||
+				!value.Artifact.Enabled ||
+				value.Artifact.State != artifact.StateAvailable {
+				continue
 			}
+			artifactRefs = append(
+				artifactRefs,
+				value.Artifact.Ref(),
+			)
 		}
 	}
 
-	loadPlan, err := p.query.ComposeLoadPlan(ctx, workspace, artifactRefs)
+	loadPlan, err := p.query.ComposeLoadPlanFromCatalog(
+		view,
+		artifactRefs,
+	)
 	if err != nil {
 		return ContextLoadPlan{}, err
 	}
-
-	workspaceValue, err := p.query.GetWorkspace(ctx, workspace)
-	if err != nil {
-		return ContextLoadPlan{}, err
-	}
+	workspaceValue := loadPlan.WorkspaceState
 	output := ContextLoadPlan{
 		Workspace:       workspace,
 		CatalogRevision: loadPlan.CatalogRevision,
@@ -179,25 +174,30 @@ func (p *contextService) Compose(
 	}
 	handled := make(map[artifact.ArtifactID]struct{}, len(loadPlan.Items))
 	for _, item := range loadPlan.Items {
-		handled[item.Artifact.ID] = struct{}{}
-		if err := workspaceDomainContext.ValidateContextDefinition(item.Definition); err != nil {
+		handled[item.Resolved.Artifact.ID] = struct{}{}
+		body, err := workspaceDomainContext.ContextFromDefinition(
+			item.Resolved.Definition,
+		)
+		if err != nil {
 			output.Diagnostics = diagnostic.Append(
 				output.Diagnostics,
-				contextProjectionDiagnostic(item.Artifact, err),
+				contextProjectionDiagnostic(item.Resolved.Artifact, err),
 			)
 			output.Decisions = append(output.Decisions, CompositionDecision{
-				Artifact: item.Artifact.Ref(),
+				Artifact: item.Resolved.Artifact.Ref(),
 				Status:   workspaceRuntime.CompositionUnavailable,
 				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
 			})
 			continue
 		}
 		decision := p.runtimePolicy.Decide(ctx, artifactadapter.RuntimePolicyRequest{
-			Use:              workspaceRuntime.RuntimeUseContextPrompt,
-			Workspace:        workspaceValue,
-			Artifact:         item.Artifact,
-			DefinitionDigest: item.Definition.Digest,
-			SourceID:         item.Source.ID,
+			Use:                    workspaceRuntime.RuntimeUseContextPrompt,
+			Workspace:              workspaceValue,
+			Artifact:               item.Resolved.Artifact,
+			DefinitionDigest:       item.Resolved.Definition.Digest,
+			SourceID:               item.Resolved.Source.ID,
+			RuntimeDisabled:        item.ArtifactData.RuntimeDisabled,
+			RuntimeSettingsInvalid: !item.ArtifactDataValid,
 		})
 		if err := decision.Validate(); err != nil {
 			return ContextLoadPlan{}, err
@@ -205,46 +205,31 @@ func (p *contextService) Compose(
 		if decision.Disposition != workspaceRuntime.RuntimeAllowed {
 			output.Diagnostics = diagnostic.Append(
 				output.Diagnostics,
-				artifactadapter.RuntimeDecisionDiagnostic(decision, item.Artifact),
+				artifactadapter.RuntimeDecisionDiagnostic(decision, item.Resolved.Artifact),
 			)
 			status := workspaceRuntime.CompositionDenied
 			if decision.Disposition == workspaceRuntime.RuntimeUnavailable {
 				status = workspaceRuntime.CompositionUnavailable
 			}
 			output.Decisions = append(output.Decisions, CompositionDecision{
-				Artifact: item.Artifact.Ref(),
+				Artifact: item.Resolved.Artifact.Ref(),
 				Status:   status,
 				Code:     decision.Code,
 			})
 			continue
 		}
-		body, err := definition.DecodeBody[workspaceDomainContext.Definition](
-			item.Definition.Body,
-		)
-		if err != nil {
-			handled[item.Artifact.ID] = struct{}{}
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				contextProjectionDiagnostic(item.Artifact, err),
-			)
-			output.Decisions = append(output.Decisions, CompositionDecision{
-				Artifact: item.Artifact.Ref(),
-				Status:   workspaceRuntime.CompositionUnavailable,
-				Code:     workspaceDomain.DiagnosticCodeProjectionInvalid,
-			})
-			continue
-		}
+
 		output.Contributions = append(
 			output.Contributions,
 			ContextContribution{
 				ConventionOrder: contextRuntimeOrder(
-					item.Artifact.Binding.Locator,
+					item.Resolved.Artifact.Binding.Locator,
 				),
-				ArtifactRevision: item.Artifact.Revision,
-				Artifact:         item.Artifact.Ref(),
-				DefinitionDigest: item.Definition.Digest,
-				SourceID:         item.Source.ID,
-				Locator:          item.Artifact.Binding.Locator,
+				ArtifactRevision: item.Resolved.Artifact.Revision,
+				Artifact:         item.Resolved.Artifact.Ref(),
+				DefinitionDigest: item.Resolved.Definition.Digest,
+				SourceID:         item.Resolved.Source.ID,
+				Locator:          item.Resolved.Artifact.Binding.Locator,
 				Name:             body.Name,
 				Role:             body.Role,
 				MediaType:        body.MediaType,
@@ -300,8 +285,7 @@ func (p *contextService) List(
 	}
 	output := make([]ContextDocument, 0)
 	for _, resourceValue := range view.Resources {
-		if resourceValue.Definition.Kind != artifactbuiltin.WorkspaceContextArtifactKind ||
-			resourceValue.Definition.SchemaID != artifactbuiltin.WorkspaceContextSchemaID {
+		if !isWorkspaceContextResource(resourceValue) {
 			continue
 		}
 		value, err := projectContextDocument(resourceValue)
@@ -333,42 +317,36 @@ func (p *contextService) Load(
 	if err != nil {
 		return ContextInspection{}, err
 	}
-	requested := make(
-		map[artifact.ArtifactID]struct{},
-		len(artifactRefs),
+	requested, err := workspaceArtifactSelection(
+		workspace,
+		artifactRefs,
 	)
-	for _, ref := range artifactRefs {
-		if err := ref.Validate(); err != nil {
-			return ContextInspection{}, err
-		}
-		if ref.RootID != workspace.RootID {
-			return ContextInspection{}, fmt.Errorf(
-				"%w: Context Artifact belongs to another Root",
-				workspaceDomain.ErrInvalidWorkspace,
-			)
-		}
-		if _, duplicate := requested[ref.ArtifactID]; duplicate {
-			return ContextInspection{}, fmt.Errorf(
-				"%w: duplicate Context Artifact %q",
-				workspaceDomain.ErrInvalidWorkspace,
-				ref.ArtifactID,
-			)
-		}
-		requested[ref.ArtifactID] = struct{}{}
+	if err != nil {
+		return ContextInspection{}, err
 	}
 	output := ContextInspection{
 		Workspace:       workspace,
 		CatalogRevision: view.Catalog.Revision,
 	}
 	for _, resourceValue := range view.Resources {
-		if resourceValue.Definition.Kind != artifactbuiltin.WorkspaceContextArtifactKind ||
-			resourceValue.Definition.SchemaID != artifactbuiltin.WorkspaceContextSchemaID {
+		if !isWorkspaceContextResource(resourceValue) {
 			continue
 		}
 		if len(requested) != 0 {
 			if _, selected := requested[resourceValue.Artifact.ID]; !selected {
 				continue
 			}
+		}
+		if !resourceValue.ProjectionValid {
+			output.Diagnostics = diagnostic.Append(
+				output.Diagnostics,
+				resourceValue.Artifact.Diagnostics...,
+			)
+			output.Diagnostics = diagnostic.Append(
+				output.Diagnostics,
+				resourceValue.Diagnostics...,
+			)
+			continue
 		}
 		contribution, err := projectContext(resourceValue)
 		if err != nil {
@@ -402,7 +380,6 @@ func (p *contextService) Load(
 func projectContextDocument(
 	value workspaceDomain.Resource,
 ) (ContextDocument, error) {
-	runtimeDisabled, dataErr := artifactadapter.ArtifactRuntimeDisabled(value.Artifact)
 	output := ContextDocument{
 		Artifact:         value.Artifact.Ref(),
 		ArtifactRevision: value.Artifact.Revision,
@@ -413,20 +390,17 @@ func projectContextDocument(
 		Enabled:          value.Artifact.Enabled,
 		State:            value.Artifact.State,
 		CatalogCurrent:   value.CatalogCurrent,
-		RuntimeDisabled:  runtimeDisabled,
+		RuntimeDisabled:  value.ArtifactData.RuntimeDisabled,
 		Diagnostics: diagnostic.Append(
 			value.Artifact.Diagnostics,
 			value.Diagnostics...,
 		),
 	}
-	if dataErr != nil {
-		return output, dataErr
+	if !value.ProjectionValid {
+		return output, nil
 	}
-	if err := workspaceDomainContext.ValidateContextDefinition(value.Definition); err != nil {
-		return output, err
-	}
-	body, err := definition.DecodeBody[workspaceDomainContext.Definition](
-		value.Definition.Body,
+	body, err := workspaceDomainContext.ContextFromDefinition(
+		value.Definition,
 	)
 	if err != nil {
 		return output, err
@@ -441,10 +415,15 @@ func projectContextDocument(
 func projectContext(
 	value workspaceDomain.Resource,
 ) (ContextContribution, error) {
-	if err := workspaceDomainContext.ValidateContextDefinition(value.Definition); err != nil {
-		return ContextContribution{}, err
+	if !value.ProjectionValid {
+		return ContextContribution{}, fmt.Errorf(
+			"%w: Context Artifact projection is invalid",
+			workspaceDomain.ErrInvalidWorkspace,
+		)
 	}
-	body, err := definition.DecodeBody[workspaceDomainContext.Definition](value.Definition.Body)
+	body, err := workspaceDomainContext.ContextFromDefinition(
+		value.Definition,
+	)
 	if err != nil {
 		return ContextContribution{}, err
 	}
@@ -473,6 +452,13 @@ func sortContextContributions(values []ContextContribution) {
 		}
 		return values[left].Locator < values[right].Locator
 	})
+}
+
+func isWorkspaceContextResource(
+	value workspaceDomain.Resource,
+) bool {
+	return value.Definition.Kind == artifactbuiltin.WorkspaceContextArtifactKind &&
+		value.Definition.SchemaID == artifactbuiltin.WorkspaceContextSchemaID
 }
 
 func contextRuntimeOrder(locator basespec.Locator) int {

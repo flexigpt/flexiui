@@ -109,6 +109,97 @@ func (r ResolvedArtifact) Clone() ResolvedArtifact {
 	return output
 }
 
+type ArtifactResolutionStatus string
+
+const (
+	ArtifactResolutionRecordUnavailable     ArtifactResolutionStatus = "record-unavailable"
+	ArtifactResolutionSourceUnavailable     ArtifactResolutionStatus = "source-unavailable"
+	ArtifactResolutionOccurrenceUnavailable ArtifactResolutionStatus = "occurrence-unavailable"
+	ArtifactResolutionDefinitionUnavailable ArtifactResolutionStatus = "definition-unavailable"
+	ArtifactResolutionDefinitionMismatch    ArtifactResolutionStatus = "definition-mismatch"
+)
+
+// ArtifactResolutionIssue describes a generic Artifact Store link that could
+// not be materialized from a Collection Catalog.
+//
+// It deliberately contains no Workspace-specific diagnostics or presentation
+// strings. Feature consumers map the generic status into their own views.
+type ArtifactResolutionIssue struct {
+	Artifact artifact.Artifact
+	Status   ArtifactResolutionStatus
+}
+
+func (i ArtifactResolutionIssue) Clone() ArtifactResolutionIssue {
+	output := i
+	output.Artifact = i.Artifact.Clone()
+	return output
+}
+
+// CollectionArtifactResource joins one local Artifact record to its current
+// Catalog occurrence, canonical definition, and attached Source summary.
+//
+// Resolved is populated only when the Catalog is current and the Artifact is
+// currently available. Consumers can use it for runtime preparation without
+// repeating the generic Artifact Store resource-chain lookup.
+type CollectionArtifactResource struct {
+	Artifact       artifact.Artifact
+	Definition     definition.Definition
+	Occurrence     catalog.Occurrence
+	Source         source.Summary
+	CatalogCurrent bool
+	Resolved       *ResolvedArtifact
+}
+
+func (r CollectionArtifactResource) Clone() CollectionArtifactResource {
+	output := r
+	output.Artifact = r.Artifact.Clone()
+	output.Definition = r.Definition.Clone()
+	output.Occurrence = r.Occurrence.Clone()
+	output.Source = r.Source.Clone()
+	if r.Resolved != nil {
+		value := r.Resolved.Clone()
+		output.Resolved = &value
+	}
+	return output
+}
+
+// CollectionResourceInspection is the generic Artifact Store read model for
+// one Collection. It separates resolved resources, unresolved local Artifact
+// records, and unrecorded Catalog occurrences.
+type CollectionResourceInspection struct {
+	Catalog               catalog.CatalogInspection
+	Resources             []CollectionArtifactResource
+	UnresolvedArtifacts   []ArtifactResolutionIssue
+	UnrecordedOccurrences []catalog.Occurrence
+}
+
+func (i CollectionResourceInspection) Clone() CollectionResourceInspection {
+	output := i
+	output.Catalog = i.Catalog.Clone()
+	output.Resources = make(
+		[]CollectionArtifactResource,
+		len(i.Resources),
+	)
+	for index, value := range i.Resources {
+		output.Resources[index] = value.Clone()
+	}
+	output.UnresolvedArtifacts = make(
+		[]ArtifactResolutionIssue,
+		len(i.UnresolvedArtifacts),
+	)
+	for index, value := range i.UnresolvedArtifacts {
+		output.UnresolvedArtifacts[index] = value.Clone()
+	}
+	output.UnrecordedOccurrences = make(
+		[]catalog.Occurrence,
+		len(i.UnrecordedOccurrences),
+	)
+	for index, value := range i.UnrecordedOccurrences {
+		output.UnrecordedOccurrences[index] = value.Clone()
+	}
+	return output
+}
+
 type VerifiedEntry struct {
 	Collection       collection.CollectionRef `json:"collection"`
 	SourceID         source.SourceID          `json:"sourceID"`

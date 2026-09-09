@@ -1,7 +1,6 @@
 package consumerapi
 
 import (
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/compositionapi"
 	"github.com/flexigpt/flexigpt-app/internal/skill/store/workspaceadapter"
@@ -13,22 +12,15 @@ type components struct {
 	query           *QueryService
 	contextService  ContextService
 	skillAdapter    *workspaceadapter.Adapter
-	supportedKinds  map[artifact.ArtifactKind]struct{}
 }
 
 func newComponents(
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
-	catalogs compositionapi.CatalogAPI,
 	resources compositionapi.ResourceAPI,
 	config Config,
 ) (*components, error) {
-	supports, err := config.normalizedSupports()
-	if err != nil {
-		return nil, err
-	}
-
 	service, err := NewService(
 		collections,
 		sources,
@@ -40,9 +32,7 @@ func newComponents(
 
 	query, err := NewQueryService(
 		service,
-		artifacts,
-		catalogs,
-		supports...,
+		resources,
 	)
 	if err != nil {
 		return nil, err
@@ -68,20 +58,11 @@ func newComponents(
 		return nil, err
 	}
 
-	supportedKinds := make(
-		map[artifact.ArtifactKind]struct{},
-		len(supports),
-	)
-	for _, support := range supports {
-		supportedKinds[support.Kind] = struct{}{}
-	}
-
 	return &components{
 		workspaceRootID: config.WorkspaceRootID,
 		service:         service,
 		query:           query,
 		contextService:  contextService,
 		skillAdapter:    skillAdapter,
-		supportedKinds:  supportedKinds,
 	}, nil
 }

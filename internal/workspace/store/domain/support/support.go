@@ -2,7 +2,6 @@ package support
 
 import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
-	skillDomain "github.com/flexigpt/flexigpt-app/internal/skill/store/domain"
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 	workspaceDomainContext "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain/context"
 )
@@ -17,10 +16,10 @@ var defaultArtifactSupportMatrix = []defaultArtifactSupport{
 	},
 	{
 		support: workspaceDomain.ArtifactSupport{
-			Kind:      artifactbuiltin.AgentSkillArtifactKind,
-			SchemaID:  artifactbuiltin.AgentSkillSchemaID,
-			DecoderID: artifactbuiltin.AgentSkillDecoderID,
-			Validator: skillDomain.ValidateDefinition,
+			Kind:          artifactbuiltin.AgentSkillArtifactKind,
+			SchemaID:      artifactbuiltin.AgentSkillSchemaID,
+			SchemaVersion: artifactbuiltin.AgentSkillSchemaVersion,
+			DecoderID:     artifactbuiltin.AgentSkillDecoderID,
 		},
 	},
 }

@@ -127,8 +127,11 @@ func (d AdoptionDecision) Validate() error {
 }
 
 // CollectionBehavior is the common Artifact Store inbound behavior for one
-// CollectionKind. A behavior must additionally implement exactly one planning
-// role below.
+// CollectionKind.
+//
+// Artifact Store validates generic Collection, Attachment, and Source values
+// before invoking a behavior. A behavior owns collection-kind-specific
+// semantics and must additionally implement exactly one planning role below.
 //
 // It receives immutable generic views and returns declarations. It must not
 // perform direct Artifact Store mutations or depend on system.Components.

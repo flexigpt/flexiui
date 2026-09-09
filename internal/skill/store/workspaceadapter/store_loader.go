@@ -44,37 +44,12 @@ func (r *StoreLoader) ListCollectionSkills(
 	ctx context.Context,
 	workspace collection.CollectionRef,
 ) ([]skillAggregate.ResolvedArtifactSkill, error) {
-	values, err := r.adapter.List(ctx, workspace)
+	plan, err := r.adapter.LoadAll(ctx, workspace)
 	if err != nil {
 		return nil, err
 	}
-
-	refs := make([]artifact.ArtifactRef, 0, len(values))
-	for _, value := range values {
-		if !value.ProjectionValid ||
-			!value.RuntimePathBacked ||
-			!value.WorkspaceEnabled ||
-			!value.Skill.IsEnabled ||
-			!value.CatalogCurrent ||
-			value.RuntimeDisabled ||
-			value.State != artifact.StateAvailable {
-			continue
-		}
-		refs = append(refs, value.Artifact)
-	}
-	if len(refs) == 0 {
+	if len(plan.Skills) == 0 {
 		return []skillAggregate.ResolvedArtifactSkill{}, nil
-	}
-
-	plan, err := r.adapter.Load(ctx, workspace, refs)
-	if err != nil {
-		return nil, err
-	}
-	if len(plan.Skills) != len(refs) {
-		return nil, fmt.Errorf(
-			"%w: one or more Workspace Skills could not be projected",
-			basespec.ErrCatalogStale,
-		)
 	}
 
 	output := make([]skillAggregate.ResolvedArtifactSkill, 0, len(plan.Skills))
@@ -92,15 +67,13 @@ func workspaceResolvedSkill(
 	value WorkspaceSkill,
 ) (skillAggregate.ResolvedArtifactSkill, error) {
 	if !value.ProjectionValid ||
-		!value.RuntimePathBacked ||
-		!value.WorkspaceEnabled ||
-		!value.CatalogCurrent ||
-		!value.Skill.IsEnabled ||
-		value.RuntimeDisabled ||
-		value.State != artifact.StateAvailable {
+		value.RuntimeLocation == "" ||
+		value.SourceContentDigest == "" ||
+		value.SourceGeneration == "" ||
+		value.ArtifactRevision == 0 {
 		return skillAggregate.ResolvedArtifactSkill{}, fmt.Errorf(
-			"%w: Workspace Skill is not eligible for runtime registration",
-			basespec.ErrCatalogStale,
+			"%w: Workspace Skill is missing prepared runtime material",
+			basespec.ErrReferenceUnresolved,
 		)
 	}
 

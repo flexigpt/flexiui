@@ -64,14 +64,37 @@ func DecodeArtifactData(
 	return value, nil
 }
 
-func ValidateWorkspaceState(
+// DeriveWorkspaceTopology derives Workspace mode and primary Source from
+// Artifact Store values and already-decoded Workspace CollectionData.
+//
+// It retains Workspace-specific topology and attachment-data validation while
+// skipping generic Artifact Store model validation.
+func DeriveWorkspaceTopology(
 	value collection.Collection,
 	data workspaceDomain.CollectionData,
 	attachments []collection.Attachment,
 	sources []source.Summary,
 ) (workspaceDomain.Mode, source.SourceID, error) {
-	if err := value.Validate(); err != nil {
-		return "", "", fmt.Errorf("%w: invalid Workspace collection: %w", workspaceDomain.ErrInvalidWorkspace, err)
+	return validateWorkspaceState(
+		value,
+		data,
+		attachments,
+		sources,
+		false,
+	)
+}
+
+func validateWorkspaceState(
+	value collection.Collection,
+	data workspaceDomain.CollectionData,
+	attachments []collection.Attachment,
+	sources []source.Summary,
+	validateInputs bool,
+) (workspaceDomain.Mode, source.SourceID, error) {
+	if validateInputs {
+		if err := value.Validate(); err != nil {
+			return "", "", fmt.Errorf("%w: invalid Workspace collection: %w", workspaceDomain.ErrInvalidWorkspace, err)
+		}
 	}
 	if value.Kind != artifactbuiltin.WorkspaceCollectionV1Kind {
 		return "", "", fmt.Errorf(
@@ -81,18 +104,22 @@ func ValidateWorkspaceState(
 			value.Kind,
 		)
 	}
-	if err := collectiondata.ValidateCollectionData(data); err != nil {
-		return "", "", err
+	if validateInputs {
+		if err := collectiondata.ValidateCollectionData(data); err != nil {
+			return "", "", err
+		}
 	}
 	sourcesByID := make(map[source.SourceID]source.Summary, len(sources))
 
 	for _, sourceValue := range sources {
-		if err := sourceValue.Validate(); err != nil {
-			return "", "", fmt.Errorf(
-				"%w: invalid Workspace source summary: %w",
-				workspaceDomain.ErrInvalidWorkspace,
-				err,
-			)
+		if validateInputs {
+			if err := sourceValue.Validate(); err != nil {
+				return "", "", fmt.Errorf(
+					"%w: invalid Workspace source summary: %w",
+					workspaceDomain.ErrInvalidWorkspace,
+					err,
+				)
+			}
 		}
 		if _, duplicate := sourcesByID[sourceValue.ID]; duplicate {
 			return "", "", fmt.Errorf(
@@ -115,12 +142,14 @@ func ValidateWorkspaceState(
 	var primarySourceID source.SourceID
 	seenAttachments := make(map[source.SourceID]struct{}, len(attachments))
 	for _, attachment := range attachments {
-		if err := attachment.Validate(); err != nil {
-			return "", "", fmt.Errorf(
-				"%w: invalid Workspace attachment: %w",
-				workspaceDomain.ErrInvalidWorkspace,
-				err,
-			)
+		if validateInputs {
+			if err := attachment.Validate(); err != nil {
+				return "", "", fmt.Errorf(
+					"%w: invalid Workspace attachment: %w",
+					workspaceDomain.ErrInvalidWorkspace,
+					err,
+				)
+			}
 		}
 
 		if _, duplicate := seenAttachments[attachment.SourceID]; duplicate {

@@ -109,7 +109,7 @@ func (*ContextDecoder) Decode(
 		},
 		Body: raw,
 	}
-	if err := workspaceDomainContext.ValidateContextDefinition(value); err != nil {
+	if _, err := workspaceDomainContext.ContextFromDefinition(value); err != nil {
 		return nil, artifactadapter.WorkspaceArtifactDiagnostics(
 			candidate.Locator,
 			workspaceDomain.DiagnosticCodeContextInvalidContent,

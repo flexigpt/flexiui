@@ -22,6 +22,12 @@ type CatalogInspection struct {
 	DecoderChanged  bool     `json:"decoderChanged"`
 }
 
+func (i CatalogInspection) Clone() CatalogInspection {
+	output := i
+	output.Catalog = i.Catalog.Clone()
+	return output
+}
+
 func (i CatalogInspection) IsCurrent() bool {
 	return !i.MetadataChanged &&
 		!i.PlanChanged &&

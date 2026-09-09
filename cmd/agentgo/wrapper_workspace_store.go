@@ -21,7 +21,6 @@ func InitWorkspaceWrappers(
 	sources compositionapi.SourceAPI,
 	collections compositionapi.CollectionAPI,
 	artifacts compositionapi.ArtifactAPI,
-	catalogs compositionapi.CatalogAPI,
 	resources compositionapi.ResourceAPI,
 ) error {
 	if storeWrapper == nil ||
@@ -34,7 +33,6 @@ func InitWorkspaceWrappers(
 		sources,
 		collections,
 		artifacts,
-		catalogs,
 		resources,
 		workspaceConsumerAPI.DefaultConfig(),
 	)

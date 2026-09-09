@@ -274,7 +274,6 @@ func (a *App) initManagers() {
 		artifactComposition.Sources,
 		artifactComposition.Collections,
 		artifactComposition.Artifacts,
-		artifactComposition.Catalogs,
 		artifactComposition.Resources,
 	)
 	if err != nil {

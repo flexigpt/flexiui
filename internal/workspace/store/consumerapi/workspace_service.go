@@ -47,6 +47,9 @@ func (s *Service) List(
 	ctx context.Context,
 	rootID root.RootID,
 ) ([]workspaceDomain.Workspace, error) {
+	if err := rootID.Validate(); err != nil {
+		return nil, err
+	}
 	if err := s.requireWorkspaceRoot(rootID); err != nil {
 		return nil, err
 	}
@@ -75,10 +78,10 @@ func (s *Service) Get(
 	ctx context.Context,
 	ref collection.CollectionRef,
 ) (workspaceDomain.Workspace, error) {
-	if err := s.requireWorkspaceRoot(ref.RootID); err != nil {
+	if err := ref.Validate(); err != nil {
 		return workspaceDomain.Workspace{}, err
 	}
-	if err := ref.Validate(); err != nil {
+	if err := s.requireWorkspaceRoot(ref.RootID); err != nil {
 		return workspaceDomain.Workspace{}, err
 	}
 
@@ -138,7 +141,7 @@ func (s *Service) Get(
 		sources = append(sources, sourceValue)
 	}
 
-	mode, primarySourceID, err := artifactadapter.ValidateWorkspaceState(
+	mode, primarySourceID, err := artifactadapter.DeriveWorkspaceTopology(
 		value,
 		data,
 		attachments,
@@ -162,12 +165,10 @@ func (s *Service) Get(
 	}, nil
 }
 
+// requireWorkspaceRoot receives an already-validated Root ID.
 func (s *Service) requireWorkspaceRoot(
 	rootID root.RootID,
 ) error {
-	if err := rootID.Validate(); err != nil {
-		return err
-	}
 	if rootID != s.workspaceRootID {
 		return fmt.Errorf(
 			"%w: Workspace Root must be %q",

@@ -2,12 +2,14 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/root"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
@@ -21,6 +23,23 @@ type catalogReader interface {
 		ctx context.Context,
 		ref collection.CollectionRef,
 	) (catalog.Snapshot, error)
+
+	InspectCollectionCatalog(
+		ctx context.Context,
+		ref collection.CollectionRef,
+	) (catalog.CatalogInspection, error)
+}
+
+type catalogArtifactKey struct {
+	Occurrence catalog.OccurrenceKey
+	Kind       artifact.ArtifactKind
+}
+
+type catalogArtifactMaterial struct {
+	occurrence       catalog.Occurrence
+	definition       definition.Definition
+	source           source.Source
+	sourceGeneration string
 }
 
 type Service struct {
@@ -53,153 +72,150 @@ func NewService(
 	}, nil
 }
 
-// ResolveArtifact verifies the complete current resource chain:
-//
-// Artifact -> Collection -> current provider plan -> Catalog occurrence ->
-// Definition -> Source revision -> optional exact source bytes.
-func (s *Service) ResolveArtifact(
+// InspectCollectionResources returns the generic resource linkage for one
+// Collection without applying Workspace, Skill, MCP, or runtime policy.
+func (s *Service) InspectCollectionResources(
 	ctx context.Context,
-	ref artifact.ArtifactRef,
-	options resource.ResolveOptions,
-) (resource.ResolvedArtifact, error) {
-	if err := validateContext(ctx, "Artifact resolution"); err != nil {
-		return resource.ResolvedArtifact{}, err
+	ref collection.CollectionRef,
+) (resource.CollectionResourceInspection, error) {
+	if err := validateContext(ctx, "Collection resource inspection"); err != nil {
+		return resource.CollectionResourceInspection{}, err
 	}
 	if s == nil ||
 		s.artifacts == nil ||
 		s.collections == nil ||
 		s.catalogs == nil ||
 		s.sources == nil {
-		return resource.ResolvedArtifact{}, basespec.ErrClosed
+		return resource.CollectionResourceInspection{}, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return resource.ResolvedArtifact{}, err
+		return resource.CollectionResourceInspection{}, err
 	}
 
-	record, err := s.artifacts.Get(ctx, ref)
+	collectionValue, err := s.collections.Get(ctx, ref)
 	if err != nil {
-		return resource.ResolvedArtifact{}, err
+		return resource.CollectionResourceInspection{}, err
 	}
-	if record.State != artifact.StateAvailable ||
-		record.ResolvedDefinition == nil {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
-			"%w: Artifact %q is not currently available",
-			basespec.ErrReferenceUnresolved,
-			ref.ArtifactID,
-		)
-	}
-
-	collectionRef := collection.CollectionRef{
-		RootID:       record.RootID,
-		CollectionID: record.CollectionID,
-	}
-	collectionValue, err := s.collections.Get(ctx, collectionRef)
-	if err != nil {
-		return resource.ResolvedArtifact{}, err
-	}
-	if collectionValue.Ref() != collectionRef {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
+	if collectionValue.Ref() != ref {
+		return resource.CollectionResourceInspection{}, fmt.Errorf(
 			"%w: Collection reader returned another Collection",
 			basespec.ErrInvalid,
 		)
 	}
 
-	snapshot, err := s.catalogs.CurrentCatalog(ctx, collectionRef)
+	inspection, err := s.catalogs.InspectCollectionCatalog(ctx, ref)
 	if err != nil {
-		return resource.ResolvedArtifact{}, err
+		return resource.CollectionResourceInspection{}, err
+	}
+	snapshot := inspection.Catalog
+	if err := snapshot.Validate(); err != nil {
+		return resource.CollectionResourceInspection{}, fmt.Errorf(
+			"%w: catalog inspection returned an invalid Catalog: %w",
+			basespec.ErrInvalid,
+			err,
+		)
 	}
 
-	var occurrence *catalog.Occurrence
-	for index := range snapshot.Occurrences {
-		current := snapshot.Occurrences[index]
-		if current.Key.SourceID != record.Binding.SourceID ||
-			current.Key.Locator != record.Binding.Locator ||
-			current.Key.SubresourceLocator !=
-				record.Binding.SubresourceLocator {
+	records, err := s.artifacts.ListByCollection(ctx, ref)
+	if err != nil {
+		return resource.CollectionResourceInspection{}, err
+	}
+
+	occurrences := catalogOccurrenceIndex(snapshot.Occurrences)
+	recorded := make(map[catalogArtifactKey]struct{}, len(records))
+	output := resource.CollectionResourceInspection{
+		Catalog:             inspection.Clone(),
+		Resources:           make([]resource.CollectionArtifactResource, 0, len(records)),
+		UnresolvedArtifacts: make([]resource.ArtifactResolutionIssue, 0),
+	}
+
+	for _, record := range records {
+		if record.RootID != ref.RootID ||
+			record.CollectionID != ref.CollectionID {
+			return resource.CollectionResourceInspection{}, fmt.Errorf(
+				"%w: Artifact belongs to another Collection",
+				basespec.ErrInvalid,
+			)
+		}
+
+		recorded[catalogArtifactKeyFor(record)] = struct{}{}
+		if record.ResolvedDefinition == nil {
+			output.UnresolvedArtifacts = append(
+				output.UnresolvedArtifacts,
+				resource.ArtifactResolutionIssue{
+					Artifact: record.Clone(),
+					Status:   resource.ArtifactResolutionRecordUnavailable,
+				},
+			)
 			continue
 		}
-		value := current.Clone()
-		occurrence = &value
-		break
-	}
-	if occurrence == nil ||
-		occurrence.State != catalog.OccurrenceValid ||
-		occurrence.Kind != record.Kind ||
-		occurrence.DefinitionDigest == nil ||
-		occurrence.SourceContentDigest == nil ||
-		*occurrence.DefinitionDigest != *record.ResolvedDefinition {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
-			"%w: Artifact %q does not match its current Catalog occurrence",
-			basespec.ErrCatalogStale,
-			record.ID,
-		)
-	}
 
-	definitionValue, err := snapshot.DefinitionForOccurrence(
-		occurrence.Key,
-	)
-	if err != nil {
-		return resource.ResolvedArtifact{}, err
-	}
-	if definitionValue.Kind != record.Kind ||
-		definitionValue.Digest != *record.ResolvedDefinition {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
-			"%w: Artifact %q definition does not match current state",
-			basespec.ErrDigestMismatch,
-			record.ID,
-		)
-	}
-
-	sourceRevision := snapshot.SourceRevisions[record.Binding.SourceID]
-	sourceGeneration := snapshot.SourceGenerations[record.Binding.SourceID]
-	if sourceRevision == 0 || sourceGeneration == "" {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
-			"%w: Artifact Source has no current Catalog state",
-			basespec.ErrCatalogStale,
-		)
-	}
-
-	sourceValue, err := s.sources.Get(
-		ctx,
-		record.RootID,
-		record.Binding.SourceID,
-	)
-	if err != nil {
-		return resource.ResolvedArtifact{}, err
-	}
-	if sourceValue.Revision != sourceRevision {
-		return resource.ResolvedArtifact{}, fmt.Errorf(
-			"%w: Artifact Source changed after Catalog publication",
-			basespec.ErrCatalogStale,
-		)
-	}
-
-	if options.VerifySourceContent {
-		if err := sourceimpl.VerifySnapshotContentDigest(
+		material, err := s.catalogArtifactMaterialFor(
 			ctx,
-			s.sources,
-			sourceValue,
-			record.Binding.Locator,
-			sourceGeneration,
-			*occurrence.SourceContentDigest,
-			basespec.MaxCandidateBytes,
-		); err != nil {
-			return resource.ResolvedArtifact{}, err
+			record,
+			collectionValue,
+			snapshot,
+			occurrences,
+			false,
+		)
+		if err != nil {
+			status, expected := artifactResolutionStatusFor(err)
+			if !expected {
+				return resource.CollectionResourceInspection{}, err
+			}
+			output.UnresolvedArtifacts = append(
+				output.UnresolvedArtifacts,
+				resource.ArtifactResolutionIssue{
+					Artifact: record.Clone(),
+					Status:   status,
+				},
+			)
+			continue
 		}
+
+		current := inspection.IsCurrent() &&
+			material.source.Revision ==
+				snapshot.SourceRevisions[record.Binding.SourceID]
+
+		linked := resource.CollectionArtifactResource{
+			Artifact:       record.Clone(),
+			Definition:     material.definition.Clone(),
+			Occurrence:     material.occurrence.Clone(),
+			Source:         material.source.Summary(),
+			CatalogCurrent: current,
+		}
+		if record.State == artifact.StateAvailable && current {
+			resolved, err := resolvedArtifactFromMaterial(
+				record,
+				collectionValue,
+				snapshot,
+				material,
+			)
+			if err != nil {
+				return resource.CollectionResourceInspection{}, err
+			}
+			linked.Resolved = &resolved
+		}
+		output.Resources = append(output.Resources, linked)
 	}
 
-	output := resource.ResolvedArtifact{
-		Artifact:         record.Clone(),
-		Collection:       collectionValue.Clone(),
-		Definition:       definitionValue.Clone(),
-		Occurrence:       occurrence.Clone(),
-		Source:           sourceValue.Summary(),
-		CatalogRevision:  snapshot.Revision,
-		SourceGeneration: sourceGeneration,
+	for _, occurrence := range snapshot.Occurrences {
+		if occurrence.Kind == "" {
+			continue
+		}
+		key := catalogArtifactKey{
+			Occurrence: occurrence.Key,
+			Kind:       occurrence.Kind,
+		}
+		if _, found := recorded[key]; found {
+			continue
+		}
+		output.UnrecordedOccurrences = append(
+			output.UnrecordedOccurrences,
+			occurrence.Clone(),
+		)
 	}
-	if err := output.Validate(); err != nil {
-		return resource.ResolvedArtifact{}, err
-	}
+
 	return output.Clone(), nil
 }
 
@@ -382,6 +398,265 @@ func (s *Service) SupportsLocalPath(kind source.SourceKind) bool {
 	}
 	localPaths, supported := s.sources.(sourceimpl.LocalPathRuntime)
 	return supported && localPaths.SupportsLocalPath(kind)
+}
+
+// ResolveArtifact verifies the complete current resource chain:
+//
+// Artifact -> Collection -> current provider plan -> Catalog occurrence ->
+// Definition -> Source revision -> optional exact source bytes.
+func (s *Service) ResolveArtifact(
+	ctx context.Context,
+	ref artifact.ArtifactRef,
+	options resource.ResolveOptions,
+) (resource.ResolvedArtifact, error) {
+	if err := validateContext(ctx, "Artifact resolution"); err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	if s == nil ||
+		s.artifacts == nil ||
+		s.collections == nil ||
+		s.catalogs == nil ||
+		s.sources == nil {
+		return resource.ResolvedArtifact{}, basespec.ErrClosed
+	}
+	if err := ref.Validate(); err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+
+	record, err := s.artifacts.Get(ctx, ref)
+	if err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	if record.State != artifact.StateAvailable ||
+		record.ResolvedDefinition == nil {
+		return resource.ResolvedArtifact{}, fmt.Errorf(
+			"%w: Artifact %q is not currently available",
+			basespec.ErrReferenceUnresolved,
+			ref.ArtifactID,
+		)
+	}
+	collectionRef := collection.CollectionRef{
+		RootID:       record.RootID,
+		CollectionID: record.CollectionID,
+	}
+	collectionValue, err := s.collections.Get(ctx, collectionRef)
+	if err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	if collectionValue.Ref() != collectionRef {
+		return resource.ResolvedArtifact{}, fmt.Errorf(
+			"%w: Collection reader returned another Collection",
+			basespec.ErrInvalid,
+		)
+	}
+	snapshot, err := s.catalogs.CurrentCatalog(ctx, collectionRef)
+	if err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	material, err := s.catalogArtifactMaterialFor(
+		ctx,
+		record,
+		collectionValue,
+		snapshot,
+		catalogOccurrenceIndex(snapshot.Occurrences),
+		true,
+	)
+	if err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	output, err := resolvedArtifactFromMaterial(
+		record,
+		collectionValue,
+		snapshot,
+		material,
+	)
+	if err != nil {
+		return resource.ResolvedArtifact{}, err
+	}
+	if options.VerifySourceContent {
+		if err := sourceimpl.VerifySnapshotContentDigest(
+			ctx,
+			s.sources,
+			material.source,
+			record.Binding.Locator,
+			material.sourceGeneration,
+			*material.occurrence.SourceContentDigest,
+			basespec.MaxCandidateBytes,
+		); err != nil {
+			return resource.ResolvedArtifact{}, err
+		}
+	}
+	return output.Clone(), nil
+}
+
+func (s *Service) catalogArtifactMaterialFor(
+	ctx context.Context,
+	record artifact.Artifact,
+	collectionValue collection.Collection,
+	snapshot catalog.Snapshot,
+	occurrences map[catalog.OccurrenceKey]catalog.Occurrence,
+	requireCurrentSource bool,
+) (catalogArtifactMaterial, error) {
+	if record.RootID != collectionValue.RootID ||
+		record.CollectionID != collectionValue.ID {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact belongs to another Collection",
+			basespec.ErrInvalid,
+		)
+	}
+	if record.ResolvedDefinition == nil {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact %q has no resolved definition",
+			basespec.ErrReferenceUnresolved,
+			record.ID,
+		)
+	}
+
+	key := catalog.OccurrenceKey{
+		CollectionID:       record.CollectionID,
+		SourceID:           record.Binding.SourceID,
+		Locator:            record.Binding.Locator,
+		SubresourceLocator: record.Binding.SubresourceLocator,
+	}
+	occurrence, found := occurrences[key]
+	if !found ||
+		occurrence.State != catalog.OccurrenceValid ||
+		occurrence.Kind != record.Kind ||
+		occurrence.DefinitionDigest == nil ||
+		occurrence.SourceContentDigest == nil ||
+		*occurrence.DefinitionDigest != *record.ResolvedDefinition {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact %q does not match its current Catalog occurrence",
+			basespec.ErrCatalogStale,
+			record.ID,
+		)
+	}
+
+	definitionValue, err := snapshot.DefinitionForOccurrence(key)
+	if err != nil {
+		return catalogArtifactMaterial{}, err
+	}
+	if definitionValue.Kind != record.Kind ||
+		definitionValue.Digest != *record.ResolvedDefinition {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact %q definition does not match current state",
+			basespec.ErrDigestMismatch,
+			record.ID,
+		)
+	}
+
+	sourceRevision := snapshot.SourceRevisions[record.Binding.SourceID]
+	sourceGeneration := snapshot.SourceGenerations[record.Binding.SourceID]
+	if sourceRevision == 0 || sourceGeneration == "" {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact Source has no current Catalog state",
+			basespec.ErrCatalogStale,
+		)
+	}
+
+	sourceValue, err := s.sources.Get(
+		ctx,
+		record.RootID,
+		record.Binding.SourceID,
+	)
+	if err != nil {
+		return catalogArtifactMaterial{}, err
+	}
+	if requireCurrentSource && sourceValue.Revision != sourceRevision {
+		return catalogArtifactMaterial{}, fmt.Errorf(
+			"%w: Artifact Source changed after Catalog publication",
+			basespec.ErrCatalogStale,
+		)
+	}
+
+	return catalogArtifactMaterial{
+		occurrence:       occurrence.Clone(),
+		definition:       definitionValue.Clone(),
+		source:           sourceValue.Clone(),
+		sourceGeneration: sourceGeneration,
+	}, nil
+}
+
+func resolvedArtifactFromMaterial(
+	record artifact.Artifact,
+	collectionValue collection.Collection,
+	snapshot catalog.Snapshot,
+	material catalogArtifactMaterial,
+) (resource.ResolvedArtifact, error) {
+	if record.State != artifact.StateAvailable {
+		return resource.ResolvedArtifact{}, fmt.Errorf(
+			"%w: Artifact %q is not currently available",
+			basespec.ErrReferenceUnresolved,
+			record.ID,
+		)
+	}
+
+	output := resource.ResolvedArtifact{
+		Artifact:         record.Clone(),
+		Collection:       collectionValue.Clone(),
+		Definition:       material.definition.Clone(),
+		Occurrence:       material.occurrence.Clone(),
+		Source:           material.source.Summary(),
+		CatalogRevision:  snapshot.Revision,
+		SourceGeneration: material.sourceGeneration,
+	}
+	if err := output.Validate(); err != nil {
+		return resource.ResolvedArtifact{}, fmt.Errorf(
+			"%w: resolved Artifact material is invalid: %w",
+			basespec.ErrInvalid,
+			err,
+		)
+	}
+	return output.Clone(), nil
+}
+
+func catalogOccurrenceIndex(
+	values []catalog.Occurrence,
+) map[catalog.OccurrenceKey]catalog.Occurrence {
+	output := make(map[catalog.OccurrenceKey]catalog.Occurrence, len(values))
+	for _, value := range values {
+		output[value.Key] = value.Clone()
+	}
+	return output
+}
+
+func catalogArtifactKeyFor(
+	record artifact.Artifact,
+) catalogArtifactKey {
+	return catalogArtifactKey{
+		Occurrence: catalog.OccurrenceKey{
+			CollectionID:       record.CollectionID,
+			SourceID:           record.Binding.SourceID,
+			Locator:            record.Binding.Locator,
+			SubresourceLocator: record.Binding.SubresourceLocator,
+		},
+		Kind: record.Kind,
+	}
+}
+
+func artifactResolutionStatusFor(
+	err error,
+) (resource.ArtifactResolutionStatus, bool) {
+	switch {
+	case errors.Is(err, basespec.ErrSourceNotFound),
+		errors.Is(err, basespec.ErrSourceUnavailable):
+		return resource.ArtifactResolutionSourceUnavailable, true
+
+	case errors.Is(err, basespec.ErrDefinitionNotFound):
+		return resource.ArtifactResolutionDefinitionUnavailable, true
+
+	case errors.Is(err, basespec.ErrDigestMismatch):
+		return resource.ArtifactResolutionDefinitionMismatch, true
+
+	case errors.Is(err, basespec.ErrCatalogStale):
+		return resource.ArtifactResolutionOccurrenceUnavailable, true
+
+	case errors.Is(err, basespec.ErrReferenceUnresolved):
+		return resource.ArtifactResolutionRecordUnavailable, true
+
+	default:
+		return "", false
+	}
 }
 
 func validateContext(ctx context.Context, operation string) error {

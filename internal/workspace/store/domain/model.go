@@ -1,18 +1,16 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/artifact"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/catalog"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/resource"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/schema"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
-	"github.com/flexigpt/flexigpt-app/internal/cryptoutil"
 )
 
 type Mode string
@@ -80,13 +78,22 @@ type Workspace struct {
 }
 
 type Resource struct {
-	Artifact        artifact.Artifact       `json:"-"`
-	Definition      definition.Definition   `json:"-"`
-	Occurrence      *catalog.Occurrence     `json:"-"`
-	Source          source.Summary          `json:"-"`
-	CatalogCurrent  bool                    `json:"-"`
+	Artifact          artifact.Artifact     `json:"-"`
+	ArtifactData      ArtifactData          `json:"-"`
+	ArtifactDataValid bool                  `json:"-"`
+	Definition        definition.Definition `json:"-"`
+	Occurrence        *catalog.Occurrence   `json:"-"`
+	Source            source.Summary        `json:"-"`
+	CatalogCurrent    bool                  `json:"-"`
+
+	// ProjectionValid covers Workspace-owned local Artifact projection only.
+	// Artifact-family semantic projection occurs at the runtime-use boundary.
 	ProjectionValid bool                    `json:"-"`
 	Diagnostics     []diagnostic.Diagnostic `json:"-"`
+
+	// Resolved is populated only when Artifact Store has verified a current,
+	// available Artifact resource chain for this Catalog resource.
+	Resolved *resource.ResolvedArtifact `json:"-"`
 }
 
 type ResourceGroup struct {
@@ -109,29 +116,25 @@ type CatalogView struct {
 // LoadPlanItem contains privileged materialized source state. It must be
 // projected into an explicit adapter response before crossing an API boundary.
 type LoadPlanItem struct {
-	Artifact                   artifact.Artifact     `json:"-"`
-	Definition                 definition.Definition `json:"-"`
-	Source                     source.Summary        `json:"-"`
-	CatalogCurrent             bool                  `json:"-"`
-	OccurrenceDefinitionDigest cryptoutil.Digest     `json:"-"`
-	SourceContentDigest        cryptoutil.Digest     `json:"-"`
-	SourceGeneration           string                `json:"-"`
+	Resolved          resource.ResolvedArtifact `json:"-"`
+	ArtifactData      ArtifactData              `json:"-"`
+	ArtifactDataValid bool                      `json:"-"`
+	ProjectionValid   bool                      `json:"-"`
 }
 
 type LoadPlan struct {
 	Workspace       WorkspaceRef            `json:"-"`
+	WorkspaceState  Workspace               `json:"-"`
 	CatalogRevision uint64                  `json:"-"`
 	Items           []LoadPlanItem          `json:"-"`
 	Diagnostics     []diagnostic.Diagnostic `json:"-"`
 }
 
-type DefinitionValidator func(definition.Definition) error
-
 type ArtifactSupport struct {
-	Kind      artifact.ArtifactKind
-	SchemaID  schema.SchemaID
-	DecoderID basespec.DecoderID
-	Validator DefinitionValidator
+	Kind          artifact.ArtifactKind
+	SchemaID      schema.SchemaID
+	SchemaVersion string
+	DecoderID     basespec.DecoderID
 }
 
 func (s ArtifactSupport) Validate() error {
@@ -141,15 +144,15 @@ func (s ArtifactSupport) Validate() error {
 	if err := s.SchemaID.Validate(); err != nil {
 		return err
 	}
-	if err := s.DecoderID.Validate(); err != nil {
+	if err := basespec.ValidateRequiredText(
+		"Workspace Artifact support schema version",
+		s.SchemaVersion,
+		basespec.MaxVersionBytes,
+	); err != nil {
 		return err
 	}
-	if s.Validator == nil {
-		return fmt.Errorf(
-			"%w: Workspace artifact support %q has no semantic validator",
-			ErrInvalidWorkspace,
-			s.Kind,
-		)
+	if err := s.DecoderID.Validate(); err != nil {
+		return err
 	}
 	return nil
 }

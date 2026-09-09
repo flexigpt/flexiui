@@ -83,25 +83,13 @@ type WorkspaceDataSource interface {
 		ref artifact.ArtifactRef,
 	) (workspaceDomain.Workspace, workspaceDomain.Resource, error)
 
-	ComposeLoadPlan(
-		ctx context.Context,
-		workspace collection.CollectionRef,
+	ComposeLoadPlanFromCatalog(
+		view workspaceDomain.CatalogView,
 		artifactRefs []artifact.ArtifactRef,
 	) (workspaceDomain.LoadPlan, error)
-
-	GetWorkspace(
-		ctx context.Context,
-		workspace collection.CollectionRef,
-	) (workspaceDomain.Workspace, error)
 }
 
 type ArtifactResourceReader interface {
-	ResolveArtifact(
-		ctx context.Context,
-		ref artifact.ArtifactRef,
-		options resource.ResolveOptions,
-	) (resource.ResolvedArtifact, error)
-
 	ResolveVerifiedLocalPath(
 		ctx context.Context,
 		resolved resource.ResolvedArtifact,
@@ -182,7 +170,6 @@ func (f *Adapter) LoadArtifact(
 	if err != nil {
 		return WorkspaceSkill{}, err
 	}
-	workspace := workspaceValue.Collection.Ref()
 	if resourceValue.Definition.Kind != artifactbuiltin.AgentSkillArtifactKind ||
 		resourceValue.Definition.SchemaID != artifactbuiltin.AgentSkillSchemaID {
 		return WorkspaceSkill{}, fmt.Errorf(
@@ -191,18 +178,23 @@ func (f *Adapter) LoadArtifact(
 			ref.ArtifactID,
 		)
 	}
-	plan, err := f.Load(ctx, workspace, []artifact.ArtifactRef{ref})
+	value, failure, err := f.prepareWorkspaceSkill(
+		ctx,
+		workspaceValue,
+		resourceValue,
+	)
 	if err != nil {
 		return WorkspaceSkill{}, err
 	}
-	if len(plan.Skills) != 1 {
+	if failure != nil {
 		return WorkspaceSkill{}, fmt.Errorf(
-			"%w: Artifact %q is unavailable for runtime loading",
+			"%w: Artifact %q is unavailable for runtime loading: %s",
 			workspaceDomain.ErrReferenceUnresolved,
 			ref.ArtifactID,
+			failure.Message,
 		)
 	}
-	return plan.Skills[0], nil
+	return value, nil
 }
 
 func (f *Adapter) Load(
@@ -210,155 +202,217 @@ func (f *Adapter) Load(
 	workspace collection.CollectionRef,
 	artifactRefs []artifact.ArtifactRef,
 ) (SkillLoadPlan, error) {
-	seen := make(map[artifact.ArtifactRef]struct{}, len(artifactRefs))
-	for _, ref := range artifactRefs {
-		if err := ref.Validate(); err != nil {
-			return SkillLoadPlan{}, err
-		}
-		if ref.RootID != workspace.RootID {
-			return SkillLoadPlan{}, fmt.Errorf(
-				"%w: Workspace Skill belongs to another Root",
-				workspaceDomain.ErrReferenceUnresolved,
-			)
-		}
-		if _, duplicate := seen[ref]; duplicate {
-			return SkillLoadPlan{}, fmt.Errorf(
-				"%w: duplicate Workspace Skill Artifact %q",
-				workspaceDomain.ErrInvalidWorkspace,
-				ref.ArtifactID,
-			)
-		}
-		seen[ref] = struct{}{}
-	}
-	return f.loadLocal(ctx, workspace, artifactRefs)
-}
-
-func (f *Adapter) loadLocal(
-	ctx context.Context,
-	workspace collection.CollectionRef,
-	artifactRefs []artifact.ArtifactRef,
-) (SkillLoadPlan, error) {
-	if err := workspace.Validate(); err != nil {
+	view, err := f.query.Catalog(ctx, workspace)
+	if err != nil {
 		return SkillLoadPlan{}, err
 	}
-	loadPlan, err := f.query.ComposeLoadPlan(
-		ctx,
-		workspace,
+	return f.loadFromCatalog(ctx, view, artifactRefs)
+}
+
+// LoadAll resolves every currently runtime-eligible Workspace Skill. It is
+// used by the Skill catalog bridge, which must fail closed when one selected
+// runtime registration cannot be materialized.
+func (f *Adapter) LoadAll(
+	ctx context.Context,
+	workspace collection.CollectionRef,
+) (SkillLoadPlan, error) {
+	view, err := f.query.Catalog(ctx, workspace)
+	if err != nil {
+		return SkillLoadPlan{}, err
+	}
+
+	artifactRefs := f.runtimeEligibleSkillRefs(view)
+	plan, err := f.loadFromCatalog(ctx, view, artifactRefs)
+	if err != nil {
+		return SkillLoadPlan{}, err
+	}
+	if len(plan.Skills) != len(artifactRefs) {
+		return SkillLoadPlan{}, fmt.Errorf(
+			"%w: one or more Workspace Skills could not be projected",
+			basespec.ErrCatalogStale,
+		)
+	}
+	return plan, nil
+}
+
+func (f *Adapter) loadFromCatalog(
+	ctx context.Context,
+	view workspaceDomain.CatalogView,
+	artifactRefs []artifact.ArtifactRef,
+) (SkillLoadPlan, error) {
+	loadPlan, err := f.query.ComposeLoadPlanFromCatalog(
+		view,
 		artifactRefs,
 	)
 	if err != nil {
 		return SkillLoadPlan{}, err
 	}
-	workspaceValue, err := f.query.GetWorkspace(ctx, workspace)
-	if err != nil {
-		return SkillLoadPlan{}, err
-	}
+	workspaceValue := loadPlan.WorkspaceState
 
 	output := SkillLoadPlan{
-		Workspace:       workspace,
+		Workspace:       loadPlan.Workspace,
 		CatalogRevision: loadPlan.CatalogRevision,
 		Diagnostics:     diagnostic.Clone(loadPlan.Diagnostics),
 	}
 
 	for _, item := range loadPlan.Items {
-		resourceValue := workspaceDomain.Resource{
-			Artifact:        item.Artifact,
-			Definition:      item.Definition,
-			Source:          item.Source,
-			CatalogCurrent:  item.CatalogCurrent,
-			ProjectionValid: true,
-		}
-		projected, err := projectWorkspaceSkill(
-			workspace,
+		resourceValue := workspaceResourceFromLoadPlanItem(item)
+		projected, failure, err := f.prepareWorkspaceSkill(
+			ctx,
+			workspaceValue,
 			resourceValue,
-			workspaceValue.Collection.Enabled,
-			true,
-			f.supportsRuntimePath(item.Source.Kind),
 		)
 		if err != nil {
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				skillProjectionDiagnostic(item.Artifact, err),
-			)
-			continue
-		}
-		decision := f.runtimePolicy.Decide(ctx, artifactadapter.RuntimePolicyRequest{
-			Use:              workspaceRuntime.RuntimeUseSkill,
-			Workspace:        workspaceValue,
-			Artifact:         item.Artifact,
-			DefinitionDigest: item.Definition.Digest,
-			SourceID:         item.Source.ID,
-		})
-		if err := decision.Validate(); err != nil {
 			return SkillLoadPlan{}, err
 		}
-		if decision.Disposition != workspaceRuntime.RuntimeAllowed {
+		if failure != nil {
 			output.Diagnostics = diagnostic.Append(
 				output.Diagnostics,
-				artifactadapter.RuntimeDecisionDiagnostic(decision, item.Artifact),
+				*failure,
 			)
 			continue
 		}
 
-		resolved, err := f.resourceAPI.ResolveArtifact(
-			ctx,
-			item.Artifact.Ref(),
-			resource.ResolveOptions{},
-		)
-		if err != nil {
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				runtimeLocationDiagnostic(item.Artifact, err),
-			)
-			continue
-		}
-		if resolved.Artifact.Revision != item.Artifact.Revision ||
-			resolved.CatalogRevision != loadPlan.CatalogRevision ||
-			resolved.Definition.Digest != item.Definition.Digest ||
-			resolved.Source.ID != item.Source.ID {
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				runtimeLocationDiagnostic(
-					item.Artifact,
-					fmt.Errorf(
-						"%w: Workspace Skill changed after load-plan composition",
-						basespec.ErrCatalogStale,
-					),
-				),
-			)
-			continue
-		}
-
-		packageLocator, err := skillDomain.RuntimePackageLocator(
-			item.Artifact.Binding.Locator,
-			item.Artifact.Binding.SubresourceLocator,
-		)
-		if err != nil {
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				runtimeLocationDiagnostic(item.Artifact, err),
-			)
-			continue
-		}
-		runtimeLocation, err := f.resourceAPI.ResolveVerifiedLocalPath(
-			ctx,
-			resolved,
-			packageLocator,
-		)
-		if err != nil {
-			output.Diagnostics = diagnostic.Append(
-				output.Diagnostics,
-				runtimeLocationDiagnostic(item.Artifact, err),
-			)
-			continue
-		}
-		projected.SourceContentDigest = *resolved.Occurrence.SourceContentDigest
-		projected.SourceGeneration = resolved.SourceGeneration
-		projected.RuntimeLocation = runtimeLocation
 		output.Skills = append(output.Skills, projected)
 	}
 	sortWorkspaceSkills(output.Skills)
 	return output, nil
+}
+
+func (f *Adapter) runtimeEligibleSkillRefs(
+	view workspaceDomain.CatalogView,
+) []artifact.ArtifactRef {
+	if !view.Workspace.Collection.Enabled {
+		return nil
+	}
+
+	output := make([]artifact.ArtifactRef, 0)
+	for _, value := range view.Resources {
+		if value.Definition.Kind != artifactbuiltin.AgentSkillArtifactKind ||
+			value.Definition.SchemaID != artifactbuiltin.AgentSkillSchemaID ||
+			!value.ProjectionValid ||
+			!value.CatalogCurrent ||
+			value.Resolved == nil ||
+			!value.Artifact.Enabled ||
+			value.Artifact.State != artifact.StateAvailable ||
+			value.ArtifactData.RuntimeDisabled ||
+			!f.supportsRuntimePath(value.Source.Kind) {
+			continue
+		}
+		output = append(output, value.Artifact.Ref())
+	}
+	return output
+}
+
+func workspaceResourceFromLoadPlanItem(
+	value workspaceDomain.LoadPlanItem,
+) workspaceDomain.Resource {
+	resolved := value.Resolved.Clone()
+	occurrence := resolved.Occurrence.Clone()
+	return workspaceDomain.Resource{
+		Artifact:          resolved.Artifact.Clone(),
+		ArtifactData:      value.ArtifactData,
+		ArtifactDataValid: value.ArtifactDataValid,
+		Definition:        resolved.Definition.Clone(),
+		Occurrence:        &occurrence,
+		Source:            resolved.Source.Clone(),
+		CatalogCurrent:    true,
+		ProjectionValid:   value.ProjectionValid,
+		Resolved:          &resolved,
+	}
+}
+
+func (f *Adapter) prepareWorkspaceSkill(
+	ctx context.Context,
+	workspaceValue workspaceDomain.Workspace,
+	resourceValue workspaceDomain.Resource,
+) (WorkspaceSkill, *diagnostic.Diagnostic, error) {
+	workspace := workspaceValue.Collection.Ref()
+	projected, err := projectWorkspaceSkill(
+		workspace,
+		resourceValue,
+		workspaceValue.Collection.Enabled,
+		true,
+		f.supportsRuntimePath(resourceValue.Source.Kind),
+	)
+	if err != nil {
+		failure := skillProjectionDiagnostic(resourceValue.Artifact, err)
+		return WorkspaceSkill{}, &failure, nil
+	}
+	if !projected.ProjectionValid {
+		failure := skillProjectionDiagnostic(
+			resourceValue.Artifact,
+			fmt.Errorf(
+				"%w: Workspace Skill projection is invalid",
+				workspaceDomain.ErrInvalidWorkspace,
+			),
+		)
+		return WorkspaceSkill{}, &failure, nil
+	}
+
+	decision := f.runtimePolicy.Decide(ctx, artifactadapter.RuntimePolicyRequest{
+		Use:                    workspaceRuntime.RuntimeUseSkill,
+		Workspace:              workspaceValue,
+		Artifact:               resourceValue.Artifact,
+		DefinitionDigest:       resourceValue.Definition.Digest,
+		SourceID:               resourceValue.Source.ID,
+		RuntimeDisabled:        resourceValue.ArtifactData.RuntimeDisabled,
+		RuntimeSettingsInvalid: !resourceValue.ArtifactDataValid,
+	})
+	if err := decision.Validate(); err != nil {
+		return WorkspaceSkill{}, nil, err
+	}
+	if decision.Disposition != workspaceRuntime.RuntimeAllowed {
+		failure := artifactadapter.RuntimeDecisionDiagnostic(
+			decision,
+			resourceValue.Artifact,
+		)
+		return WorkspaceSkill{}, &failure, nil
+	}
+	if resourceValue.Resolved == nil {
+		failure := runtimeLocationDiagnostic(
+			resourceValue.Artifact,
+			fmt.Errorf(
+				"%w: Workspace Skill has no current resolved resource chain",
+				basespec.ErrCatalogStale,
+			),
+		)
+		return WorkspaceSkill{}, &failure, nil
+	}
+
+	resolved := resourceValue.Resolved.Clone()
+	packageLocator, err := skillDomain.RuntimePackageLocator(
+		resolved.Artifact.Binding.Locator,
+		resolved.Artifact.Binding.SubresourceLocator,
+	)
+	if err != nil {
+		failure := runtimeLocationDiagnostic(resolved.Artifact, err)
+		return WorkspaceSkill{}, &failure, nil
+	}
+	runtimeLocation, err := f.resourceAPI.ResolveVerifiedLocalPath(
+		ctx,
+		resolved,
+		packageLocator,
+	)
+	if err != nil {
+		failure := runtimeLocationDiagnostic(resolved.Artifact, err)
+		return WorkspaceSkill{}, &failure, nil
+	}
+	if resolved.Occurrence.SourceContentDigest == nil {
+		failure := runtimeLocationDiagnostic(
+			resolved.Artifact,
+			fmt.Errorf(
+				"%w: resolved Workspace Skill has no source digest",
+				basespec.ErrDigestMismatch,
+			),
+		)
+		return WorkspaceSkill{}, &failure, nil
+	}
+
+	projected.SourceContentDigest = *resolved.Occurrence.SourceContentDigest
+	projected.SourceGeneration = resolved.SourceGeneration
+	projected.RuntimeLocation = runtimeLocation
+	return projected, nil, nil
 }
 
 func projectWorkspaceSkill(
@@ -368,9 +422,6 @@ func projectWorkspaceSkill(
 	includeMarkdown bool,
 	runtimePathBacked bool,
 ) (WorkspaceSkill, error) {
-	runtimeDisabled, dataErr := artifactadapter.ArtifactRuntimeDisabled(
-		resourceValue.Artifact,
-	)
 	output := WorkspaceSkill{
 		Workspace:        workspace,
 		Artifact:         resourceValue.Artifact.Ref(),
@@ -380,7 +431,7 @@ func projectWorkspaceSkill(
 		Locator:          resourceValue.Artifact.Binding.Locator,
 		State:            resourceValue.Artifact.State,
 		CatalogCurrent:   resourceValue.CatalogCurrent,
-		RuntimeDisabled:  runtimeDisabled,
+		RuntimeDisabled:  resourceValue.ArtifactData.RuntimeDisabled,
 		WorkspaceEnabled: workspaceEnabled,
 		Diagnostics: diagnostic.Append(
 			resourceValue.Artifact.Diagnostics,
@@ -388,8 +439,8 @@ func projectWorkspaceSkill(
 		),
 		RuntimePathBacked: runtimePathBacked,
 	}
-	if dataErr != nil {
-		return output, dataErr
+	if !resourceValue.ProjectionValid {
+		return output, nil
 	}
 	doc, err := skillDomain.DocumentFromDefinition(
 		resourceValue.Definition,

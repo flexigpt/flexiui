@@ -17,8 +17,6 @@ import (
 	workspaceDomain "github.com/flexigpt/flexigpt-app/internal/workspace/store/domain"
 )
 
-type WorkspaceRef = collection.CollectionRef
-
 type WorkspaceDiscoveryRoot struct {
 	Root            basespec.Locator `json:"root"`
 	Recursive       bool             `json:"recursive"`
@@ -53,16 +51,16 @@ type WorkspaceAttachmentView struct {
 // data, and the trust-reference contents. Local filesystem paths are included
 // because the local Workspace management UI intentionally displays them.
 type WorkspaceView struct {
-	Workspace       WorkspaceRef              `json:"workspace"`
-	Revision        uint64                    `json:"revision"`
-	DisplayName     string                    `json:"displayName"`
-	Description     string                    `json:"description,omitempty"`
-	Enabled         bool                      `json:"enabled"`
-	Mode            workspaceDomain.Mode      `json:"mode"`
-	PrimarySourceID source.SourceID           `json:"primarySourceID,omitempty"`
-	PrimaryPath     string                    `json:"primaryPath,omitempty"`
-	Discovery       WorkspaceDiscovery        `json:"discovery"`
-	Attachments     []WorkspaceAttachmentView `json:"attachments"`
+	Workspace       workspaceDomain.WorkspaceRef `json:"workspace"`
+	Revision        uint64                       `json:"revision"`
+	DisplayName     string                       `json:"displayName"`
+	Description     string                       `json:"description,omitempty"`
+	Enabled         bool                         `json:"enabled"`
+	Mode            workspaceDomain.Mode         `json:"mode"`
+	PrimarySourceID source.SourceID              `json:"primarySourceID,omitempty"`
+	PrimaryPath     string                       `json:"primaryPath,omitempty"`
+	Discovery       WorkspaceDiscovery           `json:"discovery"`
+	Attachments     []WorkspaceAttachmentView    `json:"attachments"`
 }
 
 type WorkspaceArtifactView struct {
@@ -154,7 +152,7 @@ type WorkspaceContextDecision struct {
 }
 
 type WorkspaceContextLoadPlan struct {
-	Workspace       WorkspaceRef                   `json:"workspace"`
+	Workspace       workspaceDomain.WorkspaceRef   `json:"workspace"`
 	CatalogRevision uint64                         `json:"catalogRevision"`
 	Contributions   []WorkspaceContextContribution `json:"contributions"`
 	Prompt          string                         `json:"prompt"`
@@ -181,7 +179,7 @@ type WorkspaceContextView struct {
 }
 
 type WorkspaceContextInspectionView struct {
-	Workspace       WorkspaceRef                   `json:"workspace"`
+	Workspace       workspaceDomain.WorkspaceRef   `json:"workspace"`
 	CatalogRevision uint64                         `json:"catalogRevision"`
 	Contributions   []WorkspaceContextContribution `json:"contributions"`
 	Diagnostics     []diagnostic.Diagnostic        `json:"diagnostics,omitempty"`
@@ -209,30 +207,30 @@ type WorkspaceSkillSummary struct {
 }
 
 type WorkspaceSkillView struct {
-	Workspace        WorkspaceRef            `json:"workspace"`
-	Artifact         artifact.ArtifactRef    `json:"artifact"`
-	DefinitionDigest cryptoutil.Digest       `json:"definitionDigest"`
-	SourceID         source.SourceID         `json:"sourceID"`
-	Locator          basespec.Locator        `json:"locator"`
-	Skill            WorkspaceSkillSummary   `json:"skill"`
-	MarkdownBody     string                  `json:"markdownBody,omitempty"`
-	RecordRevision   uint64                  `json:"recordRevision"`
-	State            artifact.State          `json:"state"`
-	ProjectionValid  bool                    `json:"projectionValid"`
-	CatalogCurrent   bool                    `json:"catalogCurrent"`
-	RuntimeDisabled  bool                    `json:"runtimeDisabled"`
-	Diagnostics      []diagnostic.Diagnostic `json:"diagnostics,omitempty"`
+	Workspace        workspaceDomain.WorkspaceRef `json:"workspace"`
+	Artifact         artifact.ArtifactRef         `json:"artifact"`
+	DefinitionDigest cryptoutil.Digest            `json:"definitionDigest"`
+	SourceID         source.SourceID              `json:"sourceID"`
+	Locator          basespec.Locator             `json:"locator"`
+	Skill            WorkspaceSkillSummary        `json:"skill"`
+	MarkdownBody     string                       `json:"markdownBody,omitempty"`
+	RecordRevision   uint64                       `json:"recordRevision"`
+	State            artifact.State               `json:"state"`
+	ProjectionValid  bool                         `json:"projectionValid"`
+	CatalogCurrent   bool                         `json:"catalogCurrent"`
+	RuntimeDisabled  bool                         `json:"runtimeDisabled"`
+	Diagnostics      []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
 }
 
 type WorkspaceSkillLoadView struct {
-	Workspace       WorkspaceRef            `json:"workspace"`
-	CatalogRevision uint64                  `json:"catalogRevision"`
-	Skills          []WorkspaceSkillView    `json:"skills"`
-	Diagnostics     []diagnostic.Diagnostic `json:"diagnostics,omitempty"`
+	Workspace       workspaceDomain.WorkspaceRef `json:"workspace"`
+	CatalogRevision uint64                       `json:"catalogRevision"`
+	Skills          []WorkspaceSkillView         `json:"skills"`
+	Diagnostics     []diagnostic.Diagnostic      `json:"diagnostics,omitempty"`
 }
 
 type GetWorkspaceRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 }
 
 type GetWorkspaceResponse struct {
@@ -250,7 +248,7 @@ type ListWorkspacesResponse struct {
 }
 
 type GetWorkspaceCatalogRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 }
 
 type GetWorkspaceCatalogResponse struct {
@@ -258,8 +256,8 @@ type GetWorkspaceCatalogResponse struct {
 }
 
 type GetWorkspaceArtifactRequest struct {
-	Workspace WorkspaceRef         `json:"workspace" required:"true"`
-	Artifact  artifact.ArtifactRef `json:"artifact"  required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
+	Artifact  artifact.ArtifactRef         `json:"artifact"  required:"true"`
 }
 
 type GetWorkspaceArtifactResponse struct {
@@ -267,7 +265,7 @@ type GetWorkspaceArtifactResponse struct {
 }
 
 type ListWorkspaceArtifactsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 }
 
 type ListWorkspaceArtifactsResponseBody struct {
@@ -279,7 +277,7 @@ type ListWorkspaceArtifactsResponse struct {
 }
 
 type ListWorkspaceContextsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 }
 
 type ListWorkspaceContextsResponseBody struct {
@@ -295,7 +293,7 @@ type LoadWorkspaceContextsRequestBody struct {
 }
 
 type LoadWorkspaceContextsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 	Body      *LoadWorkspaceContextsRequestBody
 }
 
@@ -308,7 +306,7 @@ type ComposeWorkspaceContextRequestBody struct {
 }
 
 type ComposeWorkspaceContextRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 	Body      *ComposeWorkspaceContextRequestBody
 }
 
@@ -317,7 +315,7 @@ type ComposeWorkspaceContextResponse struct {
 }
 
 type ListWorkspaceSkillsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 }
 
 type ListWorkspaceSkillsResponseBody struct {
@@ -333,7 +331,7 @@ type LoadWorkspaceSkillsRequestBody struct {
 }
 
 type LoadWorkspaceSkillsRequest struct {
-	Workspace WorkspaceRef `json:"workspace" required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
 	Body      *LoadWorkspaceSkillsRequestBody
 }
 
@@ -347,8 +345,8 @@ type SetWorkspaceArtifactRuntimeDisabledRequestBody struct {
 }
 
 type SetWorkspaceArtifactRuntimeDisabledRequest struct {
-	Workspace WorkspaceRef         `json:"workspace" required:"true"`
-	Artifact  artifact.ArtifactRef `json:"artifact"  required:"true"`
+	Workspace workspaceDomain.WorkspaceRef `json:"workspace" required:"true"`
+	Artifact  artifact.ArtifactRef         `json:"artifact"  required:"true"`
 	Body      *SetWorkspaceArtifactRuntimeDisabledRequestBody
 }
 
