@@ -294,39 +294,53 @@ func (a *API) Refresh(
 	ref collection.CollectionRef,
 	allowProtected bool,
 ) (Bundle, error) {
+	commit, err := a.PrepareRefresh(ctx, ref, allowProtected)
+	if err != nil {
+		return Bundle{}, err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareRefresh(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	allowProtected bool,
+) (BundleMutationCommit, error) {
 	if a == nil {
-		return Bundle{}, basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 	if err := a.requireBundleMutation(
 		ctx,
 		ref.RootID,
 		allowProtected,
 	); err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 
 	bundle, err := a.Get(ctx, ref)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 	if !bundle.Collection.Enabled {
-		return Bundle{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: MCP Bundle %q is disabled",
 			basespec.ErrConflict,
 			ref.CollectionID,
 		)
 	}
 
-	if _, err := a.catalogs.RefreshCollection(
-		ctx,
-		ref,
-	); err != nil {
-		return Bundle{}, err
-	}
-	return a.Get(ctx, ref)
+	return func(commitCtx context.Context) (Bundle, error) {
+		if _, err := a.catalogs.RefreshCollection(
+			commitCtx,
+			ref,
+		); err != nil {
+			return Bundle{}, err
+		}
+		return a.Get(commitCtx, ref)
+	}, nil
 }
 
 // EnsureBuiltInCurrent avoids managed package republishing for a current
@@ -398,22 +412,51 @@ func (a *API) Get(
 	if err != nil {
 		return Bundle{}, err
 	}
-	if len(attachments) != 1 {
-		return Bundle{}, fmt.Errorf(
-			"%w: MCP Bundle must have exactly one Source Attachment",
-			basespec.ErrInvalid,
-		)
+	topology := mcpDomainBundle.StoreTopology{
+		Collection:  value.Ref(),
+		Data:        data,
+		Attachments: make([]mcpDomainBundle.StoreAttachment, 0, len(attachments)),
+		Sources:     make([]mcpDomainBundle.StoreSource, 0, len(attachments)),
 	}
+	sourceValues := make([]source.Summary, 0, len(attachments))
+	for _, attachment := range attachments {
+		sourceValue, err := a.sources.Get(
+			ctx,
+			ref.RootID,
+			attachment.SourceID,
+		)
+		if err != nil {
+			return Bundle{}, err
+		}
+		topology.Attachments = append(
+			topology.Attachments,
+			mcpDomainBundle.StoreAttachment{
+				RootID:       attachment.RootID,
+				CollectionID: attachment.CollectionID,
+				SourceID:     attachment.SourceID,
+				Role:         attachment.Role,
+			},
+		)
+		topology.Sources = append(
+			topology.Sources,
+			mcpDomainBundle.StoreSource{
+				ID:     sourceValue.ID,
+				RootID: sourceValue.RootID,
+				Kind:   sourceValue.Kind,
+			},
+		)
+		sourceValues = append(sourceValues, sourceValue)
+	}
+
+	if err := mcpDomainBundle.ValidateStoreTopology(topology); err != nil {
+		return Bundle{}, err
+	}
+
 	attachment := attachments[0]
-	if attachment.Role != artifactbuiltin.ManagedAttachmentRole &&
-		attachment.Role != artifactbuiltin.BuiltInAttachmentRole {
-		return Bundle{}, fmt.Errorf(
-			"%w: unsupported MCP Attachment role %q",
-			basespec.ErrInvalid,
-			attachment.Role,
-		)
-	}
-	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(attachment.Data)
+	sourceValue := sourceValues[0]
+	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(
+		attachment.Data,
+	)
 	if err != nil {
 		return Bundle{}, err
 	}
@@ -422,27 +465,6 @@ func (a *API) Get(
 	)
 	if err != nil {
 		return Bundle{}, err
-	}
-	sourceValue, err := a.sources.Get(
-		ctx,
-		ref.RootID,
-		attachment.SourceID,
-	)
-	if err != nil {
-		return Bundle{}, err
-	}
-	if sourceValue.Kind != source.SourceKindManagedDirectory {
-		return Bundle{}, fmt.Errorf(
-			"%w: MCP Bundle requires a managed Source",
-			basespec.ErrInvalid,
-		)
-	}
-	if data.ManagedSourceID != "" &&
-		data.ManagedSourceID != sourceValue.ID {
-		return Bundle{}, fmt.Errorf(
-			"%w: MCP Bundle managed Source ownership mismatch",
-			basespec.ErrInvalid,
-		)
 	}
 
 	return Bundle{
@@ -707,58 +729,68 @@ type ServerStore interface {
 	) (mcpDomainServer.Resolved, error)
 }
 
+type BundleMutationCommit func(context.Context) (Bundle, error)
+
+type CollectionMutationCommit func(
+	context.Context,
+) (collection.Collection, error)
+
+type ArtifactMutationCommit func(context.Context) (artifact.Artifact, error)
+
+type MutationCommit func(context.Context) error
+
 type BundleMutator interface {
-	ReplaceDocument(
+	PrepareReplaceDocument(
 		ctx context.Context,
 		request ReplaceDocumentRequest,
-	) (Bundle, error)
+	) (BundleMutationCommit, error)
 
-	Refresh(
+	PrepareRefresh(
 		ctx context.Context,
 		collectionRef collection.CollectionRef,
-		force bool,
-	) (Bundle, error)
+		allowProtected bool,
+	) (BundleMutationCommit, error)
 
-	UpdateBundleEnabled(
+	PrepareUpdateBundleEnabled(
 		ctx context.Context,
 		collectionRef collection.CollectionRef,
 		bundleID uint64,
 		enabled bool,
-	) (Bundle, error)
+	) (BundleMutationCommit, error)
 
-	Retire(
+	PrepareRetire(
 		ctx context.Context,
 		collectionRef collection.CollectionRef,
 		bundleID uint64,
-	) (collection.Collection, error)
+	) (CollectionMutationCommit, error)
 
-	Purge(
+	PreparePurge(
 		ctx context.Context,
 		collectionRef collection.CollectionRef,
 		bundleID uint64,
-	) error
+	) (MutationCommit, error)
 
-	UpdateProtectedBundleInstallation(
+	PrepareUpdateProtectedBundleInstallation(
 		ctx context.Context,
 		collectionRef collection.CollectionRef,
 		bundleID uint64,
 		protected bool,
-	) error
+	) (MutationCommit, error)
 
-	UpdateServerInstallation(
+	PrepareUpdateServerInstallation(
 		ctx context.Context,
 		artifactRef artifact.ArtifactRef,
 		installationID uint64,
 		serverData mcpDomainServer.ServerData,
-	) (artifact.Artifact, error)
+	) (ArtifactMutationCommit, error)
 
-	UpdateProtectedServerInstallation(
+	PrepareUpdateProtectedServerInstallation(
 		ctx context.Context,
 		artifactRef artifact.ArtifactRef,
 		installationID uint64,
 		protected bool,
 		serverData mcpDomainServer.ServerData,
-	) error
+	) (MutationCommit, error)
 }
 
 type BundleServerStore interface {

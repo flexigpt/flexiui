@@ -75,10 +75,14 @@ func (l *Lifecycle) ReplaceDocument(
 	ctx context.Context,
 	request mcpConsumerAPI.ReplaceDocumentRequest,
 ) (mcpConsumerAPI.Bundle, error) {
+	commit, err := l.store.PrepareReplaceDocument(ctx, request)
+	if err != nil {
+		return mcpConsumerAPI.Bundle{}, err
+	}
 	if err := l.InvalidateCollection(ctx, request.Bundle); err != nil {
 		return mcpConsumerAPI.Bundle{}, err
 	}
-	return l.store.ReplaceDocument(ctx, request)
+	return commit(ctx)
 }
 
 func (l *Lifecycle) RefreshBundle(
@@ -86,10 +90,14 @@ func (l *Lifecycle) RefreshBundle(
 	ref collection.CollectionRef,
 	allowProtected bool,
 ) (mcpConsumerAPI.Bundle, error) {
+	commit, err := l.store.PrepareRefresh(ctx, ref, allowProtected)
+	if err != nil {
+		return mcpConsumerAPI.Bundle{}, err
+	}
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
 		return mcpConsumerAPI.Bundle{}, err
 	}
-	return l.store.Refresh(ctx, ref, allowProtected)
+	return commit(ctx)
 }
 
 func (l *Lifecycle) UpdateBundleEnabled(
@@ -98,10 +106,19 @@ func (l *Lifecycle) UpdateBundleEnabled(
 	expectedRevision uint64,
 	enabled bool,
 ) (mcpConsumerAPI.Bundle, error) {
+	commit, err := l.store.PrepareUpdateBundleEnabled(
+		ctx,
+		ref,
+		expectedRevision,
+		enabled,
+	)
+	if err != nil {
+		return mcpConsumerAPI.Bundle{}, err
+	}
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
 		return mcpConsumerAPI.Bundle{}, err
 	}
-	return l.store.UpdateBundleEnabled(ctx, ref, expectedRevision, enabled)
+	return commit(ctx)
 }
 
 func (l *Lifecycle) RetireBundle(
@@ -109,10 +126,14 @@ func (l *Lifecycle) RetireBundle(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) (collection.Collection, error) {
+	commit, err := l.store.PrepareRetire(ctx, ref, expectedRevision)
+	if err != nil {
+		return collection.Collection{}, err
+	}
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
 		return collection.Collection{}, err
 	}
-	return l.store.Retire(ctx, ref, expectedRevision)
+	return commit(ctx)
 }
 
 func (l *Lifecycle) PurgeBundle(
@@ -120,10 +141,14 @@ func (l *Lifecycle) PurgeBundle(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) error {
+	commit, err := l.store.PreparePurge(ctx, ref, expectedRevision)
+	if err != nil {
+		return err
+	}
 	if err := l.InvalidateCollection(ctx, ref); err != nil {
 		return err
 	}
-	return l.store.Purge(ctx, ref, expectedRevision)
+	return commit(ctx)
 }
 
 func (l *Lifecycle) UpdateProtectedBundleInstallation(
@@ -132,15 +157,19 @@ func (l *Lifecycle) UpdateProtectedBundleInstallation(
 	expectedOverlayRevision uint64,
 	runtimeEnabled bool,
 ) error {
-	if err := l.InvalidateCollection(ctx, ref); err != nil {
-		return err
-	}
-	return l.store.UpdateProtectedBundleInstallation(
+	commit, err := l.store.PrepareUpdateProtectedBundleInstallation(
 		ctx,
 		ref,
 		expectedOverlayRevision,
 		runtimeEnabled,
 	)
+	if err != nil {
+		return err
+	}
+	if err := l.InvalidateCollection(ctx, ref); err != nil {
+		return err
+	}
+	return commit(ctx)
 }
 
 func (l *Lifecycle) UpdateServerInstallation(
@@ -149,15 +178,19 @@ func (l *Lifecycle) UpdateServerInstallation(
 	expectedArtifactRevision uint64,
 	data mcpDomainServer.ServerData,
 ) (artifact.Artifact, error) {
-	if err := l.InvalidateServer(ctx, ref); err != nil {
-		return artifact.Artifact{}, err
-	}
-	return l.store.UpdateServerInstallation(
+	commit, err := l.store.PrepareUpdateServerInstallation(
 		ctx,
 		ref,
 		expectedArtifactRevision,
 		data,
 	)
+	if err != nil {
+		return artifact.Artifact{}, err
+	}
+	if err := l.InvalidateServer(ctx, ref); err != nil {
+		return artifact.Artifact{}, err
+	}
+	return commit(ctx)
 }
 
 func (l *Lifecycle) UpdateProtectedServerInstallation(
@@ -167,14 +200,18 @@ func (l *Lifecycle) UpdateProtectedServerInstallation(
 	runtimeEnabled bool,
 	data mcpDomainServer.ServerData,
 ) error {
-	if err := l.InvalidateServer(ctx, ref); err != nil {
-		return err
-	}
-	return l.store.UpdateProtectedServerInstallation(
+	commit, err := l.store.PrepareUpdateProtectedServerInstallation(
 		ctx,
 		ref,
 		expectedOverlayRevision,
 		runtimeEnabled,
 		data,
 	)
+	if err != nil {
+		return err
+	}
+	if err := l.InvalidateServer(ctx, ref); err != nil {
+		return err
+	}
+	return commit(ctx)
 }

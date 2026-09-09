@@ -18,14 +18,32 @@ func (a *API) UpdateBundleEnabled(
 	expectedRevision uint64,
 	enabled bool,
 ) (Bundle, error) {
-	if a == nil {
-		return Bundle{}, basespec.ErrClosed
-	}
-	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
+	commit, err := a.PrepareUpdateBundleEnabled(
+		ctx,
+		ref,
+		expectedRevision,
+		enabled,
+	)
+	if err != nil {
 		return Bundle{}, err
 	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareUpdateBundleEnabled(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	expectedRevision uint64,
+	enabled bool,
+) (BundleMutationCommit, error) {
+	if a == nil {
+		return nil, basespec.ErrClosed
+	}
+	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
+		return nil, err
+	}
 	if expectedRevision == 0 {
-		return Bundle{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: expected MCP Bundle revision is required",
 			basespec.ErrInvalid,
 		)
@@ -33,30 +51,34 @@ func (a *API) UpdateBundleEnabled(
 
 	current, err := a.Get(ctx, ref)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 	if current.Collection.Revision != expectedRevision {
-		return Bundle{}, basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 	if current.Collection.Enabled == enabled {
-		return current, nil
+		return func(context.Context) (Bundle, error) {
+			return current, nil
+		}, nil
 	}
 
-	updated, err := a.collections.Update(
-		ctx,
-		ref,
-		collection.Update{
-			ExpectedRevision: expectedRevision,
-			DisplayName:      current.Collection.DisplayName,
-			Description:      current.Collection.Description,
-			Enabled:          enabled,
-			Data:             current.Collection.Data,
-		},
-	)
-	if err != nil {
-		return Bundle{}, err
-	}
-	return a.Get(ctx, updated.Ref())
+	return func(commitCtx context.Context) (Bundle, error) {
+		updated, err := a.collections.Update(
+			commitCtx,
+			ref,
+			collection.Update{
+				ExpectedRevision: expectedRevision,
+				DisplayName:      current.Collection.DisplayName,
+				Description:      current.Collection.Description,
+				Enabled:          enabled,
+				Data:             current.Collection.Data,
+			},
+		)
+		if err != nil {
+			return Bundle{}, err
+		}
+		return a.Get(commitCtx, updated.Ref())
+	}, nil
 }
 
 func (a *API) Retire(
@@ -64,29 +86,52 @@ func (a *API) Retire(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) (collection.Collection, error) {
+	commit, err := a.PrepareRetire(ctx, ref, expectedRevision)
+	if err != nil {
+		return collection.Collection{}, err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareRetire(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	expectedRevision uint64,
+) (CollectionMutationCommit, error) {
 	if a == nil {
-		return collection.Collection{}, basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
-		return collection.Collection{}, err
+		return nil, err
+	}
+	if expectedRevision == 0 {
+		return nil, fmt.Errorf(
+			"%w: expected MCP Bundle revision is required",
+			basespec.ErrInvalid,
+		)
+	}
+
+	bundle, err := a.Get(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	if bundle.Collection.Revision != expectedRevision {
+		return nil, basespec.ErrConflict
 	}
 
 	records, err := a.artifacts.ListByCollection(ctx, ref)
 	if err != nil {
-		return collection.Collection{}, err
+		return nil, err
 	}
 	if len(records) != 0 {
-		return collection.Collection{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: remove all MCP server and policy Artifacts before retiring the Bundle",
 			basespec.ErrConflict,
 		)
 	}
-
-	return a.collections.Retire(
-		ctx,
-		ref,
-		expectedRevision,
-	)
+	return func(commitCtx context.Context) (collection.Collection, error) {
+		return a.collections.Retire(commitCtx, ref, expectedRevision)
+	}, nil
 }
 
 func (a *API) Purge(
@@ -94,27 +139,48 @@ func (a *API) Purge(
 	ref collection.CollectionRef,
 	expectedRevision uint64,
 ) error {
+	commit, err := a.PreparePurge(ctx, ref, expectedRevision)
+	if err != nil {
+		return err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PreparePurge(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	expectedRevision uint64,
+) (MutationCommit, error) {
 	if a == nil {
-		return basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 	if err := a.requireBundleMutation(ctx, ref.RootID, false); err != nil {
-		return err
+		return nil, err
+	}
+	if expectedRevision == 0 {
+		return nil, fmt.Errorf(
+			"%w: expected MCP Bundle revision is required",
+			basespec.ErrInvalid,
+		)
 	}
 
 	retired, err := a.collections.GetRetired(ctx, ref)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if retired.Kind != artifactbuiltin.BundleKind {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: Collection %q is not a retired MCP Bundle",
 			basespec.ErrCollectionNotFound,
 			ref.CollectionID,
 		)
 	}
+	if retired.Revision != expectedRevision {
+		return nil, basespec.ErrConflict
+	}
 	data, err := mcpDomainBundle.DecodeCollectionData(retired.Data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var owned source.Summary
@@ -125,33 +191,34 @@ func (a *API) Purge(
 			data.ManagedSourceID,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	if err := a.collections.Purge(
-		ctx,
-		ref,
-		expectedRevision,
-	); err != nil {
-		return err
-	}
-	if data.ManagedSourceID == "" {
+	return func(commitCtx context.Context) error {
+		if err := a.collections.Purge(
+			commitCtx,
+			ref,
+			expectedRevision,
+		); err != nil {
+			return err
+		}
+		if data.ManagedSourceID == "" {
+			return nil
+		}
+		if err := a.sources.Discard(
+			commitCtx,
+			ref.RootID,
+			owned.ID,
+			owned.Revision,
+		); err != nil {
+			return fmt.Errorf(
+				"MCP Bundle metadata was purged but managed Source cleanup remains pending: %w",
+				err,
+			)
+		}
 		return nil
-	}
-
-	if err := a.sources.Discard(
-		ctx,
-		ref.RootID,
-		owned.ID,
-		owned.Revision,
-	); err != nil {
-		return fmt.Errorf(
-			"MCP Bundle metadata was purged but managed Source cleanup remains pending: %w",
-			err,
-		)
-	}
-	return nil
+	}, nil
 }
 
 func (a *API) UpdateProtectedBundleInstallation(
@@ -160,27 +227,45 @@ func (a *API) UpdateProtectedBundleInstallation(
 	expectedOverlayRevision uint64,
 	runtimeEnabled bool,
 ) error {
+	commit, err := a.PrepareUpdateProtectedBundleInstallation(
+		ctx,
+		ref,
+		expectedOverlayRevision,
+		runtimeEnabled,
+	)
+	if err != nil {
+		return err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareUpdateProtectedBundleInstallation(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	expectedOverlayRevision uint64,
+	runtimeEnabled bool,
+) (MutationCommit, error) {
 	if a == nil {
-		return basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 
 	if !a.protection.IsProtectedRoot(ref.RootID) {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: MCP Bundle is not in a protected Root",
 			basespec.ErrProtected,
 		)
 	}
 	if err := ref.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	if a.overlays == nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: protected MCP Bundle overlay store is unavailable",
 			basespec.ErrReferenceUnresolved,
 		)
 	}
 	if _, err := a.Get(ctx, ref); err != nil {
-		return err
+		return nil, err
 	}
 
 	current, found, err := a.overlays.GetBundleOverlay(
@@ -189,13 +274,13 @@ func (a *API) UpdateProtectedBundleInstallation(
 		ref.CollectionID,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if found && current.Revision != expectedOverlayRevision {
-		return basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 	if !found && expectedOverlayRevision != 0 {
-		return basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 
 	nextRevision := uint64(1)
@@ -203,15 +288,18 @@ func (a *API) UpdateProtectedBundleInstallation(
 		nextRevision = current.Revision + 1
 	}
 
-	return a.overlays.PutBundleOverlay(
-		ctx,
-		ref.RootID,
-		ref.CollectionID,
-		expectedOverlayRevision,
-		mcpOverlay.BundleOverlay{
-			SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
-			Revision:       nextRevision,
-			RuntimeEnabled: runtimeEnabled,
-		},
-	)
+	next := mcpOverlay.BundleOverlay{
+		SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
+		Revision:       nextRevision,
+		RuntimeEnabled: runtimeEnabled,
+	}
+	return func(commitCtx context.Context) error {
+		return a.overlays.PutBundleOverlay(
+			commitCtx,
+			ref.RootID,
+			ref.CollectionID,
+			expectedOverlayRevision,
+			next,
+		)
+	}, nil
 }

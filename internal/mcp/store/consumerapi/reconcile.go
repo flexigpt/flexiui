@@ -34,14 +34,31 @@ func (a *API) ReplaceDocument(
 	ctx context.Context,
 	request ReplaceDocumentRequest,
 ) (Bundle, error) {
+	commit, err := a.PrepareReplaceDocument(ctx, request)
+	if err != nil {
+		return Bundle{}, err
+	}
+	return commit(ctx)
+}
+
+// PrepareReplaceDocument validates and materializes all request-derived
+// document state before runtime invalidation. The returned commit function
+// still relies on Artifact Store compare-and-swap checks for concurrency.
+func (a *API) PrepareReplaceDocument(
+	ctx context.Context,
+	request ReplaceDocumentRequest,
+) (BundleMutationCommit, error) {
+	if a == nil {
+		return nil, basespec.ErrClosed
+	}
 	document, parsed, err := a.canonicalizeBundleBytes(
 		ctx,
 		request.Document,
 	)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
-	return a.replaceCanonicalDocument(
+	return a.prepareCanonicalDocumentReplace(
 		ctx,
 		request,
 		document,
@@ -60,6 +77,26 @@ func (a *API) replaceCanonicalDocument(
 	raw json.RawMessage,
 	suppliedFiles []source.ManagedPackageFile,
 ) (Bundle, error) {
+	commit, err := a.prepareCanonicalDocumentReplace(
+		ctx,
+		request,
+		document,
+		raw,
+		suppliedFiles,
+	)
+	if err != nil {
+		return Bundle{}, err
+	}
+	return commit(ctx)
+}
+
+func (a *API) prepareCanonicalDocumentReplace(
+	ctx context.Context,
+	request ReplaceDocumentRequest,
+	document mcpDomainBundle.BundleDocument,
+	raw json.RawMessage,
+	suppliedFiles []source.ManagedPackageFile,
+) (BundleMutationCommit, error) {
 	plan, err := a.prepareDocumentReplace(
 		ctx,
 		request,
@@ -67,17 +104,17 @@ func (a *API) replaceCanonicalDocument(
 		raw,
 	)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 	packageAddress, err := mcpDomainBundle.PackageAddressForBundle(
 		plan.document.LogicalName,
 		plan.document.LogicalVersion,
 	)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 	if packageAddress != plan.bundle.PackageAddress {
-		return Bundle{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: MCP Bundle document identity would move package content",
 			basespec.ErrConflict,
 		)
@@ -88,9 +125,27 @@ func (a *API) replaceCanonicalDocument(
 		suppliedFiles,
 	)
 	if err != nil {
-		return Bundle{}, err
+		return nil, err
 	}
 
+	return func(commitCtx context.Context) (Bundle, error) {
+		return a.commitDocumentReplace(
+			commitCtx,
+			plan,
+			packageAddress,
+			files,
+			request.AllowProtected,
+		)
+	}, nil
+}
+
+func (a *API) commitDocumentReplace(
+	ctx context.Context,
+	plan documentReplacePlan,
+	packageAddress source.ManagedPackageAddress,
+	files []source.ManagedPackageFile,
+	allowProtected bool,
+) (Bundle, error) {
 	if replaceCollectionMetadataNeeded(
 		plan.bundle,
 		plan.document,
@@ -122,7 +177,7 @@ func (a *API) replaceCanonicalDocument(
 		current, found := plan.existingBySubresource[subresource]
 		if !found {
 			data := plan.dataBySubresource[subresource]
-			current, err = a.pinRegisteredArtifact(
+			_, err := a.pinRegisteredArtifact(
 				ctx,
 				plan.bundle,
 				registration,
@@ -134,7 +189,7 @@ func (a *API) replaceCanonicalDocument(
 			}
 		} else {
 			data := plan.dataBySubresource[subresource]
-			current, err = a.updateRegisteredArtifact(
+			_, err := a.updateRegisteredArtifact(
 				ctx,
 				plan.bundle,
 				current,
@@ -159,7 +214,7 @@ func (a *API) replaceCanonicalDocument(
 				Address: packageAddress,
 				Files:   files,
 			},
-			AllowProtected: request.AllowProtected,
+			AllowProtected: allowProtected,
 			ForceRefresh:   true,
 		},
 	); err != nil {
@@ -540,11 +595,29 @@ func (a *API) UpdateServerInstallation(
 	expectedArtifactRevision uint64,
 	data mcpDomainServer.ServerData,
 ) (artifact.Artifact, error) {
+	commit, err := a.PrepareUpdateServerInstallation(
+		ctx,
+		ref,
+		expectedArtifactRevision,
+		data,
+	)
+	if err != nil {
+		return artifact.Artifact{}, err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareUpdateServerInstallation(
+	ctx context.Context,
+	ref artifact.ArtifactRef,
+	expectedArtifactRevision uint64,
+	data mcpDomainServer.ServerData,
+) (ArtifactMutationCommit, error) {
 	if a == nil {
-		return artifact.Artifact{}, basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 	if expectedArtifactRevision == 0 {
-		return artifact.Artifact{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: expected MCP Server Artifact revision is required",
 			basespec.ErrInvalid,
 		)
@@ -556,62 +629,64 @@ func (a *API) UpdateServerInstallation(
 		resource.ResolveOptions{},
 	)
 	if err != nil {
-		return artifact.Artifact{}, err
+		return nil, err
 	}
 	record := resolvedResource.Artifact
 	if a.protection.IsProtectedRoot(record.RootID) {
-		return artifact.Artifact{}, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: protected MCP Server installation data belongs in an overlay",
 			basespec.ErrProtected,
 		)
 	}
 	if record.Revision != expectedArtifactRevision ||
 		record.Kind != artifactbuiltin.ServerKind {
-		return artifact.Artifact{}, basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 	document, err := mcpDomainServer.ServerDocumentFromDefinition(
 		resolvedResource.Definition,
 	)
 	if err != nil {
-		return artifact.Artifact{}, err
+		return nil, err
 	}
 	if err := data.ValidateFor(
 		ref,
 		document,
 	); err != nil {
-		return artifact.Artifact{}, err
+		return nil, err
 	}
 
 	encoded, err := mcpDomainServer.EncodeServerData(data)
 	if err != nil {
-		return artifact.Artifact{}, err
+		return nil, err
 	}
-	if jsonutil.Equal(record.Data, encoded) {
-		return record, a.cleanupChangedServerInstallation(
-			ctx,
-			record,
+	return func(commitCtx context.Context) (artifact.Artifact, error) {
+		if jsonutil.Equal(record.Data, encoded) {
+			return record, a.cleanupChangedServerInstallation(
+				commitCtx,
+				record,
+				document,
+				data,
+			)
+		}
+		updated, err := a.artifacts.UpdateData(
+			commitCtx,
+			ref,
+			expectedArtifactRevision,
+			encoded,
+		)
+		if err != nil {
+			return artifact.Artifact{}, err
+		}
+		if err := a.cleanupChangedServerInstallation(
+			commitCtx,
+			updated,
 			document,
 			data,
-		)
-	}
-	updated, err := a.artifacts.UpdateData(
-		ctx,
-		ref,
-		expectedArtifactRevision,
-		encoded,
-	)
-	if err != nil {
-		return artifact.Artifact{}, err
-	}
-	if err := a.cleanupChangedServerInstallation(
-		ctx,
-		updated,
-		document,
-		data,
-	); err != nil {
-		return updated, err
-	}
-	return updated, nil
+		); err != nil {
+			return updated, err
+		}
+		return updated, nil
+	}, nil
 }
 
 func (a *API) UpdateProtectedServerInstallation(
@@ -621,21 +696,41 @@ func (a *API) UpdateProtectedServerInstallation(
 	runtimeEnabled bool,
 	data mcpDomainServer.ServerData,
 ) error {
+	commit, err := a.PrepareUpdateProtectedServerInstallation(
+		ctx,
+		ref,
+		expectedOverlayRevision,
+		runtimeEnabled,
+		data,
+	)
+	if err != nil {
+		return err
+	}
+	return commit(ctx)
+}
+
+func (a *API) PrepareUpdateProtectedServerInstallation(
+	ctx context.Context,
+	ref artifact.ArtifactRef,
+	expectedOverlayRevision uint64,
+	runtimeEnabled bool,
+	data mcpDomainServer.ServerData,
+) (MutationCommit, error) {
 	if a == nil {
-		return basespec.ErrClosed
+		return nil, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	if !a.protection.IsProtectedRoot(ref.RootID) {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: MCP Server is not in a protected Root",
 			basespec.ErrProtected,
 		)
 	}
 	if a.overlays == nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: protected MCP installation overlay store is unavailable",
 			basespec.ErrReferenceUnresolved,
 		)
@@ -647,12 +742,12 @@ func (a *API) UpdateProtectedServerInstallation(
 		resource.ResolveOptions{},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	record := resolvedResource.Artifact
 	if record.Kind != artifactbuiltin.ServerKind ||
 		resolvedResource.Collection.Kind != artifactbuiltin.BundleKind {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: Artifact is not an available MCP Server",
 			basespec.ErrInvalid,
 		)
@@ -661,13 +756,13 @@ func (a *API) UpdateProtectedServerInstallation(
 		resolvedResource.Definition,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := data.ValidateFor(
 		ref,
 		document,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	current, found, err := a.overlays.GetServerOverlay(
@@ -675,43 +770,45 @@ func (a *API) UpdateProtectedServerInstallation(
 		ref,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if found && current.Revision != expectedOverlayRevision {
-		return basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 	if !found && expectedOverlayRevision != 0 {
-		return basespec.ErrConflict
+		return nil, basespec.ErrConflict
 	}
 
 	nextRevision := uint64(1)
 	if found {
 		nextRevision = current.Revision + 1
 	}
-	if err := a.overlays.PutServerOverlay(
-		ctx,
-		ref,
-		expectedOverlayRevision,
-		mcpOverlay.ServerOverlay{
-			SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
-			Revision:       nextRevision,
-			RuntimeEnabled: runtimeEnabled,
-			ServerData:     data,
-		},
-	); err != nil {
-		return err
+	next := mcpOverlay.ServerOverlay{
+		SchemaVersion:  artifactbuiltin.MCPSchemaVersion,
+		Revision:       nextRevision,
+		RuntimeEnabled: runtimeEnabled,
+		ServerData:     data,
 	}
-
-	if err := a.cleanupChangedServerInstallation(
-		ctx,
-		record,
-		document,
-		data,
-	); err != nil {
-		return fmt.Errorf(
-			"MCP protected server installation cleanup remains pending: %w",
-			err,
-		)
-	}
-	return nil
+	return func(commitCtx context.Context) error {
+		if err := a.overlays.PutServerOverlay(
+			commitCtx,
+			ref,
+			expectedOverlayRevision,
+			next,
+		); err != nil {
+			return err
+		}
+		if err := a.cleanupChangedServerInstallation(
+			commitCtx,
+			record,
+			document,
+			data,
+		); err != nil {
+			return fmt.Errorf(
+				"MCP protected server installation cleanup remains pending: %w",
+				err,
+			)
+		}
+		return nil
+	}, nil
 }

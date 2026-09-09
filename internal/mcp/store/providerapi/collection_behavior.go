@@ -7,7 +7,6 @@ import (
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/collection"
-	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/source"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/providerapi"
 	mcpDomainBundle "github.com/flexigpt/flexigpt-app/internal/mcp/store/domain/bundle"
 )
@@ -53,31 +52,44 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
-	if len(attachments) != 1 {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: MCP Bundle must have exactly one Source Attachment",
-			basespec.ErrInvalid,
+	topology := mcpDomainBundle.StoreTopology{
+		Collection: collection.CollectionRef{
+			RootID:       collectionValue.RootID,
+			CollectionID: collectionValue.ID,
+		},
+		Data:        data,
+		Attachments: make([]mcpDomainBundle.StoreAttachment, 0, len(attachments)),
+		Sources:     make([]mcpDomainBundle.StoreSource, 0, len(sources)),
+	}
+	for _, attachment := range attachments {
+		topology.Attachments = append(
+			topology.Attachments,
+			mcpDomainBundle.StoreAttachment{
+				RootID:       attachment.RootID,
+				CollectionID: attachment.CollectionID,
+				SourceID:     attachment.SourceID,
+				Role:         attachment.Role,
+			},
+		)
+	}
+	for _, sourceValue := range sources {
+		topology.Sources = append(
+			topology.Sources,
+			mcpDomainBundle.StoreSource{
+				ID:     sourceValue.ID,
+				RootID: sourceValue.RootID,
+				Kind:   sourceValue.Kind,
+			},
 		)
 	}
 
+	if err := mcpDomainBundle.ValidateStoreTopology(topology); err != nil {
+		return providerapi.Plan{}, err
+	}
 	attachment := attachments[0]
-	if attachment.RootID != collectionValue.RootID ||
-		attachment.CollectionID != collectionValue.ID {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: MCP Bundle attachment belongs to another collection",
-			basespec.ErrInvalid,
-		)
-	}
-	if attachment.Role != artifactbuiltin.ManagedAttachmentRole &&
-		attachment.Role != artifactbuiltin.BuiltInAttachmentRole {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: unsupported MCP Attachment role %q",
-			basespec.ErrInvalid,
-			attachment.Role,
-		)
-	}
-
-	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(attachment.Data)
+	attachmentData, err := mcpDomainBundle.DecodeAttachmentData(
+		attachment.Data,
+	)
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
@@ -87,50 +99,6 @@ func (b mcpCollectionBehavior) BuildDiscoveryPlan(
 	if err != nil {
 		return providerapi.Plan{}, err
 	}
-	sourcesByID := make(
-		map[source.SourceID]providerapi.Source,
-		len(sources),
-	)
-	for index, sourceValue := range sources {
-		if sourceValue.RootID != collectionValue.RootID {
-			return providerapi.Plan{}, fmt.Errorf(
-				"%w: MCP provider source %d belongs to another root",
-				basespec.ErrInvalid,
-				index,
-			)
-		}
-		if _, duplicate := sourcesByID[sourceValue.ID]; duplicate {
-			return providerapi.Plan{}, fmt.Errorf(
-				"%w: MCP provider received duplicate source %q",
-				basespec.ErrInvalid,
-				sourceValue.ID,
-			)
-		}
-		sourcesByID[sourceValue.ID] = sourceValue
-	}
-
-	sourceValue, found := sourcesByID[attachment.SourceID]
-	if !found {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: MCP Bundle Source %q is unavailable",
-			basespec.ErrAttachmentNotFound,
-			attachment.SourceID,
-		)
-	}
-	if sourceValue.Kind != source.SourceKindManagedDirectory {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: MCP Bundle requires a managed Source",
-			basespec.ErrInvalid,
-		)
-	}
-	if data.ManagedSourceID != "" &&
-		data.ManagedSourceID != sourceValue.ID {
-		return providerapi.Plan{}, fmt.Errorf(
-			"%w: MCP Bundle managed Source ownership mismatch",
-			basespec.ErrInvalid,
-		)
-	}
-
 	p := providerapi.SourcePlan{
 		SourceID: attachment.SourceID,
 		ExplicitLocators: []basespec.Locator{

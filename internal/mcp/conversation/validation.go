@@ -2,7 +2,9 @@ package conversation
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	mcpPolicy "github.com/flexigpt/flexigpt-app/internal/mcp/runtime/policy"
@@ -361,19 +363,50 @@ func ValidateMCPProviderToolMapping(m MCPProviderToolMapping) error {
 	if err := m.Server.Validate(); err != nil {
 		return err
 	}
+	if err := validateConversationRequiredText(
+		"MCP provider tool name",
+		m.ProviderToolName,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if err := validateConversationRequiredText(
+		"MCP choice ID",
+		m.ChoiceID,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if err := validateConversationRequiredText(
+		"MCP tool name",
+		m.ToolName,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if err := mcpServer.Digest(m.ToolDigest).Validate(); err != nil {
+		return err
+	}
 	if err := m.ApprovalRule.Validate(); err != nil {
 		return err
 	}
 	if err := m.ExecutionMode.Validate(); err != nil {
 		return err
 	}
-
-	return validateMCPVisibility(m.Visibility)
+	if err := validateMCPVisibility(m.Visibility); err != nil {
+		return err
+	}
+	return validateMCPAppResourceURI(m.AppResourceURI)
 }
 
 func validateMCPServerSelection(value MCPServerSelection) error {
 	if err := value.Server.Validate(); err != nil {
 		return err
+	}
+	if value.SnapshotDigest != "" {
+		if err := mcpServer.Digest(value.SnapshotDigest).Validate(); err != nil {
+			return err
+		}
 	}
 
 	switch value.ToolExposure {
@@ -431,7 +464,35 @@ func validateMCPToolSelection(value MCPToolSelection) error {
 	if err := value.Server.Validate(); err != nil {
 		return err
 	}
-
+	if err := validateConversationRequiredText(
+		"selected MCP tool name",
+		value.ToolName,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if err := validateConversationOptionalText(
+		"selected MCP provider tool name",
+		value.ProviderToolName,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if err := validateConversationOptionalText(
+		"selected MCP choice ID",
+		value.ChoiceID,
+		mcpServer.MaxDisplayNameBytes,
+	); err != nil {
+		return err
+	}
+	if value.Digest != "" {
+		if err := mcpServer.Digest(value.Digest).Validate(); err != nil {
+			return err
+		}
+	}
+	if err := validateMCPAppResourceURI(value.AppResourceURI); err != nil {
+		return err
+	}
 	if value.ApprovalRule != nil {
 		if err := value.ApprovalRule.Validate(); err != nil {
 			return err
@@ -527,6 +588,82 @@ func validateMCPVisibility(values []string) error {
 			)
 		}
 		seen[value] = struct{}{}
+	}
+	return nil
+}
+
+func validateConversationRequiredText(
+	subject string,
+	value string,
+	maximum int,
+) error {
+	if value == "" {
+		return fmt.Errorf(
+			"%w: %s is required",
+			mcpServer.ErrInvalid,
+			subject,
+		)
+	}
+	return validateConversationOptionalText(subject, value, maximum)
+}
+
+func validateConversationOptionalText(
+	subject string,
+	value string,
+	maximum int,
+) error {
+	if value == "" {
+		return nil
+	}
+	if !utf8.ValidString(value) ||
+		strings.TrimSpace(value) != value ||
+		len(value) > maximum ||
+		strings.ContainsRune(value, 0) {
+		return fmt.Errorf(
+			"%w: %s is invalid",
+			mcpServer.ErrInvalid,
+			subject,
+		)
+	}
+	for _, character := range value {
+		if unicode.IsControl(character) {
+			return fmt.Errorf(
+				"%w: %s contains a control character",
+				mcpServer.ErrInvalid,
+				subject,
+			)
+		}
+	}
+	return nil
+}
+
+func validateMCPAppResourceURI(value string) error {
+	if value == "" {
+		return nil
+	}
+	if err := validateConversationOptionalText(
+		"MCP App resource URI",
+		value,
+		mcpServer.MaxURIBytes,
+	); err != nil {
+		return err
+	}
+	parsed, err := url.Parse(value)
+	if err != nil {
+		return fmt.Errorf(
+			"%w: MCP App resource URI is invalid: %w",
+			mcpServer.ErrInvalid,
+			err,
+		)
+	}
+	if parsed.Scheme != "ui" ||
+		parsed.Host == "" ||
+		parsed.User != nil ||
+		parsed.Fragment != "" {
+		return fmt.Errorf(
+			"%w: MCP App resource URI must be a ui:// URI",
+			mcpServer.ErrInvalid,
+		)
 	}
 	return nil
 }

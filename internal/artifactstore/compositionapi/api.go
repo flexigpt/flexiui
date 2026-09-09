@@ -304,6 +304,14 @@ type ResourceAPI interface {
 		maximumBytes int64,
 	) (resource.VerifiedEntry, error)
 
+	ReadCollectionEntryWithCatalog(
+		ctx context.Context,
+		ref collection.CollectionRef,
+		sourceID source.SourceID,
+		locator basespec.Locator,
+		maximumBytes int64,
+	) (resource.VerifiedCollectionEntry, error)
+
 	ResolveSourceLocalPath(
 		ctx context.Context,
 		rootID root.RootID,

@@ -277,30 +277,52 @@ func (s *Service) ReadCollectionEntry(
 	locator basespec.Locator,
 	maximumBytes int64,
 ) (resource.VerifiedEntry, error) {
-	if err := validateContext(ctx, "Collection source read"); err != nil {
+	value, err := s.ReadCollectionEntryWithCatalog(
+		ctx,
+		ref,
+		sourceID,
+		locator,
+		maximumBytes,
+	)
+	if err != nil {
 		return resource.VerifiedEntry{}, err
+	}
+	return value.Entry.Clone(), nil
+}
+
+// ReadCollectionEntryWithCatalog reads one exact current Collection entry and
+// returns the exact Catalog snapshot used to validate that entry.
+func (s *Service) ReadCollectionEntryWithCatalog(
+	ctx context.Context,
+	ref collection.CollectionRef,
+	sourceID source.SourceID,
+	locator basespec.Locator,
+	maximumBytes int64,
+) (resource.VerifiedCollectionEntry, error) {
+	if err := validateContext(ctx, "Collection source read"); err != nil {
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	if s == nil || s.catalogs == nil || s.sources == nil {
-		return resource.VerifiedEntry{}, basespec.ErrClosed
+		return resource.VerifiedCollectionEntry{}, basespec.ErrClosed
 	}
 	if err := ref.Validate(); err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	if err := sourceID.Validate(); err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	if err := locator.Validate(false); err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 
 	snapshot, err := s.catalogs.CurrentCatalog(ctx, ref)
 	if err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	sourceRevision := snapshot.SourceRevisions[sourceID]
 	sourceGeneration := snapshot.SourceGenerations[sourceID]
 	if sourceRevision == 0 || sourceGeneration == "" {
-		return resource.VerifiedEntry{}, fmt.Errorf(
+		return resource.VerifiedCollectionEntry{}, fmt.Errorf(
 			"%w: Source %q has no current Collection Catalog state",
 			basespec.ErrCatalogStale,
 			sourceID,
@@ -309,10 +331,10 @@ func (s *Service) ReadCollectionEntry(
 
 	sourceValue, err := s.sources.Get(ctx, ref.RootID, sourceID)
 	if err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	if sourceValue.Revision != sourceRevision {
-		return resource.VerifiedEntry{}, fmt.Errorf(
+		return resource.VerifiedCollectionEntry{}, fmt.Errorf(
 			"%w: Collection Source changed after Catalog publication",
 			basespec.ErrCatalogStale,
 		)
@@ -327,10 +349,10 @@ func (s *Service) ReadCollectionEntry(
 		maximumBytes,
 	)
 	if err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 
-	output := resource.VerifiedEntry{
+	entry := resource.VerifiedEntry{
 		Collection:       ref,
 		SourceID:         sourceID,
 		CatalogRevision:  snapshot.Revision,
@@ -339,8 +361,12 @@ func (s *Service) ReadCollectionEntry(
 		Content:          append([]byte(nil), content...),
 		Digest:           digest,
 	}
+	output := resource.VerifiedCollectionEntry{
+		Catalog: snapshot.Clone(),
+		Entry:   entry,
+	}
 	if err := output.Validate(); err != nil {
-		return resource.VerifiedEntry{}, err
+		return resource.VerifiedCollectionEntry{}, err
 	}
 	return output.Clone(), nil
 }

@@ -67,12 +67,8 @@ func (a *API) GetDocument(
 	if err != nil {
 		return mcpDomainBundle.BundleDocument{}, err
 	}
-	snapshot, err := a.currentCatalog(ctx, bundle)
-	if err != nil {
-		return mcpDomainBundle.BundleDocument{}, err
-	}
 
-	entry, err := a.resources.ReadCollectionEntry(
+	resolvedEntry, err := a.resources.ReadCollectionEntryWithCatalog(
 		ctx,
 		ref,
 		bundle.Source.ID,
@@ -82,12 +78,8 @@ func (a *API) GetDocument(
 	if err != nil {
 		return mcpDomainBundle.BundleDocument{}, err
 	}
-	if entry.CatalogRevision != snapshot.Revision {
-		return mcpDomainBundle.BundleDocument{}, fmt.Errorf(
-			"%w: MCP Bundle Catalog changed during document resolution",
-			basespec.ErrCatalogStale,
-		)
-	}
+	snapshot := resolvedEntry.Catalog
+	entry := resolvedEntry.Entry
 
 	document, _, err := a.canonicalizeBundleBytes(ctx, entry.Content)
 	if err != nil {

@@ -200,6 +200,58 @@ func (i CollectionResourceInspection) Clone() CollectionResourceInspection {
 	return output
 }
 
+// VerifiedCollectionEntry binds a verified Collection entry to the exact
+// current Catalog snapshot used to validate its Source revision and
+// generation.
+type VerifiedCollectionEntry struct {
+	Catalog catalog.Snapshot
+	Entry   VerifiedEntry
+}
+
+func (e VerifiedCollectionEntry) Validate() error {
+	if err := e.Catalog.Validate(); err != nil {
+		return err
+	}
+	if err := e.Entry.Validate(); err != nil {
+		return err
+	}
+	if e.Catalog.RootID != e.Entry.Collection.RootID ||
+		e.Catalog.CollectionID != e.Entry.Collection.CollectionID {
+		return fmt.Errorf(
+			"%w: verified entry Catalog belongs to another Collection",
+			basespec.ErrInvalid,
+		)
+	}
+	if e.Catalog.Revision != e.Entry.CatalogRevision {
+		return fmt.Errorf(
+			"%w: verified entry Catalog revision does not match snapshot",
+			basespec.ErrInvalid,
+		)
+	}
+	sourceRevision, found := e.Catalog.SourceRevisions[e.Entry.SourceID]
+	if !found || sourceRevision != e.Entry.SourceRevision {
+		return fmt.Errorf(
+			"%w: verified entry Source revision does not match snapshot",
+			basespec.ErrInvalid,
+		)
+	}
+	sourceGeneration, found := e.Catalog.SourceGenerations[e.Entry.SourceID]
+	if !found || sourceGeneration != e.Entry.SourceGeneration {
+		return fmt.Errorf(
+			"%w: verified entry Source generation does not match snapshot",
+			basespec.ErrInvalid,
+		)
+	}
+	return nil
+}
+
+func (e VerifiedCollectionEntry) Clone() VerifiedCollectionEntry {
+	output := e
+	output.Catalog = e.Catalog.Clone()
+	output.Entry = e.Entry.Clone()
+	return output
+}
+
 type VerifiedEntry struct {
 	Collection       collection.CollectionRef `json:"collection"`
 	SourceID         source.SourceID          `json:"sourceID"`
