@@ -2,16 +2,45 @@ package domain
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/flexigpt/agentskills-go/document"
 	"github.com/flexigpt/flexigpt-app/internal/artifactbuiltin"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec"
 	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/definition"
+	"github.com/flexigpt/flexigpt-app/internal/artifactstore/basespec/diagnostic"
 )
 
 func ValidateDefinition(value definition.Definition) error {
 	_, err := DocumentFromDefinition(value)
 	return err
+}
+
+// DecodeSkillDocument is the shared SKILL.md parse-and-definition path used
+// by discovery, managed Skill publication, and built-in Skill hydration.
+func DecodeSkillDocument(
+	content []byte,
+	expectedName string,
+) (definition.Definition, []diagnostic.Diagnostic, error) {
+	doc, warnings, err := document.ParseSkillDocument(
+		content,
+		document.ParseSkillDocumentOptions{
+			ExpectedName: expectedName,
+		},
+	)
+	if err != nil {
+		return definition.Definition{}, nil, err
+	}
+
+	value, err := definitionForDocument(doc)
+	if err != nil {
+		return definition.Definition{}, nil, err
+	}
+	canonical, err := definition.Canonicalize(value)
+	if err != nil {
+		return definition.Definition{}, nil, err
+	}
+	return canonical, warningDiagnostics(warnings), nil
 }
 
 // DocumentFromDefinition validates the canonical Artifact definition and
@@ -50,11 +79,11 @@ func DocumentFromDefinition(
 			basespec.ErrInvalid,
 		)
 	}
-	body, err := definition.DecodeBody[Body](value.Body)
+	doc, err := definition.DecodeBody[document.SkillDocument](value.Body)
 	if err != nil {
 		return document.SkillDocument{}, err
 	}
-	doc := toDocument(body)
+
 	if err := document.ValidateSkillDocument(doc); err != nil {
 		return document.SkillDocument{}, fmt.Errorf(
 			"%w: invalid Agent Skill document: %w",
@@ -62,25 +91,25 @@ func DocumentFromDefinition(
 			err,
 		)
 	}
-	if string(value.LogicalName) != body.Name {
+	if string(value.LogicalName) != doc.Name {
 		return document.SkillDocument{}, fmt.Errorf(
 			"%w: Skill logical name does not match body.name",
 			basespec.ErrInvalid,
 		)
 	}
-	if value.DisplayName != body.DisplayName {
+	if value.DisplayName != doc.DisplayName {
 		return document.SkillDocument{}, fmt.Errorf(
 			"%w: Skill display name does not match body.displayName",
 			basespec.ErrInvalid,
 		)
 	}
-	if value.Description != body.Description {
+	if value.Description != doc.Description {
 		return document.SkillDocument{}, fmt.Errorf(
 			"%w: Skill description does not match body.description",
 			basespec.ErrInvalid,
 		)
 	}
-	if value.Labels[artifactbuiltin.AgentSkillInsertLabelKey] != body.Insert {
+	if value.Labels[artifactbuiltin.AgentSkillInsertLabelKey] != string(doc.Insert) {
 		return document.SkillDocument{}, fmt.Errorf(
 			"%w: Skill insert label does not match body.insert",
 			basespec.ErrInvalid,
@@ -89,27 +118,45 @@ func DocumentFromDefinition(
 	return doc, nil
 }
 
-func toDocument(value Body) document.SkillDocument {
-	arguments := make(
-		[]document.SkillArgument,
-		0,
-		len(value.Arguments),
-	)
-	for _, argument := range value.Arguments {
-		arguments = append(arguments, document.SkillArgument{
-			Name:        argument.Name,
-			Description: argument.Description,
-			Default:     argument.Default,
+func definitionForDocument(
+	doc document.SkillDocument,
+) (definition.Definition, error) {
+	raw, err := definition.EncodeBody(doc)
+	if err != nil {
+		return definition.Definition{}, err
+	}
+
+	return definition.Definition{
+		Kind:          artifactbuiltin.AgentSkillArtifactKind,
+		SchemaID:      artifactbuiltin.AgentSkillSchemaID,
+		SchemaVersion: artifactbuiltin.AgentSkillSchemaVersion,
+		LogicalName:   basespec.LogicalName(doc.Name),
+		DisplayName:   doc.DisplayName,
+		Description:   doc.Description,
+		Labels: map[string]string{
+			artifactbuiltin.AgentSkillInsertLabelKey: string(doc.Insert),
+		},
+		Body: raw,
+	}, nil
+}
+
+func warningDiagnostics(
+	warnings []string,
+) []diagnostic.Diagnostic {
+	output := make([]diagnostic.Diagnostic, 0, len(warnings))
+	for _, warning := range warnings {
+		if len(output) == diagnostic.MaxDiagnostics {
+			break
+		}
+		warning = strings.TrimSpace(warning)
+		if warning == "" {
+			continue
+		}
+		output = append(output, diagnostic.Diagnostic{
+			Severity: diagnostic.SeverityWarning,
+			Code:     "agent.skill.parse-warning",
+			Message:  diagnostic.BoundedMessage(warning),
 		})
 	}
-	return document.SkillDocument{
-		Name:           value.Name,
-		DisplayName:    value.DisplayName,
-		Description:    value.Description,
-		Insert:         document.SkillInsert(value.Insert),
-		Arguments:      arguments,
-		Tags:           append([]string(nil), value.Tags...),
-		MarkdownBody:   value.MarkdownBody,
-		RawFrontmatter: value.RawFrontmatter,
-	}
+	return output
 }
